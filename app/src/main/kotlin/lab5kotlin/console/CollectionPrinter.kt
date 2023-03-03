@@ -15,6 +15,6 @@ class CollectionPrinter {
     }
 
     fun <T : Entity> printItem(collectionItem: T) {
-        print(collectionItem.toString());
+        print(collectionItem.toString())
     }
 }

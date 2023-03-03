@@ -6,7 +6,6 @@ package lab5kotlin
 import lab5kotlin.collection.Collection
 import lab5kotlin.collection.exceptions.ValidationFieldException
 import lab5kotlin.console.CollectionPrinter
-import javax.swing.text.Position
 
 class App {
     val greeting: String
@@ -26,8 +25,8 @@ class App {
             onCreateHuman["id"] = 1
             onCreateHuman["name"] = "Alex"
             onCreateHuman["age"] = 18L
-            onCreateHuman["position"] = position;
-            onCreateHuman["fatness"] = Fatness.FAT;
+            onCreateHuman["position"] = position
+            onCreateHuman["fatness"] = Fatness.FAT
             val humanItem = Human(onCreateHuman)
             collection.addItem(humanItem)
         } catch (e: ValidationFieldException) {

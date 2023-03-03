@@ -14,6 +14,6 @@ class Coordinates(values: MutableMap<String, Any?>) : Entity() {
         this.fields.add(xField)
         this.fields.add(yField)
 
-        this.init(values);
+        this.init(values)
     }
 }

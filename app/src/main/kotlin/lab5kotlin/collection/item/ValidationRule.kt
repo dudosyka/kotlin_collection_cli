@@ -4,15 +4,15 @@ class ValidationRule(max: Long?, min: Long?, required: Boolean = false, checkChi
     val max: Long?
     val min: Long?
     val required: Boolean
-    val checkChildEntity: String?;
-    val checkChildEnum: String?;
+    val checkChildEntity: String?
+    val checkChildEnum: String?
 
     init {
         this.max = max
         this.min = min
         this.required = required
-        this.checkChildEntity = checkChildEntity;
-        this.checkChildEnum = checkChildEnum;
+        this.checkChildEntity = checkChildEntity
+        this.checkChildEnum = checkChildEnum
     }
 
     private fun validateNumber(type: FieldType, value: Any): Boolean {

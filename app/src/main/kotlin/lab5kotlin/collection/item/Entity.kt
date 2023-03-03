@@ -18,13 +18,13 @@ open class Entity {
     }
 
     override fun toString(): String {
-        var output: String = "";
+        var output = ""
         output += "Item <${this::class.simpleName}> {"
         for (field in this.fields) {
             output += "\n\t${field.name}: ${this.values[field.name].toString()}"
         }
         output += "\n}"
 
-        return output;
+        return output
     }
 }
