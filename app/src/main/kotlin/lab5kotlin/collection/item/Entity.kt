@@ -2,7 +2,7 @@ package lab5kotlin.collection.item
 
 import lab5kotlin.collection.exceptions.ValidationFieldException
 
-open class CollectionItem {
+open class Entity {
     var fields: MutableCollection<Field> = mutableListOf()
     var values: MutableMap<String, Any?> = mutableMapOf()
 
@@ -15,5 +15,16 @@ open class CollectionItem {
                 throw ValidationFieldException(field, element)
             }
         }
+    }
+
+    override fun toString(): String {
+        var output: String = "";
+        output += "Item <${this::class.simpleName}> {"
+        for (field in this.fields) {
+            output += "\n\t${field.name}: ${this.values[field.name].toString()}"
+        }
+        output += "\n}"
+
+        return output;
     }
 }

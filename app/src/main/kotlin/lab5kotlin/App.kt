@@ -6,6 +6,7 @@ package lab5kotlin
 import lab5kotlin.collection.Collection
 import lab5kotlin.collection.exceptions.ValidationFieldException
 import lab5kotlin.console.CollectionPrinter
+import javax.swing.text.Position
 
 class App {
     val greeting: String
@@ -16,13 +17,18 @@ class App {
     var collection: Collection<Human> = Collection<Human>()
 
     fun createCollection() {
-        val humanItem = Human()
-        val onCreateHuman = mutableMapOf<String, Any?>()
-        onCreateHuman["id"] = 1
-        onCreateHuman["name"] = "Alex"
-        onCreateHuman["age"] = "18"
         try {
-            humanItem.init(onCreateHuman)
+            val onCreatePosition = mutableMapOf<String, Any?>()
+            onCreatePosition["x"] = 1
+            onCreatePosition["y"] = 2
+            val position = Coordinates(onCreatePosition)
+            val onCreateHuman = mutableMapOf<String, Any?>()
+            onCreateHuman["id"] = 1
+            onCreateHuman["name"] = "Alex"
+            onCreateHuman["age"] = 18L
+            onCreateHuman["position"] = position;
+            onCreateHuman["fatness"] = Fatness.FAT;
+            val humanItem = Human(onCreateHuman)
             collection.addItem(humanItem)
         } catch (e: ValidationFieldException) {
             println("Item creation failed!")

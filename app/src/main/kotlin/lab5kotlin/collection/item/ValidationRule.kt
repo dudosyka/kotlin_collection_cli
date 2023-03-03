@@ -1,14 +1,18 @@
 package lab5kotlin.collection.item
 
-class ValidationRule(max: Long?, min: Long?, required: Boolean = false) {
+class ValidationRule(max: Long?, min: Long?, required: Boolean = false, checkChildEntity: String? = null, checkChildEnum: String? = null) {
     val max: Long?
     val min: Long?
     val required: Boolean
+    val checkChildEntity: String?;
+    val checkChildEnum: String?;
 
     init {
         this.max = max
         this.min = min
         this.required = required
+        this.checkChildEntity = checkChildEntity;
+        this.checkChildEnum = checkChildEnum;
     }
 
     private fun validateNumber(type: FieldType, value: Any): Boolean {
@@ -52,6 +56,12 @@ class ValidationRule(max: Long?, min: Long?, required: Boolean = false) {
 
         if (!this.required && value == null)
             return true
+
+        if (field.type == FieldType.ENUM && checkChildEnum != null)
+            return (value is Enum<*> && value::class.simpleName == checkChildEnum)
+
+        if (field.type == FieldType.ENTITY && checkChildEntity != null)
+            return (value is Entity && value::class.simpleName == checkChildEntity)
 
         if (field.type == FieldType.INT || field.type == FieldType.LONG)
             return this.validateNumber(field.type, value!!)

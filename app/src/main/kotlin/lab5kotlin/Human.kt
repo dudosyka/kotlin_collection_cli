@@ -1,28 +1,31 @@
 package lab5kotlin
 
-import lab5kotlin.collection.item.CollectionItem
+import lab5kotlin.collection.item.Entity
 import lab5kotlin.collection.item.Field
 import lab5kotlin.collection.item.FieldType
 import lab5kotlin.collection.item.ValidationRule
 
-class Human : CollectionItem() {
+class Human(values: MutableMap<String, Any?>) : Entity() {
     init {
-        val idValidationRule = ValidationRule(null, null, true)
-        val idField = Field("id", FieldType.NUMBER, idValidationRule)
+        val validationRule = ValidationRule(null, null, true)
 
-        val nameValidationRule = ValidationRule(null, null, true)
-        val nameField = Field("name", FieldType.STRING, nameValidationRule)
+        val idField = Field("id", FieldType.NUMBER, validationRule)
+        val nameField = Field("name", FieldType.STRING, validationRule)
+        val ageField = Field("age", FieldType.LONG, validationRule)
 
-        val ageValidationRule = ValidationRule(null, null, true)
-        val ageField = Field("age", FieldType.LONG, ageValidationRule)
+        val positionValidationRule = ValidationRule(null, null, true, Coordinates::class.simpleName)
+        val positionField = Field("position", FieldType.ENTITY, positionValidationRule)
+
+        val fatnessValidationRule = ValidationRule(null, null, true, null, Fatness::class.simpleName)
+        val fatnessField = Field("fatness", FieldType.ENUM, fatnessValidationRule)
 
 
         this.fields.add(idField)
         this.fields.add(nameField)
         this.fields.add(ageField)
+        this.fields.add(positionField)
+        this.fields.add(fatnessField)
 
-        this.values.put("id", null)
-        this.values.put("name", null)
-        this.values.put("age", null)
+        this.init(values)
     }
 }

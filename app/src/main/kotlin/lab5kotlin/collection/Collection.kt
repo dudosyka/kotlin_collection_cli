@@ -1,8 +1,8 @@
 package lab5kotlin.collection
 
-import lab5kotlin.collection.item.CollectionItem
+import lab5kotlin.collection.item.Entity
 
-class Collection<T : CollectionItem> {
+class Collection<T : Entity> {
     val items: MutableCollection<T>
 
     init {
