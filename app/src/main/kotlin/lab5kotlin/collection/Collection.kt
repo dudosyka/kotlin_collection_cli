@@ -1,14 +1,10 @@
 package lab5kotlin.collection
 
+import kotlinx.serialization.Serializable
 import lab5kotlin.collection.item.Entity
 
-class Collection<T : Entity> {
-    val items: MutableCollection<T>
-
-    init {
-        this.items = mutableListOf()
-    }
-
+@Serializable
+class Collection<T : Entity>(var items: MutableCollection<T>) {
     fun getItem(index: Int): T {
         return this.items.elementAt(index)
     }

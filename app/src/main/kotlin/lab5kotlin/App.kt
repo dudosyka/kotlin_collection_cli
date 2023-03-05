@@ -4,8 +4,11 @@
 package lab5kotlin
 
 import lab5kotlin.collection.Collection
-import lab5kotlin.collection.exceptions.ValidationFieldException
 import lab5kotlin.console.CollectionPrinter
+import lab5kotlin.file.FileManager
+import lab5kotlin.human.CoordinatesBuilder
+import lab5kotlin.human.Human
+import lab5kotlin.human.HumanBuilder
 
 class App {
     val greeting: String
@@ -13,38 +16,39 @@ class App {
             return "Hello World!"
         }
 
-    var collection: Collection<Human> = Collection<Human>()
+    var collection: Collection<Human> = Collection(mutableListOf())
+    val fileManager = FileManager(Human.serializer())
+    val collectionPrinter = CollectionPrinter()
 
-    fun createCollection() {
-        try {
-            val onCreatePosition = mutableMapOf<String, Any?>()
-            onCreatePosition["x"] = 1
-            onCreatePosition["y"] = 2
-            val position = Coordinates(onCreatePosition)
-            val onCreateHuman = mutableMapOf<String, Any?>()
-            onCreateHuman["id"] = 1
-            onCreateHuman["name"] = "Alex"
-            onCreateHuman["age"] = 18L
-            onCreateHuman["position"] = position
-            onCreateHuman["fatness"] = Fatness.FAT
-            val humanItem = Human(onCreateHuman)
-            collection.addItem(humanItem)
-        } catch (e: ValidationFieldException) {
-            println("Item creation failed!")
-            println("Validation failed when processing ${e.field.name} field")
-            println("Input value: ${e.validatedValue} must be ${e.field.type} type")
-        }
+    fun readFile() {
+        this.collection = fileManager.readDumpFile("/Users/dudosyka/IdeaProjects/lab5Kotlin/data.csv")
+    }
+
+    fun dumpCollection() {
+        fileManager.writeFileDump("/Users/dudosyka/IdeaProjects/lab5Kotlin/data.csv", this.collection)
     }
 
     fun printCollection() {
-        val printer = CollectionPrinter()
-        printer.print(collection)
+        collectionPrinter.print(collection)
     }
 }
 
 fun main() {
     val app = App()
     println(app.greeting)
-    app.createCollection()
+    app.readFile()
     app.printCollection()
+    val human = HumanBuilder(
+        mutableMapOf(
+            "id" to 11900,
+            "name" to "Test name",
+            "position" to CoordinatesBuilder(mutableMapOf(
+                "x" to 1,
+                "y" to 2
+            )).build()
+        )
+    )
+    app.collection.addItem(human.build())
+    app.dumpCollection()
+    app.collectionPrinter.printItem(app.collection.getItem(1))
 }
