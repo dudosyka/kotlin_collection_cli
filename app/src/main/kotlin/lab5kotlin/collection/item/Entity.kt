@@ -1,6 +1,10 @@
 package lab5kotlin.collection.item
 
 import kotlinx.serialization.Serializable
+import java.time.ZonedDateTime
 
 @Serializable
-open class Entity
+abstract class Entity {
+    abstract var id: Int
+    abstract var creationDate: ZonedDateTime
+}

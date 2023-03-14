@@ -1,30 +1,14 @@
 package lab5kotlin.human
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import lab5kotlin.collection.item.Entity
-
-class CoordinatesBuilder(values: MutableMap<String, Any?>) {
-    private val x: Int by values
-    private val y: Int by values
-    fun build(): Coordinates {
-        return Coordinates(x, y)
-    }
-}
+import java.time.ZonedDateTime
 
 @Serializable
-class Coordinates(private var x: Int, private var y: Int) : Entity() {
-
-    init {
-//        val validator = Validator(null, null, true)
-//        val xField = Field("x", FieldType.NUMBER, validator)
-//        val yField = Field("y", FieldType.NUMBER, validator)
-//
-//        this.fields.add(xField)
-//        this.fields.add(yField)
-//
-//        this.init(values)
-    }
-
+class Coordinates(private var x: Int, private var y: Int, override var id: Int = 0,
+                  @Transient override var creationDate: ZonedDateTime = ZonedDateTime.now()
+) : Entity() {
     override fun toString(): String {
         return "Coordinates {" +
                 " x=${x}," +

@@ -1,1 +1,0 @@
-package lab5kotlin.human

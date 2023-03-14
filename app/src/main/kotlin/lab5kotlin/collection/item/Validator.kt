@@ -1,34 +1,31 @@
 package lab5kotlin.collection.item
 
 class Validator(validationOptions: Map<String, Any?>) {
-    private val max: Int? by validationOptions
-    private val min: Int? by validationOptions
-    private val type: FieldType? by validationOptions
-    private val required: Boolean? by validationOptions
-    private val checkChildEntity: String? by validationOptions
-    private val checkChildEnum: String? by validationOptions
+    private val withDefault = validationOptions.withDefault { null }
 
-    private fun validateNumber(type: FieldType, value: Any): Boolean {
-        if (type == FieldType.INT && value !is Int)
-            return false
+    private val max: Int? by withDefault
+    private val min: Int? by withDefault
+    private val type: FieldType? by withDefault
+    private val required: Boolean? by withDefault
+    private val childEntity: EntityBuilder<Entity>? by withDefault
+    private val childEnumVariants: List<String>? by withDefault
 
-        if (type == FieldType.LONG && value !is Long)
-            return false
+    var value: Any? = null
 
-        if (this.max != null) {
-            when (value) {
-                is Long -> return value < this.max!!
-                is Int -> return value < this.max!!
-            }
-            return false
-        }
-        if (this.min != null) {
-            when (value) {
-                is Long -> return value > this.min!!
-                is Int -> return value > this.min!!
-            }
-            return false
-        }
+    private fun validateNumber(type: FieldType, v: String): Boolean {
+        val value = v.toLongOrNull() ?: return false
+
+        if (type == FieldType.LONG)
+            this.value = v.toLong()
+        if (type == FieldType.INT)
+            this.value = v.toInt()
+
+        if (this.max != null)
+            return value < this.max!!
+
+        if (this.min != null)
+            return value > this.min!!
+
         return true
     }
 
@@ -43,25 +40,63 @@ class Validator(validationOptions: Map<String, Any?>) {
         return false
     }
 
+    private fun validateEnum(value: Any?): Boolean {
+        if (this.childEnumVariants?.contains(value)!!) {
+            this.value = value
+            return true
+        }
+        return false
+    }
+
+    fun isNested(): EntityBuilder<Entity>? {
+        return if (this.type != null && this.type == FieldType.ENTITY) this.childEntity else null
+    }
+
     fun validate(value: Any?): Boolean {
-        if (this.required != null && this.required!! && value == null)
+        this.value = value
+
+        if (this.required != null && this.required!! && (value == "" || value == null))
             return false
 
-        if (this.required != null && !this.required!! && value == null)
+        if (this.required != null && !this.required!! && (value == "" || value == null)) {
+            this.value = null
             return true
+        }
 
         if (type == FieldType.ENUM)
-            return (value is Enum<*> && value::class.simpleName == checkChildEnum)
-
-        if (type == FieldType.ENTITY)
-            return (value is Entity && value::class.simpleName == checkChildEntity)
+            return this.validateEnum(value)
 
         if (type == FieldType.INT || type == FieldType.LONG)
-            return this.validateNumber(type!!, value!!)
+            return this.validateNumber(type!!, value!!.toString())
 
         if (type == FieldType.STRING)
             return  this.validateString(value!!)
 
         return true
+    }
+
+    fun describe(fieldName: String): String {
+        var output = fieldName
+        if (required != null)
+            output += "\nmust be not null"
+        if (type != null)
+            if (type == FieldType.ENUM)
+                output += "\n must be one of $childEnumVariants"
+            else
+                output += "\nmust be $type"
+        if (max != null)
+            output += "\nmust be lower than $max"
+        if (min !== null)
+            output += "\nmust be grater than $min"
+
+        return output
+    }
+
+    fun isChoisable(): Boolean {
+        return type == FieldType.ENUM
+    }
+
+    fun variants(): String {
+        return childEnumVariants.toString()
     }
 }
