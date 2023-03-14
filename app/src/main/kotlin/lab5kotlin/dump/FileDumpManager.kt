@@ -10,6 +10,14 @@ import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 import java.io.*
 
+/**
+ * File dump manager
+ *
+ * @param T
+ * @property filePath
+ * @property serializer
+ * @constructor Create empty File dump manager
+ */
 @OptIn(ExperimentalSerializationApi::class)
 class FileDumpManager<T : Entity> (private val filePath: String, private val serializer: KSerializer<T>): DumpManager<T>() {
     private val writer: Writer by KoinJavaComponent.inject(Writer::class.java, named("writer"))

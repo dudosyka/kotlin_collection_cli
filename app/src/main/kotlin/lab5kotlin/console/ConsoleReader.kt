@@ -4,6 +4,11 @@ import lab5kotlin.command.CommandResolver
 import lab5kotlin.io.Reader
 import lab5kotlin.io.IOData
 
+/**
+ * Console reader
+ *
+ * @constructor Create empty Console reader
+ */
 class ConsoleReader : Reader() {
     override fun readLine(): String? {
         return readlnOrNull()

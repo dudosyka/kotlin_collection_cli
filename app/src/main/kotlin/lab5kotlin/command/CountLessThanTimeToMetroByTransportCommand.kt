@@ -8,6 +8,11 @@ import lab5kotlin.io.Writer
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 
+/**
+ * Count less than time to metro by transport command
+ *
+ * @constructor Create empty Count less than time to metro by transport command
+ */
 class CountLessThanTimeToMetroByTransportCommand : Command() {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     private val writer: Writer by KoinJavaComponent.inject(Writer::class.java, named("writer"))

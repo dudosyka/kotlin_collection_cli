@@ -9,6 +9,13 @@ import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 import java.io.BufferedReader
 
+/**
+ * File reader
+ *
+ * @property fileReader
+ * @property commandHistory
+ * @constructor Create empty File reader
+ */
 class FileReader(private val fileReader: BufferedReader?, private val commandHistory: MutableList<String>): Reader() {
     private val writer: Writer by KoinJavaComponent.inject(Writer::class.java, named("writer"))
     override fun readLine(): String? {

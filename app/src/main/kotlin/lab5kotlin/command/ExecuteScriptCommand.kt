@@ -6,6 +6,11 @@ import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.InputStreamReader
 
+/**
+ * Execute script command
+ *
+ * @constructor Create empty Execute script command
+ */
 class ExecuteScriptCommand: Command() {
     override fun execute(args: List<String>): Boolean {
         val filePath = this.getArgument(args, "File path", 0, Validator(mapOf(

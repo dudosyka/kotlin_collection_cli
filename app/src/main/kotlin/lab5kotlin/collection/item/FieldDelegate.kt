@@ -4,6 +4,14 @@ import lab5kotlin.exceptions.ValidationFieldException
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
+/**
+ * Field delegate
+ *
+ * @param R
+ * @property map
+ * @property validator
+ * @constructor Create empty Field delegate
+ */
 class FieldDelegate<R>(var map: MutableMap<String, Any?>, val validator: Validator): ReadWriteProperty<Nothing?, R?> {
     val key: (KProperty<*>) -> String = KProperty<*>::name
     override fun getValue(thisRef: Nothing?, property: KProperty<*>): R? {

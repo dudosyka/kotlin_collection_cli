@@ -3,9 +3,29 @@ package lab5kotlin.command
 import lab5kotlin.exceptions.InvalidArgumentException
 import lab5kotlin.collection.item.Validator
 
+/**
+ * Command
+ *
+ * @constructor Create empty Command
+ */
 abstract class Command {
+    /**
+     * Execute
+     *
+     * @param args
+     * @return
+     */
     abstract fun execute(args: List<String> = listOf()): Boolean
 
+    /**
+     * Get argument
+     *
+     * @param args
+     * @param name
+     * @param index
+     * @param validator
+     * @return
+     */
     fun getArgument(args: List<String?>, name: String, index: Int, validator: Validator): Any {
         if (args.size < index || args.isEmpty() || index < 0) {
             throw InvalidArgumentException(name, validator.describe(name))

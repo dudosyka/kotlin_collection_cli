@@ -5,6 +5,16 @@ import lab5kotlin.collection.item.Entity
 import lab5kotlin.collection.item.ZonedDateTimeSerializer
 import java.time.ZonedDateTime
 
+/**
+ * Human
+ *
+ * @property id
+ * @property name
+ * @property fatness
+ * @property position
+ * @property creationDate
+ * @constructor Create empty Human
+ */
 @Serializable
 class Human(
     override var id: Int,

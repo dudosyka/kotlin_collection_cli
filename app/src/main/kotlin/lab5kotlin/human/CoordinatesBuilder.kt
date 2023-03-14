@@ -5,6 +5,11 @@ import lab5kotlin.collection.item.FieldDelegate
 import lab5kotlin.collection.item.FieldType
 import lab5kotlin.collection.item.Validator
 
+/**
+ * Coordinates builder
+ *
+ * @constructor Create empty Coordinates builder
+ */
 class CoordinatesBuilder : EntityBuilder<Coordinates>() {
     override val fields = mapOf(
         "x" to Validator(mapOf(

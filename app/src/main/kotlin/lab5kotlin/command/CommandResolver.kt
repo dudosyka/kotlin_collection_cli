@@ -1,5 +1,10 @@
 package lab5kotlin.command
 
+/**
+ * Command resolver
+ *
+ * @constructor Create empty Command resolver
+ */
 class CommandResolver {
     private val commands: Map<String, Command> = mapOf(
         "help" to HelpCommand(),
@@ -19,6 +24,13 @@ class CommandResolver {
         "count_less_than_time_to_metro_by_transport" to CountLessThanTimeToMetroByTransportCommand(),
         "filter_less_than_furnish" to FilterLessThanFurnish(),
     )
+
+    /**
+     * Handle
+     *
+     * @param commandLine
+     * @return
+     */
     fun handle(commandLine: String): Boolean? {
         val split = commandLine.split(" ")
         val name = split[0]

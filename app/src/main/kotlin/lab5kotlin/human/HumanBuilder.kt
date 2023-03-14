@@ -10,6 +10,11 @@ import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 import java.time.ZonedDateTime
 
+/**
+ * Human builder
+ *
+ * @constructor Create empty Human builder
+ */
 class HumanBuilder : EntityBuilder<Human>() {
     private val collection: Collection<Human> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     @Transient

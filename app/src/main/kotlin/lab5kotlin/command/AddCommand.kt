@@ -13,6 +13,11 @@ import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 
+/**
+ * Add command
+ *
+ * @constructor Create empty Add command
+ */
 open class AddCommand : Command() {
     private val entityBuilder: EntityBuilder<Human> by inject(EntityBuilder::class.java, named("builder"))
     private val collection: Collection<Entity> by inject(Collection::class.java, named("collection"))
@@ -44,6 +49,13 @@ open class AddCommand : Command() {
             }
         }
     }
+
+    /**
+     * Get entity data
+     *
+     * @param fieldsMap
+     * @return
+     */
     protected fun getEntityData(fieldsMap: Map<String, Validator>): MutableMap<String, Any?> {
         var map = mutableMapOf<String, Any?>()
         fieldsMap.map {

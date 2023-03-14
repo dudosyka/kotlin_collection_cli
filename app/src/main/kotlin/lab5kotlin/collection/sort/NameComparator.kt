@@ -2,6 +2,11 @@ package lab5kotlin.collection.sort
 
 import lab5kotlin.human.Human
 
+/**
+ * Name comparator
+ *
+ * @constructor Create empty Name comparator
+ */
 class NameComparator: Comparator<Human> {
     /**
      * Compares its two arguments for order.  Returns a negative integer,

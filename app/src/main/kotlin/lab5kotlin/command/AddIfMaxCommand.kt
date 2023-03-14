@@ -9,6 +9,11 @@ import lab5kotlin.io.Writer
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 
+/**
+ * Add if max command
+ *
+ * @constructor Create empty Add if max command
+ */
 open class AddIfMaxCommand : AddCommand() {
     private val entityBuilder: EntityBuilder<Human> by inject(EntityBuilder::class.java, named("builder"))
     private val collection: Collection<Entity> by inject(Collection::class.java, named("collection"))

@@ -11,6 +11,11 @@ import lab5kotlin.io.Writer
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 
+/**
+ * Update command
+ *
+ * @constructor Create empty Update command
+ */
 open class UpdateCommand : AddCommand() {
     private val entityBuilder: EntityBuilder<Human> by inject(EntityBuilder::class.java, named("builder"))
     private val collection: Collection<Entity> by inject(Collection::class.java, named("collection"))

@@ -6,6 +6,11 @@ import lab5kotlin.collection.sort.CollectionSortType
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 
+/**
+ * Reorder command
+ *
+ * @constructor Create empty Reorder command
+ */
 class ReorderCommand: ShowCommand() {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(
         Collection::class.java,

@@ -2,6 +2,11 @@ package lab5kotlin.collection.sort
 
 import lab5kotlin.collection.item.Entity
 
+/**
+ * Id comparator
+ *
+ * @constructor Create empty Id comparator
+ */
 class IdComparator: Comparator<Entity> {
     /**
      * Compares its two arguments for order.  Returns a negative integer,

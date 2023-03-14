@@ -10,6 +10,11 @@ import lab5kotlin.io.Writer
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 
+/**
+ * Filter less than furnish
+ *
+ * @constructor Create empty Filter less than furnish
+ */
 class FilterLessThanFurnish : Command() {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     private val writer: Writer by KoinJavaComponent.inject(Writer::class.java, named("writer"))

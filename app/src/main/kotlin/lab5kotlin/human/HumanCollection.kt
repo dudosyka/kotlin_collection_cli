@@ -3,6 +3,12 @@ package lab5kotlin.human
 import lab5kotlin.collection.Collection
 import lab5kotlin.collection.sort.NameComparator
 
+/**
+ * Human collection
+ *
+ * @property items
+ * @constructor Create empty Human collection
+ */
 class HumanCollection(override var items: MutableList<Human> = mutableListOf()) : Collection<Human>(items) {
     override fun sortBy(comparator: Comparator<Human>) {
         this.items.sortWith(comparator)

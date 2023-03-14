@@ -8,6 +8,11 @@ import lab5kotlin.io.Writer
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 
+/**
+ * Remove at command
+ *
+ * @constructor Create empty Remove at command
+ */
 class RemoveAtCommand: Command() {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     private val writer: Writer by KoinJavaComponent.inject(Writer::class.java, named("writer"))

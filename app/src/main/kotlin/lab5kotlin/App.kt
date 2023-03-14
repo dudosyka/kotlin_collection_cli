@@ -25,6 +25,13 @@ import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
 import java.io.FileNotFoundException
 
+/**
+ * App
+ *
+ * @constructor
+ *
+ * @param filePath
+ */
 class App (filePath: String) {
     init {
         val module = module {
@@ -55,6 +62,11 @@ class App (filePath: String) {
     }
 }
 
+/**
+ * Main
+ *
+ * @param args
+ */
 fun main(args: Array<String>) {
     val writer: Writer = ConsoleWriter()
     if (args.isEmpty()) {

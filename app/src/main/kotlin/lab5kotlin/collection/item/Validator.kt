@@ -1,5 +1,12 @@
 package lab5kotlin.collection.item
 
+/**
+ * Validator
+ *
+ * @constructor
+ *
+ * @param validationOptions
+ */
 class Validator(validationOptions: Map<String, Any?>) {
     private val withDefault = validationOptions.withDefault { null }
 
@@ -48,10 +55,21 @@ class Validator(validationOptions: Map<String, Any?>) {
         return false
     }
 
+    /**
+     * Is nested
+     *
+     * @return
+     */
     fun isNested(): EntityBuilder<Entity>? {
         return if (this.type != null && this.type == FieldType.ENTITY) this.childEntity else null
     }
 
+    /**
+     * Validate
+     *
+     * @param value
+     * @return
+     */
     fun validate(value: Any?): Boolean {
         this.value = value
 
@@ -75,6 +93,12 @@ class Validator(validationOptions: Map<String, Any?>) {
         return true
     }
 
+    /**
+     * Describe
+     *
+     * @param fieldName
+     * @return
+     */
     fun describe(fieldName: String): String {
         var output = fieldName
         if (required != null)
@@ -92,10 +116,20 @@ class Validator(validationOptions: Map<String, Any?>) {
         return output
     }
 
+    /**
+     * Is choisable
+     *
+     * @return
+     */
     fun isChoisable(): Boolean {
         return type == FieldType.ENUM
     }
 
+    /**
+     * Variants
+     *
+     * @return
+     */
     fun variants(): String {
         return childEnumVariants.toString()
     }
