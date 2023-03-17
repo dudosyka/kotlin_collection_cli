@@ -4,14 +4,12 @@
 package lab5kotlin
 
 import lab5kotlin.collection.Collection
-import lab5kotlin.exceptions.InvalidArgumentException
 import lab5kotlin.collection.item.EntityBuilder
 import lab5kotlin.console.ConsoleReader
 import lab5kotlin.console.ConsoleWriter
 import lab5kotlin.dump.DumpManager
 import lab5kotlin.dump.FileDumpManager
-import lab5kotlin.exceptions.ItemNotFoundException
-import lab5kotlin.exceptions.ValidationFieldException
+import lab5kotlin.exceptions.*
 import lab5kotlin.file.FileReader
 import lab5kotlin.human.Human
 import lab5kotlin.human.HumanBuilder
@@ -23,7 +21,6 @@ import org.koin.core.context.GlobalContext.startKoin
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
-import java.io.FileNotFoundException
 
 /**
  * App
@@ -77,8 +74,16 @@ fun main(args: Array<String>) {
     App(args[0])
     val collection: Collection<Human> by inject(Collection::class.java, named("collection"))
 
-    collection.loadDump()
-//execute_script /Users/dudosyka/IdeaProjects/lab5Kotlin/script.dud
+    try {
+        collection.loadDump()
+    } catch (e: FileDumpException) {
+        writer.writeLine(e.parent.toString())
+        writer.writeLine(e.parent.message!!)
+        writer.writeLine(e.message)
+    } catch (e: NotUniqueIdException) {
+        writer.writeLine(e.message)
+    }
+
     var readNextLine = true
     var i = 0
     while (readNextLine && i < 10) {
@@ -97,8 +102,6 @@ fun main(args: Array<String>) {
             writer.writeLine(e.validationRulesDescribe)
         } catch (e: ItemNotFoundException) {
             writer.writeLine("Error! ${e.message}")
-        } catch (e: FileNotFoundException) {
-            writer.writeLine("File not found!")
         } catch (e: ValidationFieldException) {
             writer.writeLine(e.message)
         } catch (e: Exception) {

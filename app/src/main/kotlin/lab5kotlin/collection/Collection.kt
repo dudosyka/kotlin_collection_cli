@@ -30,11 +30,14 @@ abstract class Collection<T : Entity> {
     @Transient private var lastAccessTimestamp: ZonedDateTime = initializationTimestamp
 
     constructor(items: MutableList<T>) {
+        checkUniqueId(items)
+    }
+
+    private fun checkUniqueId(items: MutableList<T>) {
         val set: Set<Int> = items.map { it.id }.toSortedSet()
         if (set.size < items.size)
             throw NotUniqueIdException()
     }
-
     /**
      * Sort
      *
@@ -116,7 +119,9 @@ abstract class Collection<T : Entity> {
      */
     fun loadDump() {
         this.lastAccessTimestamp = ZonedDateTime.now()
-        this.items = dumpManager.loadDump()
+        val items = dumpManager.loadDump()
+        checkUniqueId(items)
+        this.items = items
         this.sort()
         if (this.items.size > 0)
             this.lastInsertId = this.items.last().id

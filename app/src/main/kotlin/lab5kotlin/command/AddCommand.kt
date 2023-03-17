@@ -9,7 +9,6 @@ import lab5kotlin.human.Human
 import lab5kotlin.io.Reader
 import lab5kotlin.io.IOData
 import lab5kotlin.io.Writer
-import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 
@@ -22,9 +21,7 @@ open class AddCommand : Command() {
     private val entityBuilder: EntityBuilder<Human> by inject(EntityBuilder::class.java, named("builder"))
     private val collection: Collection<Entity> by inject(Collection::class.java, named("collection"))
     private val writer: Writer by inject(Writer::class.java, named("writer"))
-    private val reader: Reader by inject(Reader::class.java, named("reader")) {
-        parametersOf(IOData.current)
-    }
+    private val reader: Reader by inject(Reader::class.java, named("reader"))
 
     private fun getField(map: MutableMap<String, Any?>, key: String, validator: Validator): MutableMap<String, Any?> {
         val isNested = validator.isNested()

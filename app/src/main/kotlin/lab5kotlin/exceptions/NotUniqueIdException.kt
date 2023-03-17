@@ -5,4 +5,7 @@ package lab5kotlin.exceptions
  *
  * @constructor Create empty Not unique id exception
  */
-class NotUniqueIdException: Exception()
+class NotUniqueIdException: Exception() {
+    override val message: String
+        get() = "Error! Duplicate id"
+}
