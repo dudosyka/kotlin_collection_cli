@@ -16,7 +16,7 @@ class LoadCommand: Command() {
      * @param args
      * @return
      */
-    override fun execute(args: List<String>): Boolean {
+    override fun execute(args: List<String>, data: MutableMap<String, Any?>): Boolean {
         try {
             this.collection.loadDump()
             this.writer.writeLine("Collection successfully restored!")

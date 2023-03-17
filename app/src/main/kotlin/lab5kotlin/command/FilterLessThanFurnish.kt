@@ -19,7 +19,7 @@ import org.koin.java.KoinJavaComponent
 class FilterLessThanFurnish : Command() {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     private val writer: Writer by KoinJavaComponent.inject(Writer::class.java, named("writer"))
-    override fun execute(args: List<String>): Boolean {
+    override fun execute(args: List<String>, data: MutableMap<String, Any?>): Boolean {
         val furnish = args.firstOrNull()
         val validator = Validator(mapOf(
             "required" to false,

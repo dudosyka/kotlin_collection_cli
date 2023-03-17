@@ -9,13 +9,15 @@ import lab5kotlin.collection.item.Validator
  * @constructor Create empty Command
  */
 abstract class Command {
+    open val needObject = false
+    open val fields: Map<String, Validator> = mapOf()
     /**
      * Execute
      *
      * @param args
      * @return
      */
-    abstract fun execute(args: List<String> = listOf()): Boolean
+    abstract fun execute(args: List<String> = listOf(), data: MutableMap<String, Any?> = mutableMapOf()): Boolean
 
     /**
      * Get argument

@@ -14,7 +14,7 @@ import org.koin.java.KoinJavaComponent
 open class ShowCommand: Command() {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     private val collectionPrinter = CollectionPrinter()
-    override fun execute(args: List<String>): Boolean {
+    override fun execute(args: List<String>, data: MutableMap<String, Any?>): Boolean {
         collectionPrinter.print(collection.getAll())
         return true
     }

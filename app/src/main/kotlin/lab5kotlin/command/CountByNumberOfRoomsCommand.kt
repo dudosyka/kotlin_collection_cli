@@ -16,7 +16,7 @@ import org.koin.java.KoinJavaComponent
 class CountByNumberOfRoomsCommand : Command() {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     private val writer: Writer by KoinJavaComponent.inject(Writer::class.java, named("writer"))
-    override fun execute(args: List<String>): Boolean {
+    override fun execute(args: List<String>, data: MutableMap<String, Any?>): Boolean {
         val numberOfRooms = this.getArgument(args, "Number of rooms", 0, Validator(mapOf(
             "required" to true,
             "type" to FieldType.INT

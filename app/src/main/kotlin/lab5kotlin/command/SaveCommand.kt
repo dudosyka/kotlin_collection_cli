@@ -15,7 +15,7 @@ import org.koin.java.KoinJavaComponent
 class SaveCommand: Command() {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     private val writer: Writer by KoinJavaComponent.inject(Writer::class.java, named("writer"))
-    override fun execute(args: List<String>): Boolean {
+    override fun execute(args: List<String>, data: MutableMap<String, Any?>): Boolean {
         try {
             this.collection.dump()
             this.writer.writeLine("Collection successfully dumped!")

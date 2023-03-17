@@ -12,7 +12,7 @@ import org.koin.java.KoinJavaComponent
 class HelpCommand : Command() {
     private val writer: Writer by KoinJavaComponent.inject(Writer::class.java, named("writer"))
 
-    override fun execute(args: List<String>): Boolean {
+    override fun execute(args: List<String>, data: MutableMap<String, Any?>): Boolean {
         val help = "" +
                 "help - Show this text\n" +
                 "info - Show information about collection\n" +

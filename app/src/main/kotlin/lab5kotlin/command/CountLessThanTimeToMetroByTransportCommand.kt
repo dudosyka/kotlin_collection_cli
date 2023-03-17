@@ -17,7 +17,7 @@ class CountLessThanTimeToMetroByTransportCommand : Command() {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     private val writer: Writer by KoinJavaComponent.inject(Writer::class.java, named("writer"))
 //    private val collectionPrinter = CollectionPrinter()
-    override fun execute(args: List<String>): Boolean {
+    override fun execute(args: List<String>, data: MutableMap<String, Any?>): Boolean {
         val timeToMetro = this.getArgument(args, "Time to metro", 0, Validator(mapOf(
             "required" to true,
             "type" to FieldType.INT

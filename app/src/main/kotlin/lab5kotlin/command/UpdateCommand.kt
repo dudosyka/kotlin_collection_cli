@@ -19,15 +19,16 @@ open class UpdateCommand : AddCommand() {
     private val entityBuilder: EntityBuilder<Entity> by inject(EntityBuilder::class.java, named("builder"))
     private val collection: Collection<Entity> by inject(Collection::class.java, named("collection"))
     private val writer: Writer by inject(Writer::class.java, named("writer"))
-    override fun execute(args: List<String>): Boolean {
+
+    override val needObject: Boolean = true
+    override val fields: Map<String, Validator> = entityBuilder.fields
+    override fun execute(args: List<String>, data: MutableMap<String, Any?>): Boolean {
         val id = this.getArgument(args, "id", 0, Validator(mapOf(
             "required" to true,
             "type" to FieldType.INT
         )))
-        if (IOData.current == "console")
-            this.writer.writeLine("Write down the fields values: ")
         collection.checkIdExists(id as Int)
-        val entity = this.getEntityData(this.entityBuilder.fields).let { this.entityBuilder.build(it) }
+        val entity = this.entityBuilder.build(data)
         collection.update(id, entity)
         this.writer.writeLine("Item successfully updated. Write down `show` to see collection")
         return true

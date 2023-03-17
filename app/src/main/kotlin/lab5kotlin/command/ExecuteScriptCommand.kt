@@ -17,7 +17,7 @@ import java.io.InputStreamReader
  */
 class ExecuteScriptCommand: Command() {
     private val writer: Writer by KoinJavaComponent.inject(Writer::class.java, named("writer"))
-    override fun execute(args: List<String>): Boolean {
+    override fun execute(args: List<String>, data: MutableMap<String, Any?>): Boolean {
         val filePath = this.getArgument(args, "File path", 0, Validator(mapOf(
             "required" to true
         )))

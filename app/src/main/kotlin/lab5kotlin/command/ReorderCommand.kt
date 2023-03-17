@@ -18,7 +18,7 @@ class ReorderCommand: Command() {
         named("collection")
     )
     private val collectionPrinter = CollectionPrinter()
-    override fun execute(args: List<String>): Boolean {
+    override fun execute(args: List<String>, data: MutableMap<String, Any?>): Boolean {
         this.collection.sort(CollectionSortType.ASC)
         collectionPrinter.print(collection.getAll())
         return true

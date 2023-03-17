@@ -37,6 +37,10 @@ class CommandResolver {
         val name = split[0]
         val args = split.subList(1, split.size)
         val command: Command = commands[name] ?: return null
+        if (command.needObject) {
+            val builder = ObjectBuilder(command.fields)
+            return command.execute(args, builder.getEntityData())
+        }
         return command.execute(args)
     }
 }
