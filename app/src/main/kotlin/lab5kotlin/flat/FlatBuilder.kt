@@ -25,18 +25,22 @@ class FlatBuilder: EntityBuilder<Flat>() {
         "area" to Validator(mapOf(
             "required" to true,
             "type" to FieldType.FLOAT,
+            "min" to 0,
         )),
         "numberOfRooms" to Validator(mapOf(
             "required" to true,
             "type" to FieldType.LONG,
+            "min" to 0,
         )),
         "numberOfBathrooms" to Validator(mapOf(
             "required" to true,
             "type" to FieldType.LONG,
+            "min" to 0,
         )),
         "timeToMetroByTransport" to Validator(mapOf(
             "required" to true,
             "type" to FieldType.INT,
+            "min" to 0,
         )),
         "coordinates" to Validator(mapOf(
             "type" to FieldType.ENTITY,

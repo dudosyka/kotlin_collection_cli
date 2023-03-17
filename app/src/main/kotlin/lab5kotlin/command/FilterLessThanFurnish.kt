@@ -19,7 +19,6 @@ import org.koin.java.KoinJavaComponent
 class FilterLessThanFurnish : Command() {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     private val writer: Writer by KoinJavaComponent.inject(Writer::class.java, named("writer"))
-//    private val collectionPrinter = CollectionPrinter()
     override fun execute(args: List<String>): Boolean {
         val furnish = args.firstOrNull()
         val validator = Validator(mapOf(
@@ -29,7 +28,7 @@ class FilterLessThanFurnish : Command() {
             "childEnumVariants" to Furnish.values().map { it.toString() }
         ))
         if (!validator.validate(furnish))
-            throw InvalidArgumentException("Fatness", validator.describe("Fatness"))
+            throw InvalidArgumentException("Furnish", validator.describe("Fatness"))
 
         this.writer.writeLine(collection.filterLessThanBy(furnish!!).toString())
 

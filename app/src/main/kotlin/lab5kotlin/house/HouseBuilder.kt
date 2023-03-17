@@ -21,18 +21,22 @@ class HouseBuilder: EntityBuilder<House>() {
         "year" to Validator(mapOf(
             "required" to true,
             "type" to FieldType.LONG,
+            "min" to 0,
         )),
         "numberOfFloors" to Validator(mapOf(
             "required" to true,
             "type" to FieldType.LONG,
+            "min" to 0,
         )),
         "numberOfFlatsOnFloor" to Validator(mapOf(
             "required" to true,
             "type" to FieldType.LONG,
+            "min" to 0,
         )),
         "numberOfLifts" to Validator(mapOf(
             "required" to true,
             "type" to FieldType.LONG,
+            "min" to 0,
         )),
     )
     /**

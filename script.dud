@@ -1,7 +1,2 @@
-show
 info
-help
-add
-new
-FAT
-1
+execute_script /Users/dudosyka/IdeaProjects/lab5Kotlin/script2.dud

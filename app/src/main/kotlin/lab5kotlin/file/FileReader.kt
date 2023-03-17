@@ -27,6 +27,8 @@ class FileReader(private val fileReader: BufferedReader?, private val commandHis
 
         if (line == null) {
             IOData.current = "console"
+            IOData.commandHistory = mutableListOf()
+            IOData.fileReader = null;
             this.writer.writeLine("File execution finished!")
             return true
         }

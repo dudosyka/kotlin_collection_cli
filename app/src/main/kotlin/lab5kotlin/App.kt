@@ -86,9 +86,7 @@ fun main(args: Array<String>) {
     }
 
     var readNextLine = true
-    var i = 0
-    while (readNextLine && i < 10) {
-        i++
+    while (readNextLine) {
         val reader: Reader by inject(Reader::class.java, named("reader"))
         try {
             val commandResult = reader.readCommand()
@@ -105,11 +103,11 @@ fun main(args: Array<String>) {
             writer.writeLine("Error! ${e.message}")
         } catch (e: ValidationFieldException) {
             writer.writeLine(e.message)
+        } catch (e: RecursiveScriptException) {
+            writer.writeLine("Error recursive script!")
         } catch (e: Exception) {
             writer.writeLine(e.stackTraceToString())
             writer.writeLine(e.toString())
-            readNextLine = false
-
         }
     }
 }
