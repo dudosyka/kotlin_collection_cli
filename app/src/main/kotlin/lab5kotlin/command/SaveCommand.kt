@@ -18,6 +18,7 @@ class SaveCommand: Command() {
     override fun execute(args: List<String>): Boolean {
         try {
             this.collection.dump()
+            this.writer.writeLine("Collection successfully dumped!")
         } catch (e: FileDumpException) {
             this.writer.writeLine(e.message)
         }

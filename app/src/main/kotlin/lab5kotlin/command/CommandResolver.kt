@@ -15,6 +15,7 @@ class CommandResolver {
         "remove_by_id" to RemoveByIdCommand(),
         "clear" to ClearCommand(),
         "save" to SaveCommand(),
+        "load" to LoadCommand(),
         "execute_script" to ExecuteScriptCommand(),
         "exit" to ExitCommand(),
         "remove_at" to RemoveAtCommand(),

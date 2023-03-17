@@ -8,15 +8,27 @@ class FlatCollection(override var items: MutableList<Flat>) : Collection<Flat>(i
     }
 
     override fun <T : Any> countBy(comparable: T): Int {
-        return this.items.filter { it.id == (comparable as Int) }.size
+        return this.items.filter { it.numberOfRooms == comparable.toString().toLongOrNull() }.size
     }
 
     override fun countLessThanBy(comparable: Any): Int {
-        return this.items.filter { it.id < (comparable as Int) }.size
+        val compare = comparable.toString().toIntOrNull() ?: 0
+        return this.items.filter { it.timeToMetroByTransport < compare }.size
     }
 
     override fun filterLessThanBy(comparable: Any): MutableList<Flat> {
-        return this.items.filter { it.id > (comparable as Int) }.toMutableList()
+        val furnishValues = Furnish.values().map { it.toString() }
+        return this.items.filter {
+            return@filter try {
+                val currFurnish = Furnish.valueOf(it.furnish.toString()).toString()
+                val checkFurnish = Furnish.valueOf(comparable.toString()).toString()
+                val currFurnishIndex = furnishValues.indexOf(currFurnish)
+                val checkFurnishIndex = furnishValues.indexOf(checkFurnish)
+                checkFurnishIndex <= currFurnishIndex
+            } catch (e: IllegalArgumentException) {
+                false
+            }
+        }.toMutableList()
     }
 
     override fun addIfMax(comparable: Any, item: Flat): Boolean {

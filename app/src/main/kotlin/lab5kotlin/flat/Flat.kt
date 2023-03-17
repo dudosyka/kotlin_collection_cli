@@ -15,13 +15,14 @@ class Flat(
     private var area: Float,
     var numberOfRooms: Long,
     private var numberOfBathrooms: Long,
-    private var timeToMetroByTransport: Int,
+    var timeToMetroByTransport: Int,
     private var coordinates: Coordinates,
-    private var furnish: Furnish?,
+    var furnish: Furnish?,
     private var house: House?
 ): Entity() {
     override fun toString(): String {
         return "Flat {\n" +
+                "\tid=$id,\n" +
                 "\tname=$name,\n" +
                 "\tarea=$area,\n" +
                 "\tnumber of rooms=$numberOfRooms,\n" +
@@ -30,6 +31,7 @@ class Flat(
                 "\tcoordinates=$coordinates,\n" +
                 "\tfurnish=$furnish,\n" +
                 "\thouse=$house,\n" +
+                "\tcreationDate=$creationDate,\n" +
                 "}"
     }
 }

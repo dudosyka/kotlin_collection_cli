@@ -5,6 +5,7 @@ import lab5kotlin.exceptions.InvalidArgumentException
 import lab5kotlin.collection.item.Entity
 import lab5kotlin.collection.item.FieldType
 import lab5kotlin.collection.item.Validator
+import lab5kotlin.flat.Furnish
 import lab5kotlin.human.Fatness
 import lab5kotlin.io.Writer
 import org.koin.core.qualifier.named
@@ -20,17 +21,17 @@ class FilterLessThanFurnish : Command() {
     private val writer: Writer by KoinJavaComponent.inject(Writer::class.java, named("writer"))
 //    private val collectionPrinter = CollectionPrinter()
     override fun execute(args: List<String>): Boolean {
-        val fatness = args.firstOrNull()
-    val validator = Validator(mapOf(
+        val furnish = args.firstOrNull()
+        val validator = Validator(mapOf(
             "required" to false,
             "type" to FieldType.ENUM,
-            "childEnum" to "Fatness",
-            "childEnumVariants" to Fatness.values().map { it.toString() }
+            "childEnum" to "Furnish",
+            "childEnumVariants" to Furnish.values().map { it.toString() }
         ))
-        if (!validator.validate(fatness))
+        if (!validator.validate(furnish))
             throw InvalidArgumentException("Fatness", validator.describe("Fatness"))
 
-        this.writer.writeLine(collection.countLessThanBy(fatness!!).toString())
+        this.writer.writeLine(collection.filterLessThanBy(furnish!!).toString())
 
         return true
 }
