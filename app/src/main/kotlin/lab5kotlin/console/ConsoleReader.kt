@@ -1,6 +1,7 @@
 package lab5kotlin.console
 
 import lab5kotlin.command.CommandResolver
+import lab5kotlin.command.CommandResult
 import lab5kotlin.io.Reader
 import lab5kotlin.io.IOData
 
@@ -13,7 +14,7 @@ class ConsoleReader : Reader() {
     override fun readLine(): String? {
         return readlnOrNull()
     }
-    override fun readCommand(): Any? {
+    override fun readCommand(): CommandResult? {
         val line = this.readLine() ?: return null
 
         IOData.current = "console"

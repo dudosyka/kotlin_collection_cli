@@ -235,6 +235,18 @@ abstract class Collection<T : Entity> {
         return CollectionInfo(this.items.javaClass.simpleName.toString(), this.items.size, this.lastInsertId, this.lastAccessTimestamp, this.initializationTimestamp)
     }
 
+    override fun toString(): String {
+        var result = ""
+        return if (items.isNotEmpty()) {
+            items.withIndex().forEach {
+                result += "[Index: ${it.index}] ${it.value}\n"
+            }
+            result
+        }
+        else
+            "Collection is empty"
+    }
+
     /**
      * Count by
      *

@@ -1,18 +1,12 @@
 package lab5kotlin.command
 
-import lab5kotlin.io.Writer
-import org.koin.core.qualifier.named
-import org.koin.java.KoinJavaComponent
-
 /**
  * Help command
  *
  * @constructor Create empty Help command
  */
 class HelpCommand : Command() {
-    private val writer: Writer by KoinJavaComponent.inject(Writer::class.java, named("writer"))
-
-    override fun execute(args: List<String>, data: MutableMap<String, Any?>): Boolean {
+    override fun execute(args: List<String>, data: MutableMap<String, Any?>): CommandResult {
         val help = "" +
                 "help - Show this text\n" +
                 "info - Show information about collection\n" +
@@ -31,7 +25,6 @@ class HelpCommand : Command() {
                 "count_by_number_of_rooms {numberOfRooms} - Show number of items which have that number of rooms\n" +
                 "count_less_than_time_to_metro_by_transport {timeToMetro} - Show number of items which time to metro less than specified\n" +
                 "filter_less_than_furnish {furnish} - Show number of items that which furniture less than specified"
-        this.writer.writeLine(help);
-        return true
+        return CommandResult(help)
     }
 }

@@ -32,11 +32,11 @@ class CommandResolver {
      * @param commandLine
      * @return
      */
-    fun handle(commandLine: String): Boolean? {
+    fun handle(commandLine: String): CommandResult? {
         val split = commandLine.split(" ")
         val name = split[0]
         val args = split.subList(1, split.size)
-        val command: Command = commands[name] ?: return null
+        val command: Command = commands[name] ?: return CommandResult("Command not found!",false)
         if (command.needObject) {
             val builder = ObjectBuilder(command.fields)
             return command.execute(args, builder.getEntityData())

@@ -5,9 +5,6 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.csv.Csv
 import lab5kotlin.collection.item.Entity
 import lab5kotlin.exceptions.FileDumpException
-import lab5kotlin.io.Writer
-import org.koin.core.qualifier.named
-import org.koin.java.KoinJavaComponent
 import java.io.*
 
 /**
@@ -42,8 +39,6 @@ class FileDumpManager<T : Entity> (val filePath: String, private val serializer:
     override fun dump(items: MutableList<T>) {
         try {
             val fileWriter = FileWriter(filePath)
-//            val outputStream = FileOutputStream(filePath)
-//            val fileWriter = BufferedWriter(OutputStreamWriter(outputStream))
             val csv = Csv { hasHeaderRecord = true; ignoreUnknownColumns = true }
             val encoded = csv.encodeToString(ListSerializer(serializer), items.toList())
             fileWriter.use {

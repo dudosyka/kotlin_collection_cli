@@ -1,5 +1,7 @@
 package lab5kotlin.io
 
+import lab5kotlin.command.CommandResult
+
 /**
  * Reader
  *
@@ -18,5 +20,5 @@ abstract class Reader {
      *
      * @return
      */
-    abstract fun readCommand(): Any?
+    abstract fun readCommand(): CommandResult?
 }

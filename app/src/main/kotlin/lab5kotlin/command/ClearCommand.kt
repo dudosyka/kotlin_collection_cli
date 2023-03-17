@@ -12,8 +12,8 @@ import org.koin.java.KoinJavaComponent
  */
 class ClearCommand: Command() {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
-    override fun execute(args: List<String>, data: MutableMap<String, Any?>): Boolean {
+    override fun execute(args: List<String>, data: MutableMap<String, Any?>): CommandResult {
         collection.clear()
-        return true
+        return CommandResult("Collection is successfully cleared!")
     }
 }

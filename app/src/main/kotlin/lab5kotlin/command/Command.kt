@@ -17,7 +17,7 @@ abstract class Command {
      * @param args
      * @return
      */
-    abstract fun execute(args: List<String> = listOf(), data: MutableMap<String, Any?> = mutableMapOf()): Boolean
+    abstract fun execute(args: List<String> = listOf(), data: MutableMap<String, Any?> = mutableMapOf()): CommandResult?
 
     /**
      * Get argument

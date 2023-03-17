@@ -85,17 +85,18 @@ fun main(args: Array<String>) {
         writer.writeLine(e.message)
     }
 
+    writer.writeLine("^_^ Welcome to the Collection CLI ^_^")
+
     var readNextLine = true
     while (readNextLine) {
         val reader: Reader by inject(Reader::class.java, named("reader"))
         try {
             val commandResult = reader.readCommand()
 
-            if (commandResult == false)
-                readNextLine = false
-
             if (commandResult == null)
-                println("Command not found!")
+                readNextLine = false
+            else
+                writer.writeLine(commandResult.body)
 
         } catch (e: InvalidArgumentException) {
             writer.writeLine(e.validationRulesDescribe)
