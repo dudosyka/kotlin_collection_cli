@@ -11,9 +11,10 @@ import lab5kotlin.dump.DumpManager
 import lab5kotlin.dump.FileDumpManager
 import lab5kotlin.exceptions.*
 import lab5kotlin.file.FileReader
+import lab5kotlin.flat.Flat
+import lab5kotlin.flat.FlatBuilder
+import lab5kotlin.flat.FlatCollection
 import lab5kotlin.human.Human
-import lab5kotlin.human.HumanBuilder
-import lab5kotlin.human.HumanCollection
 import lab5kotlin.io.Reader
 import lab5kotlin.io.IOData
 import lab5kotlin.io.Writer
@@ -32,11 +33,11 @@ import org.koin.java.KoinJavaComponent.inject
 class App (filePath: String) {
     init {
         val module = module {
-            single<Collection<Human>>(named("collection")) {
-                HumanCollection(mutableListOf())
+            single<Collection<Flat>>(named("collection")) {
+                FlatCollection(mutableListOf())
             }
-            single<DumpManager<Human>>(named("dumpManager")) {
-                FileDumpManager(filePath, Human.serializer())
+            single<DumpManager<Flat>>(named("dumpManager")) {
+                FileDumpManager(filePath, Flat.serializer())
             }
             factory<Reader>(named("reader")) {
                 if (IOData.current == "file")
@@ -47,8 +48,8 @@ class App (filePath: String) {
             single<Writer>(named("writer")) {
                 ConsoleWriter()
             }
-            single<EntityBuilder<Human>>(named("builder")) {
-                HumanBuilder()
+            single<EntityBuilder<Flat>>(named("builder")) {
+                FlatBuilder()
             }
         }
         startKoin {

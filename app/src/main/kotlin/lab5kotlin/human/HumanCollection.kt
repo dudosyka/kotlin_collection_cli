@@ -1,7 +1,6 @@
 package lab5kotlin.human
 
 import lab5kotlin.collection.Collection
-import lab5kotlin.collection.sort.NameComparator
 
 /**
  * Human collection

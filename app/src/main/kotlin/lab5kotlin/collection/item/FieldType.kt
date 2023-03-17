@@ -34,6 +34,8 @@ enum class FieldType {
      */
     INT,
 
+    FLOAT,
+
     /**
      * Entity
      *

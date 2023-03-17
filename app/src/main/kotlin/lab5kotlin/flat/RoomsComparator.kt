@@ -1,13 +1,6 @@
-package lab5kotlin.collection.sort
+package lab5kotlin.flat
 
-import lab5kotlin.human.Human
-
-/**
- * Name comparator
- *
- * @constructor Create empty Name comparator
- */
-class NameComparator: Comparator<Human> {
+class RoomsComparator: Comparator<Flat> {
     /**
      * Compares its two arguments for order.  Returns a negative integer,
      * zero, or a positive integer as the first argument is less than, equal
@@ -47,8 +40,13 @@ class NameComparator: Comparator<Human> {
      * @throws ClassCastException if the arguments' types prevent them from
      * being compared by this comparator.
      */
-    override fun compare(o1: Human?, o2: Human?): Int {
-        return o1?.name?.length?.minus(o2?.name?.length!!)!!
+    override fun compare(o1: Flat?, o2: Flat?): Int {
+        if (o1 == null) {
+            return -Int.MAX_VALUE
+        }
+        if (o2 == null) {
+            return o1.numberOfRooms.toInt()
+        }
+        return (o1.numberOfRooms - o2.numberOfRooms).toInt()
     }
-
 }

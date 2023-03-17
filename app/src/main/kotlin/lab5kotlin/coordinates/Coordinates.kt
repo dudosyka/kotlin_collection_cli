@@ -1,4 +1,4 @@
-package lab5kotlin.human
+package lab5kotlin.coordinates
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient

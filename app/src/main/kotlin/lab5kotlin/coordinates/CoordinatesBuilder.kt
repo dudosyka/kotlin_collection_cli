@@ -1,4 +1,4 @@
-package lab5kotlin.human
+package lab5kotlin.coordinates
 
 import lab5kotlin.collection.item.EntityBuilder
 import lab5kotlin.collection.item.FieldDelegate

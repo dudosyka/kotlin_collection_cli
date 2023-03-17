@@ -20,12 +20,14 @@ class Validator(validationOptions: Map<String, Any?>) {
     var value: Any? = null
 
     private fun validateNumber(type: FieldType, v: String): Boolean {
-        val value = v.toLongOrNull() ?: return false
+        val value = v.toDoubleOrNull() ?: return false
 
         if (type == FieldType.LONG)
             this.value = v.toLong()
         if (type == FieldType.INT)
             this.value = v.toInt()
+        if (type == FieldType.FLOAT)
+            this.value = v.toFloat()
 
         if (this.max != null)
             return value < this.max!!
@@ -84,7 +86,7 @@ class Validator(validationOptions: Map<String, Any?>) {
         if (type == FieldType.ENUM)
             return this.validateEnum(value)
 
-        if (type == FieldType.INT || type == FieldType.LONG)
+        if (type == FieldType.INT || type == FieldType.LONG || type == FieldType.FLOAT)
             return this.validateNumber(type!!, value!!.toString())
 
         if (type == FieldType.STRING)

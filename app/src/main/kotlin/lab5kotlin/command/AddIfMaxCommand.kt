@@ -3,7 +3,7 @@ package lab5kotlin.command
 import lab5kotlin.collection.Collection
 import lab5kotlin.collection.item.Entity
 import lab5kotlin.collection.item.EntityBuilder
-import lab5kotlin.collection.sort.NameComparator
+import lab5kotlin.human.NameComparator
 import lab5kotlin.human.Human
 import lab5kotlin.io.Writer
 import org.koin.core.qualifier.named

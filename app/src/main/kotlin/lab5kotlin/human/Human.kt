@@ -3,6 +3,7 @@ package lab5kotlin.human
 import kotlinx.serialization.Serializable
 import lab5kotlin.collection.item.Entity
 import lab5kotlin.collection.item.ZonedDateTimeSerializer
+import lab5kotlin.coordinates.Coordinates
 import java.time.ZonedDateTime
 
 /**

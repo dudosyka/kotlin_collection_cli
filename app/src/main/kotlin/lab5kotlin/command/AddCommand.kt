@@ -5,7 +5,6 @@ import lab5kotlin.collection.item.Entity
 import lab5kotlin.collection.item.EntityBuilder
 import lab5kotlin.collection.item.Validator
 import lab5kotlin.exceptions.ValidationFieldException
-import lab5kotlin.human.Human
 import lab5kotlin.io.Reader
 import lab5kotlin.io.IOData
 import lab5kotlin.io.Writer
@@ -18,7 +17,7 @@ import org.koin.java.KoinJavaComponent.inject
  * @constructor Create empty Add command
  */
 open class AddCommand : Command() {
-    private val entityBuilder: EntityBuilder<Human> by inject(EntityBuilder::class.java, named("builder"))
+    private val entityBuilder: EntityBuilder<Entity> by inject(EntityBuilder::class.java, named("builder"))
     private val collection: Collection<Entity> by inject(Collection::class.java, named("collection"))
     private val writer: Writer by inject(Writer::class.java, named("writer"))
     private val reader: Reader by inject(Reader::class.java, named("reader"))
@@ -42,7 +41,12 @@ open class AddCommand : Command() {
                 return map
             }
             else {
-                throw ValidationFieldException(key, validator)
+                if (IOData.current == "console") {
+                    this.writer.writeLine(validator.describe(key))
+                    return this.getField(map, key, validator)
+                }
+                else
+                    throw ValidationFieldException(key, validator)
             }
         }
     }
@@ -63,8 +67,8 @@ open class AddCommand : Command() {
     override fun execute(args: List<String>): Boolean {
         if (IOData.current == "console")
             this.writer.writeLine("Write down the fields values: ")
-        val human = this.getEntityData(this.entityBuilder.fields).let { this.entityBuilder.build(it) }
-        collection.addItem(human)
+        val entity = this.getEntityData(this.entityBuilder.fields).let { this.entityBuilder.build(it) }
+        collection.addItem(entity)
         this.writer.writeLine("Item successfully created. Write down `show` to see collection")
         return true
     }

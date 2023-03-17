@@ -6,6 +6,7 @@ import lab5kotlin.collection.item.EntityBuilder
 import lab5kotlin.collection.item.FieldDelegate
 import lab5kotlin.collection.item.FieldType
 import lab5kotlin.collection.item.Validator
+import lab5kotlin.coordinates.CoordinatesBuilder
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 import java.time.ZonedDateTime
