@@ -7,7 +7,6 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.*
-import multiproject.udpsocket.dto.command.FieldType
 
 class RequestDataSerializer(
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("data", PrimitiveKind.STRING)
@@ -41,14 +40,14 @@ class RequestDataSerializer(
             return content
         }
 
-        val intValue = content.toIntOrNull()
-        if (intValue!=null){
-            return intValue
-        }
         val longValue = content.toLongOrNull()
         if (longValue!=null){
             return longValue
         }
+//        val intValue = content.toIntOrNull()
+//        if (intValue!=null){
+//            return intValue
+//        }
         val floatValue = content.toFloatOrNull()
         if (floatValue!=null){
             return floatValue

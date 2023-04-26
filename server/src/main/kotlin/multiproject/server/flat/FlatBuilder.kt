@@ -4,10 +4,8 @@ import kotlinx.serialization.Transient
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.EntityBuilder
 import multiproject.server.collection.item.FieldDelegate
-import multiproject.server.coordinates.Coordinates
 import multiproject.server.coordinates.CoordinatesBuilder
 import multiproject.server.house.HouseBuilder
-import multiproject.server.human.Fatness
 import multiproject.udpsocket.dto.command.FieldType
 import multiproject.server.human.Human
 import multiproject.udpsocket.dto.command.CommandArgumentDto
@@ -37,7 +35,7 @@ class FlatBuilder: EntityBuilder<Flat>() {
             min = 0
         ),
         "numberOfBathrooms" to CommandArgumentDto(
-            name = "numberOfRooms",
+            name = "numberOfBathrooms",
             required = true,
             type = FieldType.LONG,
             min = 0
@@ -79,7 +77,7 @@ class FlatBuilder: EntityBuilder<Flat>() {
         val area: Float? by FieldDelegate(map = map, fields["area"]!!)
         val numberOfRooms: Long? by FieldDelegate(map = map, fields["numberOfRooms"]!!)
         val numberOfBathrooms: Long? by FieldDelegate(map = map, fields["numberOfBathrooms"]!!)
-        val timeToMetroByTransport: Int? by FieldDelegate(map = map, fields["timeToMetroByTransport"]!!)
+        val timeToMetroByTransport: Long? by FieldDelegate(map = map, fields["timeToMetroByTransport"]!!)
         val furnish: String? by FieldDelegate(map = map, fields["furnish"]!!)
         val furnishValue = Furnish.valueOf(furnish!!)
 
@@ -89,6 +87,6 @@ class FlatBuilder: EntityBuilder<Flat>() {
         val house: MutableMap<String, Any?>? by FieldDelegate(map = map, fields["house"]!!)
         val houseEntity = HouseBuilder().build(house!!)
 
-        return Flat(id, ZonedDateTime.now(),name!!,area!!,numberOfRooms!!,numberOfBathrooms!!,timeToMetroByTransport!!, coordinatesEntity, furnishValue, houseEntity)
+        return Flat(id, ZonedDateTime.now(),name!!,area!!,numberOfRooms!!,numberOfBathrooms!!,timeToMetroByTransport?.toInt()!!, coordinatesEntity, furnishValue, houseEntity)
     }
 }

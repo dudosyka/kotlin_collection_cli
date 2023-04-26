@@ -17,8 +17,8 @@ class CoordinatesBuilder : EntityBuilder<Coordinates>() {
     )
 
     override fun build(map: MutableMap<String, Any?>): Coordinates {
-        val x: Int? by FieldDelegate(map = map, fields["x"]!!)
-        val y: Int? by FieldDelegate(map = map, fields["y"]!!)
-        return Coordinates(x!!, y!!)
+        val x: Long? by FieldDelegate(map = map, fields["x"]!!)
+        val y: Long? by FieldDelegate(map = map, fields["y"]!!)
+        return Coordinates(x?.toInt()!!, y?.toInt()!!)
     }
 }
