@@ -1,11 +1,18 @@
 package multiproject.client.command
 
+import multiproject.client.exceptions.CommandNotFound
+import multiproject.client.io.IOData
 import multiproject.udpsocket.ClientUdpChannel
 import multiproject.udpsocket.dto.RequestDataDto
 import multiproject.udpsocket.dto.RequestDto
+import multiproject.udpsocket.dto.ResponseDto
 import multiproject.udpsocket.dto.command.CommandDto
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
+import java.io.BufferedReader
+import java.io.FileInputStream
+import java.io.FileNotFoundException
+import java.io.InputStreamReader
 
 /**
  * Command resolver
@@ -13,9 +20,9 @@ import org.koin.java.KoinJavaComponent.inject
  * @constructor Create empty Command resolver
  */
 class CommandResolver {
-    val client: ClientUdpChannel by inject(ClientUdpChannel::class.java, named("client"))
 
     companion object {
+        val client: ClientUdpChannel by inject(ClientUdpChannel::class.java, named("client"))
         var commands: List<CommandDto> = listOf()
 
         fun getCommandByName(name: String): CommandDto? {
@@ -24,6 +31,11 @@ class CommandResolver {
                 commands.first()
             else
                 null
+        }
+
+        fun loadCommands() {
+            val response: ResponseDto = client.sendRequest(RequestDto("load", RequestDataDto(mapOf(), listOf())))
+            commands = response.commands
         }
     }
     /**
@@ -36,12 +48,33 @@ class CommandResolver {
         val split = commandLine.split(" ")
         val name = split[0]
         val args = split.subList(1, split.size)
-        val command: CommandDto = getCommandByName(name) ?: return CommandResult("Command not found!", false)
+        val command: CommandDto = getCommandByName(name) ?: throw CommandNotFound(name)
 
         val inlineData: List<Any> = InlineArgumentsValidator(
-                                        args,
-                                        command.arguments.filter { it.value.inline }
-                                    ).getArguments() ?: return CommandResult("Inline arguments validation failed!", false)
+            args,
+            command.arguments.filter { it.value.inline }
+        ).getArguments() ?: return CommandResult("Inline arguments validation failed!", false)
+
+        //If we get command which used to switch between sources - switch
+        if (command.fileReaderSource) {
+            return try {
+                val inputStream = FileInputStream(inlineData[0] as String)
+                val fileReader = BufferedReader(InputStreamReader(inputStream))
+                IOData.current = "file"
+                IOData.fileReader = fileReader
+                IOData.changeSourceCommand = command.name
+                if (IOData.commandHistory.isEmpty()) {
+                    IOData.commandHistory = mutableListOf(
+                        "execute_script ${inlineData[0]}"
+                    )
+                }
+                CommandResult("")
+            } catch (e: FileNotFoundException) {
+                CommandResult("Error! ${e.message}", false)
+            } catch (e: Exception) {
+                CommandResult("Failed switch source", false)
+            }
+        }
 
         val arguments = command.arguments.filter { !it.value.inline }
 

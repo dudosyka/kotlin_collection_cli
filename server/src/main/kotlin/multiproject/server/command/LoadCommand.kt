@@ -8,6 +8,7 @@ import org.koin.java.KoinJavaComponent
 
 class LoadCommand: Command() {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
+    override val description: String = "Restore collection from the file"
 
     /**
      * Execute

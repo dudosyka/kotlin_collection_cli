@@ -11,6 +11,7 @@ import org.koin.java.KoinJavaComponent
  * @constructor Create empty Info command
  */
 class InfoCommand: Command() {
+    override val description: String = "Show information about collection"
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
         return CommandResult(collection.getInfo().toString())

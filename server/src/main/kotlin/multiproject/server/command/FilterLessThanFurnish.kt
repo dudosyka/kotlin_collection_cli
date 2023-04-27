@@ -19,11 +19,13 @@ class FilterLessThanFurnish : Command() {
     override val fields: Map<String, CommandArgumentDto> = mapOf(
         "filter" to CommandArgumentDto(
             name = "filter",
+            inline = true,
             required = true,
             index = 0,
             type = multiproject.udpsocket.dto.command.FieldType.INT,
         )
     )
+    override val description: String = "Show number of items that which furniture less than specified"
 
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
         val furnish = args.firstOrNull()

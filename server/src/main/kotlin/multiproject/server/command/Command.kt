@@ -12,6 +12,8 @@ import multiproject.udpsocket.dto.command.CommandArgumentDto
 abstract class Command {
     open val needObject = false
     open val fields: Map<String, CommandArgumentDto> = mapOf()
+    open val fileReaderSource = false
+    open val description = "no description."
     /**
      * Execute
      *
@@ -39,7 +41,8 @@ abstract class Command {
         return validator.value!!
     }
 
-    fun createCommandDto() {
-
+    fun getHelpString(): String {
+        val args = fields.filter { it.value.inline }.map { "{${it.key}}" }.joinToString(" ")
+        return "$args - $description"
     }
 }

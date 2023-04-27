@@ -18,10 +18,13 @@ class CountLessThanTimeToMetroByTransportCommand : Command() {
     override val fields: Map<String, CommandArgumentDto> = mapOf(
         "filter" to CommandArgumentDto(
             name = "filter",
+            inline = true,
+            index = 0,
             required = true,
             type = multiproject.udpsocket.dto.command.FieldType.INT,
         )
     )
+    override val description: String = "Show number of items which time to metro less than specified"
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
         val timeToMetro = this.getArgument(args, "Time to metro", 0, Validator(
             CommandArgumentDto(name = "time_to_metro", type = multiproject.udpsocket.dto.command.FieldType.INT, required = true)

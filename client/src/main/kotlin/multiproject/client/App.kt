@@ -3,23 +3,16 @@ package multiproject.client
 import multiproject.client.command.CommandResolver
 import multiproject.client.console.ConsoleReader
 import multiproject.client.console.ConsoleWriter
-import multiproject.client.exceptions.InvalidArgumentException
-import multiproject.client.exceptions.ItemNotFoundException
-import multiproject.client.exceptions.RecursiveScriptException
-import multiproject.client.exceptions.ValidationFieldException
+import multiproject.client.exceptions.*
 import multiproject.client.io.IOData
 import multiproject.client.io.Reader
 import multiproject.client.io.Writer
 import multiproject.udpsocket.ClientUdpChannel
-import multiproject.udpsocket.dto.RequestDto
 import org.koin.core.context.GlobalContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
 import multiproject.client.file.FileReader
-import multiproject.udpsocket.dto.RequestDataDto
-import multiproject.udpsocket.dto.ResponseCode
-import multiproject.udpsocket.dto.ResponseDto
 
 class App {
     init {
@@ -38,6 +31,7 @@ class App {
                     onConnectionRestored = {
                         response -> run {
                             CommandResolver.commands = response.commands
+                            println("Commands list updated from server!")
                         }
                     },
                     onConnectionRefused = {}
@@ -57,24 +51,27 @@ fun main() {
     val writer: Writer = ConsoleWriter()
     writer.writeLine("^_^ Welcome to the Collection CLI ^_^")
 
-    val client: ClientUdpChannel by inject(ClientUdpChannel::class.java, named("client"))
-    val response: ResponseDto = client.sendRequest(RequestDto("load", RequestDataDto(mapOf(), listOf())))
-    if (response.code == ResponseCode.CONNECTION_REFUSED)
-        println(response.result)
-    CommandResolver.commands = response.commands
+    CommandResolver.loadCommands()
 
     var readNextLine = true
     while (readNextLine) {
         val reader: Reader by inject(Reader::class.java, named("reader"))
         try {
-            val requestDto = reader.readCommand()
+            val result = reader.readCommand()
 
-            if (requestDto == null)
+            if (result == null)
                 readNextLine = false
-            else if (requestDto.responseDto != null)
-                writer.writeLine(requestDto.responseDto.result)
+            else if (result.responseDto != null) {
+                if (result.responseDto.commands.isNotEmpty()) {
+                    CommandResolver.commands = result.responseDto.commands
+                    writer.writeLine("Commands list updated from server!")
+                } else {
+                    writer.writeLine(result.responseDto.result)
+                }
+
+            }
             else
-                writer.writeLine(requestDto.body)
+                writer.writeLine(result.body)
 
         } catch (e: InvalidArgumentException) {
             writer.writeLine(e.validationRulesDescribe)
@@ -84,6 +81,9 @@ fun main() {
             writer.writeLine(e.message)
         } catch (e: RecursiveScriptException) {
             writer.writeLine("Error recursive script!")
+        } catch (e: CommandNotFound) {
+            writer.writeLine("Command not found. (Try to synchronize...)")
+            CommandResolver.loadCommands()
         } catch (e: Exception) {
             writer.writeLine(e.stackTraceToString())
             writer.writeLine(e.toString())

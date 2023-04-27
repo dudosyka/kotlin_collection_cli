@@ -19,11 +19,13 @@ class CountByNumberOfRoomsCommand : Command() {
     override val fields: Map<String, CommandArgumentDto> = mapOf(
         "filter" to CommandArgumentDto(
             name = "filter",
+            inline = true,
             required = true,
             index = 0,
             type = FieldType.INT,
         )
     )
+    override val description: String = "Show number of items which have that number of rooms"
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
         val numberOfRooms = this.getArgument(args, "Number of rooms", 0, Validator(
                 CommandArgumentDto(name = "number_of_rooms", type = FieldType.INT, required = true)

@@ -13,6 +13,7 @@ import org.koin.java.KoinJavaComponent
  */
 class SaveCommand: Command() {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
+    override val description: String = "Dump collection to the file"
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
         return try {
             this.collection.dump()

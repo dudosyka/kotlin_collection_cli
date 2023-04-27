@@ -20,7 +20,7 @@ class UpdateCommand : AddCommand() {
 
     override val needObject: Boolean = true
     override val fields: MutableMap<String, CommandArgumentDto> = entityBuilder.fields.toMutableMap()
-
+    override val description: String = "Update element with specified id"
     init {
         fields["id"] = CommandArgumentDto(name = "id", index = 0, type = FieldType.INT, inline = true)
     }

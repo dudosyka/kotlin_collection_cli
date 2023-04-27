@@ -3,7 +3,6 @@ package multiproject.server.command
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
 import multiproject.server.collection.item.EntityBuilder
-import multiproject.server.collection.item.Validator
 import multiproject.server.flat.Flat
 import multiproject.server.flat.RoomsComparator
 import multiproject.udpsocket.dto.command.CommandArgumentDto
@@ -21,6 +20,7 @@ open class AddIfMaxCommand : AddCommand() {
 
     override val needObject: Boolean = true
     override val fields: Map<String, CommandArgumentDto> = entityBuilder.fields
+    override val description: String = "Adds new element if number of rooms grater than max of current items"
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult? {
         val entity = this.entityBuilder.build(data)
         val result = collection.addIfMax(RoomsComparator(), entity)

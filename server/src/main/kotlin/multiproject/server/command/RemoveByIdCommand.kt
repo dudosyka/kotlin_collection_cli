@@ -18,11 +18,13 @@ class RemoveByIdCommand: Command() {
     override val fields: Map<String, CommandArgumentDto> = mapOf(
         "id" to CommandArgumentDto(
             name = "id",
+            inline = true,
             required = true,
             index = 0,
             type = multiproject.udpsocket.dto.command.FieldType.INT,
         )
     )
+    override val description: String = "Remove element with specified id"
 
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
         val id = this.getArgument(args, "id", 0, Validator(

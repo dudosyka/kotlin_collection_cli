@@ -17,11 +17,13 @@ class RemoveAtCommand: Command() {
     override val fields: Map<String, CommandArgumentDto> = mapOf(
         "index" to CommandArgumentDto(
             name = "index",
+            inline = true,
             required = true,
             index = 0,
             type = multiproject.udpsocket.dto.command.FieldType.INT,
         )
     )
+    override val description: String = "Remove element on specified index"
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
         val index = this.getArgument(args, "index", 0, Validator(
             CommandArgumentDto(name = "index", type = multiproject.udpsocket.dto.command.FieldType.INT, required = true)

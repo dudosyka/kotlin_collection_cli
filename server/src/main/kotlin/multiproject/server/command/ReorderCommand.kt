@@ -16,6 +16,7 @@ class ReorderCommand: Command() {
         Collection::class.java,
         named("collection")
     )
+    override val description: String = "Sort items and show collection"
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
         this.collection.sort(CollectionSortType.ASC)
         return CommandResult(collection.toString())
