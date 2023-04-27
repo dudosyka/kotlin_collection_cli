@@ -15,6 +15,15 @@ import org.koin.java.KoinJavaComponent
  */
 class CountByNumberOfRoomsCommand : Command() {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
+
+    override val fields: Map<String, CommandArgumentDto> = mapOf(
+        "filter" to CommandArgumentDto(
+            name = "filter",
+            required = true,
+            index = 0,
+            type = FieldType.INT,
+        )
+    )
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
         val numberOfRooms = this.getArgument(args, "Number of rooms", 0, Validator(
                 CommandArgumentDto(name = "number_of_rooms", type = FieldType.INT, required = true)

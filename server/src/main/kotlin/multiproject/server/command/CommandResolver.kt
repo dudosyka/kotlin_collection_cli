@@ -2,7 +2,6 @@ package multiproject.server.command
 
 import multiproject.udpsocket.dto.ResponseCode
 import multiproject.udpsocket.dto.ResponseDto
-import multiproject.udpsocket.dto.command.CommandArgumentDto
 import multiproject.udpsocket.dto.command.CommandDto
 
 /**
@@ -17,19 +16,18 @@ class CommandResolver {
             "info" to InfoCommand(),
             "add" to AddCommand(),
             "show" to ShowCommand(),
-//        "update" to UpdateCommand(),
-//        "remove_by_id" to RemoveByIdCommand(),
-//        "clear" to ClearCommand(),
-//        "save" to SaveCommand(),
-//        "load" to LoadCommand(),
-//        "execute_script" to ExecuteScriptCommand(),
-//        "exit" to ExitCommand(),
-//        "remove_at" to RemoveAtCommand(),
-//        "add_if_max" to AddIfMaxCommand(),
-//        "reorder" to ReorderCommand(),
-//        "count_by_number_of_rooms" to CountByNumberOfRoomsCommand(),
-//        "count_less_than_time_to_metro_by_transport" to CountLessThanTimeToMetroByTransportCommand(),
-//        "filter_less_than_furnish" to FilterLessThanFurnish(),
+            "update" to UpdateCommand(),
+            "remove_by_id" to RemoveByIdCommand(),
+            "clear" to ClearCommand(),
+            "save" to SaveCommand(),
+            "load" to LoadCommand(),
+//            "execute_script" to ExecuteScriptCommand(),
+            "remove_at" to RemoveAtCommand(),
+            "add_if_max" to AddIfMaxCommand(),
+            "reorder" to ReorderCommand(),
+            "count_by_number_of_rooms" to CountByNumberOfRoomsCommand(),
+            "count_less_than_time_to_metro_by_transport" to CountLessThanTimeToMetroByTransportCommand(),
+            "filter_less_than_furnish" to FilterLessThanFurnish(),
         )
 
         fun getCommandsInfo(): List<CommandDto> {

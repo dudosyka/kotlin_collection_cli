@@ -12,7 +12,6 @@ import multiproject.client.io.Reader
 import multiproject.client.io.Writer
 import multiproject.udpsocket.ClientUdpChannel
 import multiproject.udpsocket.dto.RequestDto
-import multiproject.udpsocket.dto.command.FieldType
 import org.koin.core.context.GlobalContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -62,8 +61,10 @@ fun main() {
 
             if (requestDto == null)
                 readNextLine = false
+            else if (requestDto.responseDto != null)
+                writer.writeLine(requestDto.responseDto.result)
             else
-                requestDto.responseDto?.result?.let { writer.writeLine(it) }
+                writer.writeLine(requestDto.body)
 
         } catch (e: InvalidArgumentException) {
             writer.writeLine(e.validationRulesDescribe)

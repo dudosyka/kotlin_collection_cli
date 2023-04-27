@@ -1,28 +1,11 @@
 package multiproject.server.command
 
-import multiproject.udpsocket.dto.command.CommandArgumentDto
-import multiproject.udpsocket.dto.command.FieldType
-
 /**
  * Help command
  *
  * @constructor Create empty Help command
  */
 class HelpCommand : Command() {
-    override val fields: Map<String, CommandArgumentDto> = mapOf(
-        "first" to CommandArgumentDto(
-            name = "first",
-            index = 0,
-            type = FieldType.STRING,
-            inline = true,
-            required = true
-        ),
-        "second" to CommandArgumentDto(
-            name = "second",
-            type = FieldType.INT,
-            required = true
-        )
-    )
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
         val help = "" +
                 "help - Show this text\n" +
@@ -35,7 +18,6 @@ class HelpCommand : Command() {
                 "save - Dump collection to the file\n" +
                 "load - Restore collection from the file\n" +
                 "execute_script {path} - Run script\n" +
-                "exit - Exit from application\n" +
                 "remove_at {index} - Remove element on specified index\n" +
                 "add_if_max - Adds new element if number of rooms grater than max of current items\n" +
                 "reorder - Sort items and show collection\n" +
