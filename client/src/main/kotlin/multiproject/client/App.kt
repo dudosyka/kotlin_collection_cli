@@ -18,6 +18,7 @@ import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
 import multiproject.client.file.FileReader
 import multiproject.udpsocket.dto.RequestDataDto
+import multiproject.udpsocket.dto.ResponseCode
 import multiproject.udpsocket.dto.ResponseDto
 
 class App {
@@ -33,7 +34,14 @@ class App {
                 ConsoleWriter()
             }
             single<ClientUdpChannel>(named("client")) {
-                ClientUdpChannel()
+                ClientUdpChannel(
+                    onConnectionRestored = {
+                        response -> run {
+                            CommandResolver.commands = response.commands
+                        }
+                    },
+                    onConnectionRefused = {}
+                )
             }
         }
         GlobalContext.startKoin {
@@ -51,6 +59,8 @@ fun main() {
 
     val client: ClientUdpChannel by inject(ClientUdpChannel::class.java, named("client"))
     val response: ResponseDto = client.sendRequest(RequestDto("load", RequestDataDto(mapOf(), listOf())))
+    if (response.code == ResponseCode.CONNECTION_REFUSED)
+        println(response.result)
     CommandResolver.commands = response.commands
 
     var readNextLine = true

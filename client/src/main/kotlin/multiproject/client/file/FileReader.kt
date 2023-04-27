@@ -19,7 +19,7 @@ class FileReader(private val fileReader: BufferedReader?, private val commandHis
         return this.fileReader!!.readLine()
     }
 
-    override fun readCommand(): CommandResult? {
+    override fun readCommand(): CommandResult {
         val line = this.readLine()
 
         if (line == null) {
@@ -29,7 +29,7 @@ class FileReader(private val fileReader: BufferedReader?, private val commandHis
             return CommandResult("File execution finished!")
         }
 
-        if (line.split(" ")[0] == "execute_script" && commandHistory.contains(line))
+        if (line.split(" ")[0] == IOData.changeSourceCommand && commandHistory.contains(line))
             throw RecursiveScriptException()
 
         commandHistory.add(line)

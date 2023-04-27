@@ -11,9 +11,6 @@ import multiproject.server.dump.FileDumpManager
 import multiproject.server.flat.Flat
 import multiproject.server.flat.FlatBuilder
 import multiproject.server.flat.FlatCollection
-import multiproject.server.human.Human
-import multiproject.server.human.HumanBuilder
-import multiproject.server.human.HumanCollection
 import multiproject.udpsocket.ServerUdpChannel
 import multiproject.udpsocket.dto.ResponseCode
 import multiproject.udpsocket.dto.ResponseDto
@@ -50,6 +47,7 @@ fun main() {
     val server = ServerUdpChannel(
         onReceive = {
             channel, address, data -> run {
+                println(data)
                 channel.send(
                     ByteBuffer.wrap(
                         Serializer.serializeResponse(
@@ -62,13 +60,14 @@ fun main() {
         },
         onFirstConnect = {
             channel, address -> run {
+                println("First connect of $address")
                 val commandList = CommandResolver.getCommandsInfo()
-            val response = ResponseDto(
+                val response = ResponseDto(
                     code = ResponseCode.SUCCESS,
                     result = "",
                     commands = commandList
                 )
-            channel.send(ByteBuffer.wrap(Serializer.serializeResponse(response).toByteArray()), address)
+                channel.send(ByteBuffer.wrap(Serializer.serializeResponse(response).toByteArray()), address)
             }
         }
     )

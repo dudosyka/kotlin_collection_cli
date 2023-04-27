@@ -37,13 +37,20 @@ class CommandResolver {
         val name = split[0]
         val args = split.subList(1, split.size)
         val command: CommandDto = getCommandByName(name) ?: return CommandResult("Command not found!", false)
-        val inlineData: List<Any> = InlineArgumentsValidator(args, command.arguments.filter { it.value.inline }).getArguments() ?: return CommandResult("Inline arguments validation failed!", false)
+
+        val inlineData: List<Any> = InlineArgumentsValidator(
+                                        args,
+                                        command.arguments.filter { it.value.inline }
+                                    ).getArguments() ?: return CommandResult("Inline arguments validation failed!", false)
+
         val arguments = command.arguments.filter { !it.value.inline }
+
         if (arguments.isNotEmpty()) {
             val objectData = ObjectBuilder(arguments).getEntityData()
             println(objectData)
             return CommandResult("Command resolved", true, client.sendRequest(RequestDto(name, RequestDataDto(objectData, inlineData))))
         }
+
         return CommandResult("Command resolved", true, client.sendRequest(RequestDto(name, RequestDataDto(mapOf(),  inlineData))))
     }
 }

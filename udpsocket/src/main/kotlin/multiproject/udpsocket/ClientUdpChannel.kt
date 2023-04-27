@@ -5,16 +5,19 @@ import multiproject.udpsocket.dto.ResponseCode
 import multiproject.udpsocket.dto.ResponseDto
 import multiproject.udpsocket.dto.Serializer
 import java.net.InetSocketAddress
+import java.net.PortUnreachableException
 import java.net.SocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
+import java.util.*
 
-class ClientUdpChannel {
+class ClientUdpChannel(val onConnectionRefused: OnConnectionRefused, val onConnectionRestored: OnConnectionRestored) {
     private val serverAddress: SocketAddress = InetSocketAddress(UdpConfig.serverAddress, UdpConfig.serverPort)
     private val channel: DatagramChannel = DatagramChannel.open()
 
     init {
         channel.bind(null)
+        channel.connect(serverAddress)
         channel.configureBlocking(false)
     }
 
@@ -35,6 +38,30 @@ class ClientUdpChannel {
     fun sendRequest(data: RequestDto): ResponseDto {
         val dataString = Serializer.serializeRequest(data)
         channel.send(ByteBuffer.wrap(dataString.toByteArray()), serverAddress)
-        return Serializer.deserializeResponse(this.getMessage())
+        return try {
+            Serializer.deserializeResponse(this.getMessage())
+        } catch (e: PortUnreachableException) {
+            var attemptNum = 0
+            val reconnectTask: TimerTask = object: TimerTask() {
+                override fun run() {
+                    attemptNum++
+                    println("Reconnect attempt #$attemptNum")
+                    channel.send(ByteBuffer.wrap(dataString.toByteArray()), serverAddress)
+                    try {
+                        onConnectionRestored.process(Serializer.deserializeResponse(getMessage()))
+                        println("Connection restored!")
+                        this.cancel()
+                    } catch (e: PortUnreachableException) {
+                        //
+                    }
+                }
+            }
+            Timer().schedule(
+                reconnectTask, UdpConfig.timeout, UdpConfig.reconnectTimeout
+            )
+
+            this.onConnectionRefused.process(data)
+            ResponseDto(code = ResponseCode.CONNECTION_REFUSED, "Connection refused! Try to reconnect...")
+        }
     }
 }
