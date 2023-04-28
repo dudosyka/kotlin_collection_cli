@@ -12,6 +12,7 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
 import multiproject.client.file.FileReader
+import multiproject.lib.dto.RequestDto
 import multiproject.lib.exceptions.CommandNotFound
 import multiproject.lib.exceptions.InvalidArgumentException
 import multiproject.lib.exceptions.RecursiveScriptException
@@ -33,11 +34,13 @@ class App {
                 ClientUdpChannel(
                     onConnectionRestored = {
                         response -> run {
-                            CommandResolver.commands = response.commands
+                            CommandResolver.updateCommandList(response.commands)
                             println("Commands list updated from server!")
                         }
                     },
-                    onConnectionRefused = {}
+                    onConnectionRefused = {
+                        println("Connection lost! Try to reconnect!")
+                    }
                 )
             }
         }
@@ -54,6 +57,8 @@ fun main() {
     val writer: Writer = ConsoleWriter()
     writer.writeLine("^_^ Welcome to the Collection CLI ^_^")
 
+    val client: ClientUdpChannel by inject(ClientUdpChannel::class.java, named("client"))
+
     CommandResolver.loadCommands()
 
     var readNextLine = true
@@ -65,16 +70,24 @@ fun main() {
             if (result == null)
                 readNextLine = false
             else if (result.responseDto != null) {
-                if (result.responseDto.commands.isNotEmpty()) {
-                    CommandResolver.commands = result.responseDto.commands
+                if (result.responseDto!!.commands.isNotEmpty()) {
+                    CommandResolver.updateCommandList(result.responseDto!!.commands)
                     writer.writeLine("Commands list updated from server!")
                 } else {
-                    writer.writeLine(result.responseDto.result)
+                    writer.writeLine(result.responseDto!!.result)
                 }
 
             }
-            else
-                writer.writeLine(result.body)
+            else {
+                if (result.body == "exit") {
+                    readNextLine = false
+                    client.sendRequest(RequestDto("_dump"))
+                    writer.writeLine("Application stopping...")
+                    client.stop()
+                } else {
+                    writer.writeLine(result.body)
+                }
+            }
 
         } catch (e: InvalidArgumentException) {
             writer.writeLine(e.validationRulesDescribe)

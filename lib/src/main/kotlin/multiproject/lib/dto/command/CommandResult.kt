@@ -1,4 +1,4 @@
-package multiproject.client.command
+package multiproject.lib.dto.command
 
 import multiproject.lib.dto.ResponseDto
 

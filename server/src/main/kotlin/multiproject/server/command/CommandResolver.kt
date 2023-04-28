@@ -4,6 +4,9 @@ import multiproject.lib.exceptions.*
 import multiproject.lib.dto.ResponseCode
 import multiproject.lib.dto.ResponseDto
 import multiproject.lib.dto.command.CommandDto
+import multiproject.lib.dto.command.CommandResult
+import multiproject.server.command.system.SystemDumpCommand
+import multiproject.server.command.system.SystemLoadCommand
 
 /**
  * Command resolver
@@ -29,6 +32,8 @@ class CommandResolver {
             "count_by_number_of_rooms" to CountByNumberOfRoomsCommand(),
             "count_less_than_time_to_metro_by_transport" to CountLessThanTimeToMetroByTransportCommand(),
             "filter_less_than_furnish" to FilterLessThanFurnish(),
+            "_load" to SystemLoadCommand(),
+            "_dump" to SystemDumpCommand()
         )
 
         fun getCommandsInfo(): ResponseDto {
@@ -39,6 +44,7 @@ class CommandResolver {
                     CommandDto(
                         name = it.key,
                         arguments = it.value.fields,
+                        hideFromClient = it.value.hideFromClient,
                         fileReaderSource = it.value.fileReaderSource
                     )
                 }
@@ -49,6 +55,8 @@ class CommandResolver {
             val command = this.commands[name] ?: return ResponseDto(code = ResponseCode.NOT_FOUND, "Command not found!")
             return try {
                 val result: CommandResult = command.execute(inline ?: listOf(), (args ?: mapOf()).toMutableMap()) ?: return ResponseDto(code = ResponseCode.INTERNAL_SERVER_ERROR, "Failed command process")
+                if (command.hideFromClient)
+                    return result.responseDto!!
                 ResponseDto(code = ResponseCode.SUCCESS, result = result.body)
             } catch (e: InvalidArgumentException) {
                 ResponseDto(code = ResponseCode.VALIDATION_ERROR, result = e.validationRulesDescribe)

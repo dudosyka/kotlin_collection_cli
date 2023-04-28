@@ -17,6 +17,7 @@ class ClientUdpChannel(val onConnectionRefused: OnConnectionRefused, val onConne
     private var ping: Boolean = true
     private var connectionLost: Boolean = false
     private var attemptNum: Int = 0
+    private var pingReconnect: TimerTask? = null
 
     init {
         channel.bind(null)
@@ -26,7 +27,7 @@ class ClientUdpChannel(val onConnectionRefused: OnConnectionRefused, val onConne
     }
 
     private fun pingServer() {
-        val reconnectTask: TimerTask = object: TimerTask() {
+        pingReconnect = object: TimerTask() {
             override fun run() {
                 if (!ping)
                     return
@@ -49,7 +50,7 @@ class ClientUdpChannel(val onConnectionRefused: OnConnectionRefused, val onConne
             }
         }
         Timer().scheduleAtFixedRate(
-            reconnectTask, UdpConfig.timeout, UdpConfig.reconnectTimeout
+            pingReconnect, UdpConfig.timeout, UdpConfig.reconnectTimeout
         )
     }
 
@@ -97,5 +98,10 @@ class ClientUdpChannel(val onConnectionRefused: OnConnectionRefused, val onConne
             this.onConnectionRefused.process(data)
             ResponseDto(code = ResponseCode.CONNECTION_REFUSED, "Connection refused! Try to reconnect...")
         }
+    }
+
+    fun stop() {
+        this.pingReconnect!!.cancel()
+        channel.close()
     }
 }

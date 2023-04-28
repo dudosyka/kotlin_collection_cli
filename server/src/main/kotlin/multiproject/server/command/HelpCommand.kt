@@ -1,5 +1,7 @@
 package multiproject.server.command
 
+import multiproject.lib.dto.command.CommandResult
+
 /**
  * Help command
  *
@@ -8,7 +10,7 @@ package multiproject.server.command
 class HelpCommand : Command() {
     override val description: String = "Show help text"
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
-        val help = CommandResolver.commands.map { "${it.key} ${it.value.getHelpString()}" }.joinToString("\n")
+        val help = CommandResolver.commands.filter { !it.value.hideFromClient }.map { "${it.key} ${it.value.getHelpString()}" }.joinToString("\n")
 //        "" +
 //                "help - Show this text\n" +
 //                "info - Show information about collection\n" +

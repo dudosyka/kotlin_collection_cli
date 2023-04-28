@@ -1,6 +1,7 @@
 package multiproject.server.command
 
 import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.CommandResult
 import multiproject.lib.dto.command.FieldType
 
 /**

@@ -6,6 +6,7 @@ import multiproject.server.collection.item.EntityBuilder
 import multiproject.server.entities.flat.Flat
 import multiproject.server.entities.flat.RoomsComparator
 import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.CommandResult
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 

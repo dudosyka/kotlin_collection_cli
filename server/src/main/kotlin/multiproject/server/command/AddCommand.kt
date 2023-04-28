@@ -4,6 +4,7 @@ import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
 import multiproject.server.collection.item.EntityBuilder
 import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.CommandResult
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 

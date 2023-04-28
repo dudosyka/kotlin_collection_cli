@@ -48,11 +48,6 @@ fun main() {
                 println(data)
                 if (data.command == "")
                     return@run
-                if (data.command == "_load") {
-                    channel.send(ByteBuffer.wrap(Serializer.serializeResponse(CommandResolver.getCommandsInfo()).toByteArray()), address)
-                    return@run
-                }
-
                 channel.send(
                     ByteBuffer.wrap(
                         Serializer.serializeResponse(

@@ -1,6 +1,6 @@
 package multiproject.client.io
 
-import multiproject.client.command.CommandResult
+import multiproject.lib.dto.command.CommandResult
 
 /**
  * Reader

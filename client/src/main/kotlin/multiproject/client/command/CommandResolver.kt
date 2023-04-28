@@ -13,6 +13,7 @@ import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
+import multiproject.lib.dto.command.CommandResult
 
 /**
  * Command resolver
@@ -33,10 +34,14 @@ class CommandResolver {
                 null
         }
 
+        fun updateCommandList(commandList: List<CommandDto>) {
+            if (commandList.isNotEmpty())
+                commands = commandList.filter { !it.hideFromClient }
+        }
+
         fun loadCommands() {
             val response: ResponseDto = client.sendRequest(RequestDto("_load", RequestDataDto(mapOf(), listOf())))
-            if (response.commands.isNotEmpty())
-                commands = response.commands
+            updateCommandList(response.commands)
         }
     }
     /**
@@ -85,7 +90,7 @@ class CommandResolver {
 
         if (arguments.isNotEmpty()) {
             val objectData = ObjectBuilder(arguments).getEntityData()
-            println(objectData)
+//            println(objectData)
             return CommandResult("Command resolved", true, client.sendRequest(RequestDto(name, RequestDataDto(objectData, inlineData))))
         }
 

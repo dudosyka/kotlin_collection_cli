@@ -4,6 +4,7 @@ import multiproject.lib.dto.command.Validator
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
 import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.CommandResult
 import multiproject.lib.dto.command.FieldType
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent

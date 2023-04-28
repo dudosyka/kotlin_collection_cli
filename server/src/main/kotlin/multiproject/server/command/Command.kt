@@ -3,6 +3,7 @@ package multiproject.server.command
 import multiproject.lib.dto.command.Validator
 import multiproject.lib.exceptions.InvalidArgumentException
 import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.CommandResult
 
 /**
  * Command
@@ -14,6 +15,7 @@ abstract class Command {
     open val fields: Map<String, CommandArgumentDto> = mapOf()
     open val fileReaderSource = false
     open val description = "no description."
+    open val hideFromClient = false
     /**
      * Execute
      *

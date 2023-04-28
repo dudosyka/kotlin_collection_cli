@@ -1,5 +1,6 @@
 package multiproject.server.command
 
+import multiproject.lib.dto.command.CommandResult
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
 import multiproject.server.collection.sort.CollectionSortType

@@ -6,5 +6,6 @@ import kotlinx.serialization.Serializable
 data class CommandDto(
     val name: String,
     val fileReaderSource: Boolean = false,
+    val hideFromClient: Boolean = false,
     val arguments: Map<String, CommandArgumentDto>
 )

@@ -1,7 +1,7 @@
 package multiproject.client.console
 
 import multiproject.client.command.CommandResolver
-import multiproject.client.command.CommandResult
+import multiproject.lib.dto.command.CommandResult
 import multiproject.client.io.Reader
 import multiproject.client.io.IOData
 
