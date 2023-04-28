@@ -16,6 +16,7 @@ dependencies {
     implementation("io.insert-koin:koin-core:3.3.3")
     implementation("de.brudaswen.kotlinx.serialization:kotlinx-serialization-csv:2.0.0")
     implementation(project(mapOf("path" to ":client")))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0-RC")
 }
 
 application {

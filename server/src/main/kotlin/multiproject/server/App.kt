@@ -41,29 +41,33 @@ class App (filePath: String) {
 
 
 fun main() {
-    App("/Users/dudosyka/IdeaProjects/lab5Kotlin/data.csv")
-    val server = ServerUdpChannel(
-        onReceive = {
-            channel, address, data -> run {
-                println(data)
-                if (data.command == "")
-                    return@run
-                channel.send(
-                    ByteBuffer.wrap(
-                        Serializer.serializeResponse(
-                            CommandResolver.run( data.command, data.data?.inlineArguments, data.data?.arguments )
-                        ).toByteArray()
-                    ),
-                    address
-                )
+    try {
+        App("/Users/dudosyka/IdeaProjects/lab5Kotlin/data.csv")
+        val server = ServerUdpChannel(
+            onReceive = {
+                channel, address, data -> run {
+                    println(data)
+                    if (data.command == "")
+                        return@run
+                    channel.send(
+                        ByteBuffer.wrap(
+                            Serializer.serializeResponse(
+                                CommandResolver.run( data.command, data.data?.inlineArguments, data.data?.arguments )
+                            ).toByteArray()
+                        ),
+                        address
+                    )
+                }
+            },
+            onFirstConnect = {
+                channel, address -> run {
+                    println("First connect of $address")
+                    channel.send(ByteBuffer.wrap(Serializer.serializeResponse(CommandResolver.getCommandsInfo()).toByteArray()), address)
+                }
             }
-        },
-        onFirstConnect = {
-            channel, address -> run {
-                println("First connect of $address")
-                channel.send(ByteBuffer.wrap(Serializer.serializeResponse(CommandResolver.getCommandsInfo()).toByteArray()), address)
-            }
-        }
-    )
-    server.run()
+        )
+        server.run()
+    } finally {
+        CommandResolver.run("_dump", listOf(), mapOf())
+    }
 }
