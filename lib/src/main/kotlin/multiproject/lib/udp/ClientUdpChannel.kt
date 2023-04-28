@@ -14,11 +14,43 @@ import java.util.*
 class ClientUdpChannel(val onConnectionRefused: OnConnectionRefused, val onConnectionRestored: OnConnectionRestored) {
     private val serverAddress: SocketAddress = InetSocketAddress(UdpConfig.serverAddress, UdpConfig.serverPort)
     private val channel: DatagramChannel = DatagramChannel.open()
+    private var ping: Boolean = true
+    private var connectionLost: Boolean = false
+    private var attemptNum: Int = 0
 
     init {
         channel.bind(null)
         channel.connect(serverAddress)
         channel.configureBlocking(false)
+        this.pingServer()
+    }
+
+    private fun pingServer() {
+        val reconnectTask: TimerTask = object: TimerTask() {
+            override fun run() {
+                if (!ping)
+                    return
+
+                try {
+                    channel.send(ByteBuffer.wrap(Serializer.serializeRequest(RequestDto("")).toByteArray()), serverAddress)
+                    if (connectionLost)
+                        onConnectionRestored.process(Serializer.deserializeResponse(getMessage()))
+                    connectionLost = false
+                    attemptNum = 0
+                } catch (e: PortUnreachableException) {
+                    connectionLost = true
+                    if (attemptNum <= 0)
+                        onConnectionRefused.process(RequestDto("ping"))
+                    attemptNum++
+                    println("Reconnect attempt #$attemptNum")
+                } catch (e: Exception) {
+                    println(e)
+                }
+            }
+        }
+        Timer().scheduleAtFixedRate(
+            reconnectTask, UdpConfig.timeout, UdpConfig.reconnectTimeout
+        )
     }
 
     private fun getMessage(): String {
@@ -37,11 +69,12 @@ class ClientUdpChannel(val onConnectionRefused: OnConnectionRefused, val onConne
 
     fun sendRequest(data: RequestDto): ResponseDto {
         val dataString = Serializer.serializeRequest(data)
-        channel.send(ByteBuffer.wrap(dataString.toByteArray()), serverAddress)
         return try {
+            channel.send(ByteBuffer.wrap(dataString.toByteArray()), serverAddress)
             Serializer.deserializeResponse(this.getMessage())
         } catch (e: PortUnreachableException) {
-            var attemptNum = 0
+            attemptNum = 0
+            ping = false
             val reconnectTask: TimerTask = object: TimerTask() {
                 override fun run() {
                     attemptNum++
@@ -51,6 +84,7 @@ class ClientUdpChannel(val onConnectionRefused: OnConnectionRefused, val onConne
                         onConnectionRestored.process(Serializer.deserializeResponse(getMessage()))
                         println("Connection restored!")
                         this.cancel()
+                        ping = true
                     } catch (e: PortUnreachableException) {
                         //
                     }

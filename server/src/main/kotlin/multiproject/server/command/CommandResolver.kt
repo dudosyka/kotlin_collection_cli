@@ -31,14 +31,18 @@ class CommandResolver {
             "filter_less_than_furnish" to FilterLessThanFurnish(),
         )
 
-        fun getCommandsInfo(): List<CommandDto> {
-            return commands.map {
-                CommandDto(
-                    name = it.key,
-                    arguments = it.value.fields,
-                    fileReaderSource = it.value.fileReaderSource
-                )
-            }
+        fun getCommandsInfo(): ResponseDto {
+            return ResponseDto(
+                code = ResponseCode.SUCCESS,
+                result = "",
+                commands = commands.map {
+                    CommandDto(
+                        name = it.key,
+                        arguments = it.value.fields,
+                        fileReaderSource = it.value.fileReaderSource
+                    )
+                }
+            )
         }
 
         fun run(name: String, inline: List<Any?>?, args: Map<String, Any?>?): ResponseDto {

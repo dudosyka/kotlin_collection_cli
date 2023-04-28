@@ -12,8 +12,6 @@ import multiproject.server.entities.flat.Flat
 import multiproject.server.entities.flat.FlatBuilder
 import multiproject.server.entities.flat.FlatCollection
 import multiproject.lib.udp.ServerUdpChannel
-import multiproject.lib.dto.ResponseCode
-import multiproject.lib.dto.ResponseDto
 import multiproject.lib.dto.Serializer
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.core.qualifier.named
@@ -48,6 +46,13 @@ fun main() {
         onReceive = {
             channel, address, data -> run {
                 println(data)
+                if (data.command == "")
+                    return@run
+                if (data.command == "_load") {
+                    channel.send(ByteBuffer.wrap(Serializer.serializeResponse(CommandResolver.getCommandsInfo()).toByteArray()), address)
+                    return@run
+                }
+
                 channel.send(
                     ByteBuffer.wrap(
                         Serializer.serializeResponse(
@@ -61,13 +66,7 @@ fun main() {
         onFirstConnect = {
             channel, address -> run {
                 println("First connect of $address")
-                val commandList = CommandResolver.getCommandsInfo()
-                val response = ResponseDto(
-                    code = ResponseCode.SUCCESS,
-                    result = "",
-                    commands = commandList
-                )
-                channel.send(ByteBuffer.wrap(Serializer.serializeResponse(response).toByteArray()), address)
+                channel.send(ByteBuffer.wrap(Serializer.serializeResponse(CommandResolver.getCommandsInfo()).toByteArray()), address)
             }
         }
     )

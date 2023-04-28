@@ -34,8 +34,9 @@ class CommandResolver {
         }
 
         fun loadCommands() {
-            val response: ResponseDto = client.sendRequest(RequestDto("load", RequestDataDto(mapOf(), listOf())))
-            commands = response.commands
+            val response: ResponseDto = client.sendRequest(RequestDto("_load", RequestDataDto(mapOf(), listOf())))
+            if (response.commands.isNotEmpty())
+                commands = response.commands
         }
     }
     /**
@@ -48,6 +49,10 @@ class CommandResolver {
         val split = commandLine.split(" ")
         val name = split[0]
         val args = split.subList(1, split.size)
+
+        if (name == "exit")
+            return CommandResult("exit")
+
         val command: CommandDto = getCommandByName(name) ?: throw CommandNotFound(name)
 
         val inlineData: List<Any> = InlineArgumentsValidator(
