@@ -5,8 +5,10 @@ import multiproject.lib.dto.ResponseDto
 import multiproject.server.command.Command
 import multiproject.lib.dto.command.CommandResult
 import multiproject.lib.exceptions.FileDumpException
+import multiproject.lib.udp.ServerUdpChannel
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
+import multiproject.server.command.CommandResolver
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 
@@ -20,6 +22,7 @@ class SystemDumpCommand: Command() {
      * @return
      */
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
+        ServerUdpChannel.removeDisconnected(CommandResolver.author!!)
         return try {
             this.collection.dump()
             CommandResult("Collection is successfully dumped!", true, ResponseDto(ResponseCode.SUCCESS, ""))

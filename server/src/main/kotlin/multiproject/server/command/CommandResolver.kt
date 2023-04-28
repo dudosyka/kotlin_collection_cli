@@ -7,6 +7,7 @@ import multiproject.lib.dto.command.CommandDto
 import multiproject.lib.dto.command.CommandResult
 import multiproject.server.command.system.SystemDumpCommand
 import multiproject.server.command.system.SystemLoadCommand
+import java.net.SocketAddress
 
 /**
  * Command resolver
@@ -15,6 +16,8 @@ import multiproject.server.command.system.SystemLoadCommand
  */
 class CommandResolver {
     companion object {
+        var author: SocketAddress? = null
+
         val commands: Map<String, Command> = mapOf(
             "help" to HelpCommand(),
             "info" to InfoCommand(),

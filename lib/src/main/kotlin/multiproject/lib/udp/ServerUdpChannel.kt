@@ -11,7 +11,17 @@ class ServerUdpChannel(
     val onReceive: OnReceive,
     val onFirstConnect: OnConnect
 ) {
-    var connections: MutableList<SocketAddress> = mutableListOf()
+
+    companion object {
+        var connections: MutableList<SocketAddress> = mutableListOf()
+        fun send(channel: DatagramChannel, address: SocketAddress, responseDto: ResponseDto) {
+            channel.send(ByteBuffer.wrap(Serializer.serializeResponse(responseDto).toByteArray()), address)
+        }
+
+        fun removeDisconnected(address: SocketAddress) {
+            connections.remove(address)
+        }
+    }
 
     var continueRun = true
 
@@ -30,8 +40,8 @@ class ServerUdpChannel(
             val bytes = ByteArray(buffer.remaining())
             buffer.get(bytes)
             val data = String(bytes)
-            if (!this.connections.contains(address)) {
-                this.connections.add(address)
+            if (!connections.contains(address)) {
+                connections.add(address)
                 this.firstConnect(channel, address)
             } else {
                 this.receive(channel, address, data)
@@ -45,12 +55,6 @@ class ServerUdpChannel(
 
     private fun receive(channel: DatagramChannel, address: SocketAddress, data: String) {
         this.onReceive.process(channel, address, Serializer.deserializeRequest(data))
-    }
-
-    companion object {
-        fun send(channel: DatagramChannel, address: SocketAddress, responseDto: ResponseDto) {
-            channel.send(ByteBuffer.wrap(Serializer.serializeResponse(responseDto).toByteArray()), address)
-        }
     }
 
     private fun firstConnect(channel: DatagramChannel, address: SocketAddress) {

@@ -46,9 +46,10 @@ fun main() {
         val server = ServerUdpChannel(
             onReceive = {
                 channel, address, data -> run {
-                    println(data)
                     if (data.command == "")
                         return@run
+
+                    CommandResolver.author = address
                     channel.send(
                         ByteBuffer.wrap(
                             Serializer.serializeResponse(
