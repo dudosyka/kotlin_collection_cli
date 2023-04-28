@@ -1,8 +1,9 @@
 package multiproject.server.command
 
-import multiproject.udpsocket.dto.ResponseCode
-import multiproject.udpsocket.dto.ResponseDto
-import multiproject.udpsocket.dto.command.CommandDto
+import multiproject.lib.exceptions.*
+import multiproject.lib.dto.ResponseCode
+import multiproject.lib.dto.ResponseDto
+import multiproject.lib.dto.command.CommandDto
 
 /**
  * Command resolver
@@ -14,7 +15,7 @@ class CommandResolver {
         val commands: Map<String, Command> = mapOf(
             "help" to HelpCommand(),
             "info" to InfoCommand(),
-//            "add" to AddCommand(),
+            "add" to AddCommand(),
             "show" to ShowCommand(),
             "update" to UpdateCommand(),
             "remove_by_id" to RemoveByIdCommand(),
@@ -42,8 +43,18 @@ class CommandResolver {
 
         fun run(name: String, inline: List<Any?>?, args: Map<String, Any?>?): ResponseDto {
             val command = this.commands[name] ?: return ResponseDto(code = ResponseCode.NOT_FOUND, "Command not found!")
-            val result = command.execute(inline ?: listOf(), (args ?: mapOf()).toMutableMap()) ?: return ResponseDto(code = ResponseCode.INTERNAL_SERVER_ERROR, "Failed command process")
-            return ResponseDto(code = ResponseCode.SUCCESS, result = result.body)
+            return try {
+                val result: CommandResult = command.execute(inline ?: listOf(), (args ?: mapOf()).toMutableMap()) ?: return ResponseDto(code = ResponseCode.INTERNAL_SERVER_ERROR, "Failed command process")
+                ResponseDto(code = ResponseCode.SUCCESS, result = result.body)
+            } catch (e: InvalidArgumentException) {
+                ResponseDto(code = ResponseCode.VALIDATION_ERROR, result = e.validationRulesDescribe)
+            } catch (e: ItemNotFoundException) {
+                ResponseDto(code = ResponseCode.ITEM_NOT_FOUND, result = e.message)
+            } catch (e: ValidationFieldException) {
+                ResponseDto(code = ResponseCode.VALIDATION_ERROR, result = e.message)
+            } catch (e: Exception) {
+                ResponseDto(code = ResponseCode.INTERNAL_SERVER_ERROR, result = e.message ?: "error!")
+            }
         }
     }
 }

@@ -1,16 +1,16 @@
 package multiproject.server.collection.item
 
-import multiproject.server.exceptions.ValidationFieldException
-import multiproject.udpsocket.dto.command.CommandArgumentDto
+import multiproject.lib.exceptions.ValidationFieldException
+import multiproject.lib.dto.command.CommandArgumentDto
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
+import multiproject.lib.dto.command.Validator
 
 /**
  * Field delegate
  *
  * @param R
  * @property map
- * @property validator
  * @constructor Create empty Field delegate
  */
 class FieldDelegate<R>(var map: MutableMap<String, Any?>, val argumentDto: CommandArgumentDto): ReadWriteProperty<Nothing?, R?> {

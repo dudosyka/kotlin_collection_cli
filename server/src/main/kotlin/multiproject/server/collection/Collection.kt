@@ -2,8 +2,7 @@ package multiproject.server.collection
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import multiproject.server.exceptions.ItemNotFoundException
-import multiproject.server.exceptions.NotUniqueIdException
+import multiproject.lib.exceptions.*
 import multiproject.server.collection.item.Entity
 import multiproject.server.collection.sort.CollectionSortType
 import multiproject.server.collection.sort.IdComparator

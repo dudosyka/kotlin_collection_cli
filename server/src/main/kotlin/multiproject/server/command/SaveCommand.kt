@@ -2,7 +2,7 @@ package multiproject.server.command
 
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
-import multiproject.server.exceptions.FileDumpException
+import multiproject.lib.exceptions.FileDumpException
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 

@@ -1,8 +1,8 @@
 package multiproject.server.command
 
-import multiproject.server.collection.item.Validator
-import multiproject.server.exceptions.InvalidArgumentException
-import multiproject.udpsocket.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.Validator
+import multiproject.lib.exceptions.InvalidArgumentException
+import multiproject.lib.dto.command.CommandArgumentDto
 
 /**
  * Command

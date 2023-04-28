@@ -3,9 +3,9 @@ package multiproject.server.command
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
 import multiproject.server.collection.item.EntityBuilder
-import multiproject.server.flat.Flat
-import multiproject.server.flat.RoomsComparator
-import multiproject.udpsocket.dto.command.CommandArgumentDto
+import multiproject.server.entities.flat.Flat
+import multiproject.server.entities.flat.RoomsComparator
+import multiproject.lib.dto.command.CommandArgumentDto
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 

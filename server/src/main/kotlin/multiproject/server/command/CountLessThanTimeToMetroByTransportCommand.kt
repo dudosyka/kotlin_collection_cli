@@ -1,9 +1,10 @@
 package multiproject.server.command
 
+import multiproject.lib.dto.command.Validator
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
-import multiproject.server.collection.item.Validator
-import multiproject.udpsocket.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.FieldType
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 
@@ -21,14 +22,15 @@ class CountLessThanTimeToMetroByTransportCommand : Command() {
             inline = true,
             index = 0,
             required = true,
-            type = multiproject.udpsocket.dto.command.FieldType.INT,
+            type = FieldType.INT,
         )
     )
     override val description: String = "Show number of items which time to metro less than specified"
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
         val timeToMetro = this.getArgument(args, "Time to metro", 0, Validator(
-            CommandArgumentDto(name = "time_to_metro", type = multiproject.udpsocket.dto.command.FieldType.INT, required = true)
-        ))
+            CommandArgumentDto(name = "time_to_metro", type = FieldType.INT, required = true)
+        )
+        )
         return CommandResult(collection.countLessThanBy(timeToMetro as Int).toString())
     }
 

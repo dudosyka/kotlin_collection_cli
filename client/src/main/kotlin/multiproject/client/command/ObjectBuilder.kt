@@ -1,10 +1,11 @@
 package multiproject.client.command
 
-import multiproject.client.exceptions.ValidationFieldException
+import multiproject.lib.exceptions.ValidationFieldException
 import multiproject.client.io.IOData
 import multiproject.client.io.Reader
 import multiproject.client.io.Writer
-import multiproject.udpsocket.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.Validator
+import multiproject.lib.dto.command.CommandArgumentDto
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 
@@ -27,16 +28,14 @@ class ObjectBuilder(private val fieldsMap: Map<String, CommandArgumentDto>) {
                 this.writer.write("(${argumentDto.choisable}) ")
             val value = this.reader.readLine()
             val validator = Validator(argumentDto, value)
-            if (validator.validate(value)) {
+            return if (validator.validate(value)) {
                 map.put(key, validator.value)
-                return map
-            }
-            else {
+                map
+            } else {
                 if (IOData.current == "console") {
                     this.writer.writeLine(validator.describe())
-                    return this.getField(map, key, argumentDto)
-                }
-                else
+                    this.getField(map, key, argumentDto)
+                } else
                     throw ValidationFieldException(key, validator)
             }
         }
@@ -45,7 +44,6 @@ class ObjectBuilder(private val fieldsMap: Map<String, CommandArgumentDto>) {
     /**
      * Get entity data
      *
-     * @param fieldsMap
      * @return
      */
     fun getEntityData(): MutableMap<String, Any?> {

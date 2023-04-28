@@ -1,11 +1,11 @@
 package multiproject.server.command
 
+import multiproject.lib.dto.command.Validator
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
 import multiproject.server.collection.item.EntityBuilder
-import multiproject.server.collection.item.Validator
-import multiproject.udpsocket.dto.command.CommandArgumentDto
-import multiproject.udpsocket.dto.command.FieldType
+import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.FieldType
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 
@@ -28,7 +28,8 @@ class UpdateCommand : AddCommand() {
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
         val id = this.getArgument(args, "id", 0, Validator(
             CommandArgumentDto(name = "id", type = FieldType.INT, required = true)
-        ))
+        )
+        )
         collection.checkIdExists(id as Int)
         val entity = this.entityBuilder.build(data)
         collection.update(id, entity)

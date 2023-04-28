@@ -3,7 +3,7 @@ package multiproject.server.command
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
 import multiproject.server.collection.item.EntityBuilder
-import multiproject.udpsocket.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.CommandArgumentDto
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 

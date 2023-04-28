@@ -3,16 +3,19 @@ package multiproject.client
 import multiproject.client.command.CommandResolver
 import multiproject.client.console.ConsoleReader
 import multiproject.client.console.ConsoleWriter
-import multiproject.client.exceptions.*
 import multiproject.client.io.IOData
 import multiproject.client.io.Reader
 import multiproject.client.io.Writer
-import multiproject.udpsocket.ClientUdpChannel
+import multiproject.lib.udp.ClientUdpChannel
 import org.koin.core.context.GlobalContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
 import multiproject.client.file.FileReader
+import multiproject.lib.exceptions.CommandNotFound
+import multiproject.lib.exceptions.InvalidArgumentException
+import multiproject.lib.exceptions.RecursiveScriptException
+import multiproject.lib.exceptions.ValidationFieldException
 
 class App {
     init {
@@ -75,8 +78,6 @@ fun main() {
 
         } catch (e: InvalidArgumentException) {
             writer.writeLine(e.validationRulesDescribe)
-        } catch (e: ItemNotFoundException) {
-            writer.writeLine("Error! ${e.message}")
         } catch (e: ValidationFieldException) {
             writer.writeLine(e.message)
         } catch (e: RecursiveScriptException) {

@@ -2,7 +2,7 @@ package multiproject.client.file
 
 import multiproject.client.command.CommandResolver
 import multiproject.client.command.CommandResult
-import multiproject.client.exceptions.RecursiveScriptException
+import multiproject.lib.exceptions.RecursiveScriptException
 import multiproject.client.io.Reader
 import multiproject.client.io.IOData
 import java.io.BufferedReader

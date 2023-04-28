@@ -1,6 +1,6 @@
 package multiproject.server.collection.item
 
-import multiproject.udpsocket.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.CommandArgumentDto
 
 /**
  * Entity builder

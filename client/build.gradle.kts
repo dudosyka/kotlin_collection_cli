@@ -9,7 +9,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":udpsocket"))
+    implementation(project(":lib"))
     implementation("io.insert-koin:koin-core:3.3.3")
 }
 

@@ -1,7 +1,7 @@
 package multiproject.server.command
 
-import multiproject.udpsocket.dto.command.CommandArgumentDto
-import multiproject.udpsocket.dto.command.FieldType
+import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.FieldType
 
 /**
  * Execute script command

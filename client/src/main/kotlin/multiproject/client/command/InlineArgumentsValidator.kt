@@ -1,7 +1,8 @@
 package multiproject.client.command
 
 import multiproject.client.io.Writer
-import multiproject.udpsocket.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.Validator
+import multiproject.lib.dto.command.CommandArgumentDto
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 

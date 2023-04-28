@@ -1,10 +1,11 @@
 package multiproject.server.command
 
+import multiproject.lib.dto.command.Validator
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
-import multiproject.server.collection.item.Validator
-import multiproject.server.flat.Furnish
-import multiproject.udpsocket.dto.command.CommandArgumentDto
+import multiproject.server.entities.flat.Furnish
+import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.FieldType
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 
@@ -22,7 +23,7 @@ class FilterLessThanFurnish : Command() {
             inline = true,
             required = true,
             index = 0,
-            type = multiproject.udpsocket.dto.command.FieldType.INT,
+            type = FieldType.INT,
         )
     )
     override val description: String = "Show number of items that which furniture less than specified"
@@ -30,7 +31,7 @@ class FilterLessThanFurnish : Command() {
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
         val furnish = args.firstOrNull()
         val validator = Validator(
-            CommandArgumentDto(name = "number_of_rooms", type = multiproject.udpsocket.dto.command.FieldType.ENUM, required = true, choisable = Furnish.values().map { it.toString() })
+            CommandArgumentDto(name = "number_of_rooms", type = FieldType.ENUM, required = true, choisable = Furnish.values().map { it.toString() })
         )
 
         if (!validator.validate(furnish))

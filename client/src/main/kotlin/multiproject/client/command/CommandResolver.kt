@@ -1,12 +1,12 @@
 package multiproject.client.command
 
-import multiproject.client.exceptions.CommandNotFound
+import multiproject.lib.exceptions.CommandNotFound
 import multiproject.client.io.IOData
-import multiproject.udpsocket.ClientUdpChannel
-import multiproject.udpsocket.dto.RequestDataDto
-import multiproject.udpsocket.dto.RequestDto
-import multiproject.udpsocket.dto.ResponseDto
-import multiproject.udpsocket.dto.command.CommandDto
+import multiproject.lib.udp.ClientUdpChannel
+import multiproject.lib.dto.RequestDataDto
+import multiproject.lib.dto.RequestDto
+import multiproject.lib.dto.ResponseDto
+import multiproject.lib.dto.command.CommandDto
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 import java.io.BufferedReader

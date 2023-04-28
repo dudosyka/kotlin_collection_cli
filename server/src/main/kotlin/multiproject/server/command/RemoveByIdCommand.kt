@@ -1,9 +1,10 @@
 package multiproject.server.command
 
+import multiproject.lib.dto.command.Validator
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
-import multiproject.server.collection.item.Validator
-import multiproject.udpsocket.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.FieldType
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 
@@ -21,15 +22,16 @@ class RemoveByIdCommand: Command() {
             inline = true,
             required = true,
             index = 0,
-            type = multiproject.udpsocket.dto.command.FieldType.INT,
+            type = FieldType.INT,
         )
     )
     override val description: String = "Remove element with specified id"
 
     override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
         val id = this.getArgument(args, "id", 0, Validator(
-            CommandArgumentDto(name = "id", type = multiproject.udpsocket.dto.command.FieldType.INT, required = true)
-        ))
+            CommandArgumentDto(name = "id", type = FieldType.INT, required = true)
+        )
+        )
         collection.removeById(id as Int)
         return CommandResult("Item with id = $id successfully removed!")
     }
