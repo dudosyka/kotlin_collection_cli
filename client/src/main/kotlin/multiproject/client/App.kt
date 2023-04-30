@@ -6,7 +6,7 @@ import multiproject.client.console.ConsoleWriter
 import multiproject.client.io.IOData
 import multiproject.client.io.Reader
 import multiproject.client.io.Writer
-import multiproject.lib.udp.ClientUdpChannel
+import multiproject.lib.udp.client.ClientUdpChannel
 import org.koin.core.context.GlobalContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -17,6 +17,8 @@ import multiproject.lib.exceptions.CommandNotFound
 import multiproject.lib.exceptions.InvalidArgumentException
 import multiproject.lib.exceptions.RecursiveScriptException
 import multiproject.lib.exceptions.ValidationFieldException
+import multiproject.lib.udp.UdpConfig
+import multiproject.lib.udp.client.runClient
 
 class App {
     init {
@@ -31,17 +33,21 @@ class App {
                 ConsoleWriter()
             }
             single<ClientUdpChannel>(named("client")) {
-                ClientUdpChannel(
-                    onConnectionRestored = {
+                runClient {
+                    onConnectionRestored {
                         response -> run {
                             CommandResolver.updateCommandList(response.commands)
                             println("Commands list updated from server!")
                         }
-                    },
-                    onConnectionRefused = {
+                    }
+                    onConnectionRefused {
                         println("Connection lost! Try to reconnect!")
                     }
-                )
+                    setServerAddress(
+                        serverAddress = UdpConfig.serverAddress,
+                        serverPort = UdpConfig.serverPort
+                    )
+                }
             }
         }
         GlobalContext.startKoin {

@@ -1,9 +1,10 @@
-package multiproject.lib.udp
+package multiproject.lib.udp.client
 
 import multiproject.lib.dto.RequestDto
 import multiproject.lib.dto.ResponseCode
 import multiproject.lib.dto.ResponseDto
 import multiproject.lib.dto.Serializer
+import multiproject.lib.udp.UdpConfig
 import java.net.InetSocketAddress
 import java.net.PortUnreachableException
 import java.net.SocketAddress
@@ -11,13 +12,32 @@ import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 import java.util.*
 
-class ClientUdpChannel(val onConnectionRefused: OnConnectionRefused, val onConnectionRestored: OnConnectionRestored) {
-    private val serverAddress: SocketAddress = InetSocketAddress(UdpConfig.serverAddress, UdpConfig.serverPort)
+class ClientUdpChannel() {
+    private var onConnectionRefusedCallback: OnConnectionRefused = OnConnectionRefused {
+        _ ->
+    }
+    private var onConnectionRestoredCallback: OnConnectionRestored = OnConnectionRestored {
+        _ ->
+    }
+    private var serverAddress: SocketAddress = InetSocketAddress(3000)
     private val channel: DatagramChannel = DatagramChannel.open()
     private var ping: Boolean = true
     private var connectionLost: Boolean = false
     private var attemptNum: Int = 0
     private var pingReconnect: TimerTask? = null
+
+    fun onConnectionRefused(callback: OnConnectionRefused) {
+        onConnectionRefusedCallback = callback
+    }
+
+    fun onConnectionRestored(callback: OnConnectionRestored) {
+        onConnectionRestoredCallback = callback
+    }
+
+    fun setServerAddress(serverAddress: String, serverPort: Int) {
+        this.serverAddress = InetSocketAddress(serverAddress, serverPort)
+    }
+
 
     init {
         channel.bind(null)
@@ -35,13 +55,13 @@ class ClientUdpChannel(val onConnectionRefused: OnConnectionRefused, val onConne
                 try {
                     channel.send(ByteBuffer.wrap(Serializer.serializeRequest(RequestDto("")).toByteArray()), serverAddress)
                     if (connectionLost)
-                        onConnectionRestored.process(Serializer.deserializeResponse(getMessage()))
+                        onConnectionRestoredCallback.process(Serializer.deserializeResponse(getMessage()))
                     connectionLost = false
                     attemptNum = 0
                 } catch (e: PortUnreachableException) {
                     connectionLost = true
                     if (attemptNum <= 0)
-                        onConnectionRefused.process(RequestDto("ping"))
+                        onConnectionRefusedCallback.process(RequestDto("ping"))
                     attemptNum++
                     println("Reconnect attempt #$attemptNum")
                 } catch (e: Exception) {
@@ -82,7 +102,7 @@ class ClientUdpChannel(val onConnectionRefused: OnConnectionRefused, val onConne
                     println("Reconnect attempt #$attemptNum")
                     channel.send(ByteBuffer.wrap(dataString.toByteArray()), serverAddress)
                     try {
-                        onConnectionRestored.process(Serializer.deserializeResponse(getMessage()))
+                        onConnectionRestoredCallback.process(Serializer.deserializeResponse(getMessage()))
                         println("Connection restored!")
                         this.cancel()
                         ping = true
@@ -95,7 +115,7 @@ class ClientUdpChannel(val onConnectionRefused: OnConnectionRefused, val onConne
                 reconnectTask, UdpConfig.timeout, UdpConfig.reconnectTimeout
             )
 
-            this.onConnectionRefused.process(data)
+            this.onConnectionRefusedCallback.process(data)
             ResponseDto(code = ResponseCode.CONNECTION_REFUSED, "Connection refused! Try to reconnect...")
         }
     }

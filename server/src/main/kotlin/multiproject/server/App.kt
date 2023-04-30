@@ -3,6 +3,8 @@
  */
 package multiproject.server
 
+import multiproject.lib.dto.Serializer
+import multiproject.lib.udp.UdpConfig
 import multiproject.server.collection.item.EntityBuilder
 import multiproject.server.collection.Collection
 import multiproject.server.command.CommandResolver
@@ -11,11 +13,12 @@ import multiproject.server.dump.FileDumpManager
 import multiproject.server.entities.flat.Flat
 import multiproject.server.entities.flat.FlatBuilder
 import multiproject.server.entities.flat.FlatCollection
-import multiproject.lib.udp.ServerUdpChannel
-import multiproject.lib.dto.Serializer
+import multiproject.lib.udp.server.ServerUdpChannel
+import multiproject.lib.udp.server.runServer
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import org.koin.java.KoinJavaComponent.inject
 import java.nio.ByteBuffer
 
 class App (filePath: String) {
@@ -30,6 +33,36 @@ class App (filePath: String) {
             single<EntityBuilder<Flat>>(named("builder")) {
                 FlatBuilder()
             }
+            single<ServerUdpChannel>(named("server")) {
+                runServer {
+                    onReceive {
+                        channel, address, data -> run {
+                            if (data.command == "")
+                                return@run
+
+                            CommandResolver.author = address
+                            channel.send(
+                                ByteBuffer.wrap(
+                                    Serializer.serializeResponse(
+                                        CommandResolver.run( data.command, data.data?.inlineArguments, data.data?.arguments )
+                                    ).toByteArray()
+                                ),
+                                address
+                            )
+                        }
+                    }
+                    onFirstConnect {
+                        channel, address -> run {
+                            println("First connect of $address")
+                            channel.send(ByteBuffer.wrap(Serializer.serializeResponse(CommandResolver.getCommandsInfo()).toByteArray()), address)
+                        }
+                    }
+                    serverAddress(
+                        serverAddress = UdpConfig.serverAddress,
+                        serverPort = UdpConfig.serverPort
+                    )
+                }
+            }
         }
         startKoin {
             modules(
@@ -43,30 +76,7 @@ class App (filePath: String) {
 fun main() {
     try {
         App("/Users/dudosyka/IdeaProjects/lab5Kotlin/data.csv")
-        val server = ServerUdpChannel(
-            onReceive = {
-                channel, address, data -> run {
-                    if (data.command == "")
-                        return@run
-
-                    CommandResolver.author = address
-                    channel.send(
-                        ByteBuffer.wrap(
-                            Serializer.serializeResponse(
-                                CommandResolver.run( data.command, data.data?.inlineArguments, data.data?.arguments )
-                            ).toByteArray()
-                        ),
-                        address
-                    )
-                }
-            },
-            onFirstConnect = {
-                channel, address -> run {
-                    println("First connect of $address")
-                    channel.send(ByteBuffer.wrap(Serializer.serializeResponse(CommandResolver.getCommandsInfo()).toByteArray()), address)
-                }
-            }
-        )
+        val server: ServerUdpChannel by inject(ServerUdpChannel::class.java, named("server"))
         server.run()
     } finally {
         CommandResolver.run("_dump", listOf(), mapOf())

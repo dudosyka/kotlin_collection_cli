@@ -2,7 +2,7 @@ package multiproject.client.command
 
 import multiproject.lib.exceptions.CommandNotFound
 import multiproject.client.io.IOData
-import multiproject.lib.udp.ClientUdpChannel
+import multiproject.lib.udp.client.ClientUdpChannel
 import multiproject.lib.dto.RequestDataDto
 import multiproject.lib.dto.RequestDto
 import multiproject.lib.dto.ResponseDto

@@ -1,4 +1,4 @@
-package multiproject.lib.udp
+package multiproject.lib.udp.server
 
 import java.net.SocketAddress
 import java.nio.channels.DatagramChannel

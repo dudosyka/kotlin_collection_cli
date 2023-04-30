@@ -1,4 +1,4 @@
-package multiproject.lib.udp
+package multiproject.lib.udp.client
 
 import multiproject.lib.dto.RequestDto
 
