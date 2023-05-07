@@ -1,8 +1,8 @@
 package multiproject.server.command
 
 import multiproject.lib.exceptions.*
-import multiproject.lib.dto.ResponseCode
-import multiproject.lib.dto.ResponseDto
+import multiproject.lib.dto.response.ResponseCode
+import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.dto.command.CommandDto
 import multiproject.lib.dto.command.CommandResult
 import multiproject.server.command.system.SystemDumpCommand

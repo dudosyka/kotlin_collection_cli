@@ -13,4 +13,4 @@ pluginManagement {
     includeBuild("build-logic")
 }
 rootProject.name = "MultiProject"
-include("server", "client", "lib")
+include("server", "client", "resolver", "lib")

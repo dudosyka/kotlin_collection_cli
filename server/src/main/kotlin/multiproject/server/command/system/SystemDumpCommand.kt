@@ -1,7 +1,7 @@
 package multiproject.server.command.system
 
-import multiproject.lib.dto.ResponseCode
-import multiproject.lib.dto.ResponseDto
+import multiproject.lib.dto.response.ResponseCode
+import multiproject.lib.dto.response.ResponseDto
 import multiproject.server.command.Command
 import multiproject.lib.dto.command.CommandResult
 import multiproject.lib.exceptions.FileDumpException

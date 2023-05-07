@@ -3,9 +3,9 @@ package multiproject.client.command
 import multiproject.lib.exceptions.CommandNotFound
 import multiproject.client.io.IOData
 import multiproject.lib.udp.client.ClientUdpChannel
-import multiproject.lib.dto.RequestDataDto
-import multiproject.lib.dto.RequestDto
-import multiproject.lib.dto.ResponseDto
+import multiproject.lib.dto.request.RequestDataDto
+import multiproject.lib.dto.request.RequestDto
+import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.dto.command.CommandDto
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
@@ -37,10 +37,11 @@ class CommandResolver {
         fun updateCommandList(commandList: List<CommandDto>) {
             if (commandList.isNotEmpty())
                 commands = commandList.filter { !it.hideFromClient }
+            println(commands);
         }
 
         fun loadCommands() {
-            val response: ResponseDto = client.sendRequest(RequestDto("_load", RequestDataDto(mapOf(), listOf())))
+            val response: ResponseDto = client.sendRequest(RequestDto("_load", data = RequestDataDto(mapOf(), listOf())))
             updateCommandList(response.commands)
         }
     }
@@ -91,9 +92,9 @@ class CommandResolver {
         if (arguments.isNotEmpty()) {
             val objectData = ObjectBuilder(arguments).getEntityData()
 //            println(objectData)
-            return CommandResult("Command resolved", true, client.sendRequest(RequestDto(name, RequestDataDto(objectData, inlineData))))
+            return CommandResult("Command resolved", true, client.sendRequest(RequestDto(name, data = RequestDataDto(objectData, inlineData))))
         }
 
-        return CommandResult("Command resolved", true, client.sendRequest(RequestDto(name, RequestDataDto(mapOf(),  inlineData))))
+        return CommandResult("Command resolved", true, client.sendRequest(RequestDto(name, data = RequestDataDto(mapOf(),  inlineData))))
     }
 }

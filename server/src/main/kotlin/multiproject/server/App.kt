@@ -3,6 +3,7 @@
  */
 package multiproject.server
 
+import multiproject.lib.dto.ConnectedServer
 import multiproject.lib.udp.UdpConfig
 import multiproject.lib.udp.interfaces.OnConnect
 import multiproject.lib.udp.interfaces.OnReceive
@@ -20,6 +21,7 @@ import org.koin.core.context.GlobalContext.startKoin
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
+import java.net.InetAddress
 import java.net.InetSocketAddress
 
 class App (filePath: String) {
@@ -38,26 +40,25 @@ class App (filePath: String) {
                 runServer {
                     receiveCallback = OnReceive {
                         _, address, data -> run {
-                            println()
-                            print("Received request. From: "); print(address); print("; Message: "); print(data)
                             if (data.command == "")
                                 return@run
 
                             CommandResolver.author = address
                             this.emit(
                                 address,
-                                CommandResolver.run( data.command, data.data?.inlineArguments, data.data?.arguments )
+                                CommandResolver.run( data.command, data.data?.inlineArguments, data.data?.arguments ).apply {
+                                    headers.putAll(data.headers)
+                                }
                             )
                         }
                     }
                     firstConnectCallback = OnConnect {
-                        _, address -> run {
-                            println("First connect of $address")
-                            this.emit(address, CommandResolver.getCommandsInfo())
+                        _, address, data -> run {
+                            this.emit(address, CommandResolver.getCommandsInfo().apply { headers.putAll(data.headers) })
                         }
                     }
                     bindOn(
-                        address = InetSocketAddress(UdpConfig.serverAddress, UdpConfig.serverPort)
+                        address = null
                     )
                 }
             }

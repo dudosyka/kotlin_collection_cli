@@ -2,6 +2,9 @@ package multiproject.lib.dto
 
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
+import multiproject.lib.dto.request.RequestDto
+import multiproject.lib.dto.response.ResponseCode
+import multiproject.lib.dto.response.ResponseDto
 
 class Serializer {
     companion object {

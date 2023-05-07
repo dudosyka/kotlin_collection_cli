@@ -1,8 +1,10 @@
 package multiproject.lib.udp.client
 
-import multiproject.lib.dto.RequestDto
-import multiproject.lib.dto.ResponseDto
+import multiproject.lib.dto.request.RequestDto
+import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.dto.Serializer
+import multiproject.lib.dto.request.RequestDirection
+import multiproject.lib.dto.request.RequestDirectionInterpreter
 import multiproject.lib.udp.UdpChannel
 import multiproject.lib.udp.UdpConfig
 import java.net.PortUnreachableException
@@ -21,7 +23,19 @@ class ClientUdpChannel: UdpChannel() {
                     return
 
                 try {
-                    channel.send(ByteBuffer.wrap(Serializer.serializeRequest(RequestDto("")).toByteArray()), servers.first())
+                    channel.send(
+                        ByteBuffer.wrap(
+                            Serializer.serializeRequest(
+                                RequestDto(
+                                    "",
+                                    headers = mutableMapOf(
+                                        "requestDirection" to RequestDirectionInterpreter.interpret(RequestDirection.FROM_CLIENT)
+                                    )
+                                )
+                            ).toByteArray()
+                        ),
+                        servers.first().address
+                    )
                     if (connectionLost)
                         onConnectionRestoredCallback.process(Serializer.deserializeResponse(getMessage()))
                     connectionLost = false
@@ -29,7 +43,12 @@ class ClientUdpChannel: UdpChannel() {
                 } catch (e: PortUnreachableException) {
                     connectionLost = true
                     if (attemptNum <= 0)
-                        onConnectionRefusedCallback.process(RequestDto("ping"))
+                        onConnectionRefusedCallback.process(RequestDto(
+                            "ping",
+                            headers = mutableMapOf(
+                                "requestDirection" to RequestDirectionInterpreter.interpret(RequestDirection.FROM_CLIENT)
+                            )
+                        ))
                     attemptNum++
                     println("Reconnect attempt #$attemptNum")
                 } catch (e: Exception) {
@@ -42,10 +61,13 @@ class ClientUdpChannel: UdpChannel() {
         )
     }
     fun sendRequest(data: RequestDto): ResponseDto {
-        return super.send(this.servers.first(), data)
+        data.headers["requestDirection"] = RequestDirectionInterpreter.interpret(RequestDirection.FROM_CLIENT);
+        val response = super.send(this.servers.first().address, data)
+        println("Response resolved: $response");
+        return response;
     }
     override fun run() {
-        channel.connect(this.servers.first())
+        channel.connect(this.servers.first().address)
         channel.configureBlocking(false)
         this.pingServer()
     }

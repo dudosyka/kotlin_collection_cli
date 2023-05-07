@@ -12,7 +12,8 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
 import multiproject.client.file.FileReader
-import multiproject.lib.dto.RequestDto
+import multiproject.lib.dto.ConnectedServer
+import multiproject.lib.dto.request.RequestDto
 import multiproject.lib.exceptions.CommandNotFound
 import multiproject.lib.exceptions.InvalidArgumentException
 import multiproject.lib.exceptions.RecursiveScriptException
@@ -52,7 +53,7 @@ class App {
                         attemptNum -> println("Reconnect attempt #$attemptNum")
                     }
                     addServer(
-                        address = InetSocketAddress(UdpConfig.serverAddress, UdpConfig.serverPort)
+                        address = ConnectedServer(0, InetSocketAddress(UdpConfig.serverAddress, UdpConfig.serverPort))
                     )
                     disconnectStrategy = RestoreOnDisconnectStrategy()
                     bindOn(InetSocketAddress( "127.0.0.1", 7071))

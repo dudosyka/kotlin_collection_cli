@@ -1,4 +1,4 @@
-package multiproject.lib.dto
+package multiproject.lib.dto.response
 
 enum class ResponseCode {
     SUCCESS,

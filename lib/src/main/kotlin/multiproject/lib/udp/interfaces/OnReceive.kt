@@ -1,6 +1,6 @@
 package multiproject.lib.udp.interfaces
 
-import multiproject.lib.dto.RequestDto
+import multiproject.lib.dto.request.RequestDto
 import java.net.SocketAddress
 import java.nio.channels.DatagramChannel
 

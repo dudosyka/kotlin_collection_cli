@@ -1,4 +1,4 @@
-package multiproject.lib.dto
+package multiproject.lib.dto.request
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
