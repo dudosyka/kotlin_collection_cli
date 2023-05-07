@@ -43,7 +43,7 @@ class App {
                     onConnectionRefused {
                         println("Connection lost! Try to reconnect!")
                     }
-                    setServerAddress(
+                    setServer(
                         serverAddress = UdpConfig.serverAddress,
                         serverPort = UdpConfig.serverPort
                     )
@@ -64,6 +64,8 @@ fun main() {
     writer.writeLine("^_^ Welcome to the Collection CLI ^_^")
 
     val client: ClientUdpChannel by inject(ClientUdpChannel::class.java, named("client"))
+
+    client.connect()
 
     CommandResolver.loadCommands()
 

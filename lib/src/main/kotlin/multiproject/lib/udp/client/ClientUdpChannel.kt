@@ -34,16 +34,14 @@ class ClientUdpChannel() {
         onConnectionRestoredCallback = callback
     }
 
-    fun setServerAddress(serverAddress: String, serverPort: Int) {
+    fun setServer(serverAddress: String, serverPort: Int) {
         this.serverAddress = InetSocketAddress(serverAddress, serverPort)
     }
 
-
-    init {
-        channel.bind(null)
-        channel.connect(serverAddress)
+    fun connect() {
+        channel.connect(this.serverAddress)
         channel.configureBlocking(false)
-        this.pingServer()
+        pingServer()
     }
 
     private fun pingServer() {

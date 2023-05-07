@@ -37,6 +37,8 @@ class App (filePath: String) {
                 runServer {
                     onReceive {
                         channel, address, data -> run {
+                            println()
+                            print("Received request. From: "); print(address); print("; Message: "); print(data)
                             if (data.command == "")
                                 return@run
 
