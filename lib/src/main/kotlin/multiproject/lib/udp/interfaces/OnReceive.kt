@@ -1,4 +1,4 @@
-package multiproject.lib.udp.server
+package multiproject.lib.udp.interfaces
 
 import multiproject.lib.dto.RequestDto
 import java.net.SocketAddress

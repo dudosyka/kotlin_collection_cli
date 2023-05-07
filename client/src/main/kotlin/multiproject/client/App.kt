@@ -18,7 +18,12 @@ import multiproject.lib.exceptions.InvalidArgumentException
 import multiproject.lib.exceptions.RecursiveScriptException
 import multiproject.lib.exceptions.ValidationFieldException
 import multiproject.lib.udp.UdpConfig
+import multiproject.lib.udp.interfaces.OnConnectionRefused
+import multiproject.lib.udp.interfaces.OnConnectionRestored
 import multiproject.lib.udp.client.runClient
+import multiproject.lib.udp.interfaces.OnDisconnectAttempt
+import multiproject.lib.udp.disconnect.RestoreOnDisconnectStrategy
+import java.net.InetSocketAddress
 
 class App {
     init {
@@ -34,19 +39,23 @@ class App {
             }
             single<ClientUdpChannel>(named("client")) {
                 runClient {
-                    onConnectionRestored {
+                    onConnectionRestoredCallback = OnConnectionRestored {
                         response -> run {
                             CommandResolver.updateCommandList(response.commands)
                             println("Commands list updated from server!")
                         }
                     }
-                    onConnectionRefused {
-                        println("Connection lost! Try to reconnect!")
+                    onConnectionRefusedCallback = OnConnectionRefused {
+                        println("Callback. Connection refused")
                     }
-                    setServer(
-                        serverAddress = UdpConfig.serverAddress,
-                        serverPort = UdpConfig.serverPort
+                    onDisconnectAttempt = OnDisconnectAttempt {
+                        attemptNum -> println("Reconnect attempt #$attemptNum")
+                    }
+                    addServer(
+                        address = InetSocketAddress(UdpConfig.serverAddress, UdpConfig.serverPort)
                     )
+                    disconnectStrategy = RestoreOnDisconnectStrategy()
+                    bindOn(InetSocketAddress( "127.0.0.1", 7071))
                 }
             }
         }
@@ -65,7 +74,7 @@ fun main() {
 
     val client: ClientUdpChannel by inject(ClientUdpChannel::class.java, named("client"))
 
-    client.connect()
+    client.run()
 
     CommandResolver.loadCommands()
 

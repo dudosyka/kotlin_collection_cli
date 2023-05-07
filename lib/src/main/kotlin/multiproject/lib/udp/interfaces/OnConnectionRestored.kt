@@ -1,4 +1,4 @@
-package multiproject.lib.udp.client
+package multiproject.lib.udp.interfaces
 
 import multiproject.lib.dto.ResponseDto
 
