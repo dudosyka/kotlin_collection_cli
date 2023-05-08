@@ -6,7 +6,6 @@ package multiproject.resolver
 import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.dto.request.RequestDirectionInterpreter
 import multiproject.lib.request.Request
-import multiproject.lib.request.resolvers.*
 import multiproject.lib.udp.SocketAddressInterpreter
 import multiproject.lib.udp.UdpConfig
 import multiproject.lib.udp.gateway.GatewayUdpChannel
@@ -26,35 +25,37 @@ class App {
                 runGateway {
                     receiveCallback = OnReceive {
                         _, address, data -> run {
-                            if (data.command == "")
-                                return@run;
+                            if (data.pathDto.controller == "")
+                                return@run
 
-                            val inetAddress = SocketAddressInterpreter.interpret(address)
-                            val request = Request(data);
+                        val inetAddress = SocketAddressInterpreter.interpret(address)
+                            val request = Request(data, inetAddress)
 
-                            if (RequestDirectionInterpreter.interpret(request.requestDirection) == RequestDirection.FROM_CLIENT) {
-                                request.acceptResolver(ClientRequestResolver(this, inetAddress))
+                        if (RequestDirectionInterpreter.interpret(request.requestDirection) == RequestDirection.FROM_CLIENT) {
+                                request.acceptResolver(ClientRequestResolver())
                             } else if (RequestDirectionInterpreter.interpret(request.requestDirection) == RequestDirection.FROM_SERVER) {
-                                request.acceptResolver(ServerRequestResolver(this, inetAddress))
+                                request.acceptResolver(ServerRequestResolver())
                             } else {
-                                request.acceptResolver(UnknownRequestResolver(this, inetAddress))
+                                request.acceptResolver(UnknownRequestResolver())
                             }
                         }
                     }
                     firstConnectCallback = OnConnect {
                         _, address, data -> run {
-                            val request = Request(data);
                             val inetAddress = SocketAddressInterpreter.interpret(address)
+                            val request = Request(data, inetAddress)
 
-                            if (RequestDirectionInterpreter.interpret(request.requestDirection) == RequestDirection.FROM_CLIENT) {
-                                request.acceptResolver(ClientFirstRequestResolver(this, inetAddress))
-                            } else if (RequestDirectionInterpreter.interpret(request.requestDirection) == RequestDirection.FROM_SERVER) {
-                                request.acceptResolver(ServerFirstRequestResolver(this, inetAddress))
-                            } else {
-                                request.acceptResolver(UnknownRequestResolver(this, inetAddress))
-                            }
+                        if (RequestDirectionInterpreter.interpret(request.requestDirection) == RequestDirection.FROM_CLIENT) {
+                                request.acceptResolver(ClientFirstRequestResolver())
+                                return@run
+                        } else if (RequestDirectionInterpreter.interpret(request.requestDirection) == RequestDirection.FROM_SERVER) {
+                                request.acceptResolver(ServerFirstRequestResolver())
+                                return@run
+                        } else {
+                                request.acceptResolver(FirstRequestResolver())
+                                return@run
+                        }
 
-                            request.acceptResolver(FirstRequestResolver(this, inetAddress));
                         }
                     }
                     bindOn(

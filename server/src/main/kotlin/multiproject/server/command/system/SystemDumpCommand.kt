@@ -1,20 +1,19 @@
 package multiproject.server.command.system
 
+import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.dto.response.ResponseDto
-import multiproject.server.command.Command
-import multiproject.lib.dto.command.CommandResult
 import multiproject.lib.exceptions.FileDumpException
-import multiproject.lib.udp.server.ServerUdpChannel
+import multiproject.lib.udp.server.router.Command
+import multiproject.lib.udp.server.router.Controller
+import multiproject.lib.utils.ExecutableInput
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
-import multiproject.server.command.CommandResolver
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 
-class SystemDumpCommand: Command() {
+class SystemDumpCommand(controller: Controller) : Command(controller) {
     private val collection: Collection<Entity> by inject(Collection::class.java, named("collection"))
-    private val server: ServerUdpChannel by inject(ServerUdpChannel::class.java, named("server"))
     override val hideFromClient: Boolean = true
     /**
      * Execute
@@ -22,13 +21,12 @@ class SystemDumpCommand: Command() {
      * @param args
      * @return
      */
-    override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
-        server.disconnect(CommandResolver.author!!)
+    override fun execute(input: ExecutableInput): Response {
         return try {
             this.collection.dump()
-            CommandResult("Collection is successfully dumped!", true, ResponseDto(ResponseCode.SUCCESS, ""))
+            Response(ResponseDto(ResponseCode.SUCCESS, "Collection is successfully dumped!"))
         } catch (e: FileDumpException) {
-            CommandResult(e.message, false, ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, e.message))
+            Response(ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, e.message))
         }
     }
 }

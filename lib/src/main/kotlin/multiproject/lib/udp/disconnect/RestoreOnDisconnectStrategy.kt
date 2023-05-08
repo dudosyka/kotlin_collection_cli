@@ -1,5 +1,6 @@
 package multiproject.lib.udp.disconnect
 
+import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.request.RequestDto
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.dto.response.ResponseDto
@@ -14,7 +15,7 @@ class RestoreOnDisconnectStrategy: DisconnectStrategy() {
         val reconnectTask: TimerTask = object: TimerTask() {
             override fun run() {
                 attemptNum++
-                channel.send(address, RequestDto(""))
+                channel.send(address, RequestDto(PathDto("", "")))
             }
         }
         Timer().schedule(

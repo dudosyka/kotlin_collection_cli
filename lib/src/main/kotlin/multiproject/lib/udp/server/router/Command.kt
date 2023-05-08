@@ -1,16 +1,18 @@
-package multiproject.server.command
+package multiproject.lib.udp.server.router
 
-import multiproject.lib.dto.command.Validator
-import multiproject.lib.exceptions.InvalidArgumentException
 import multiproject.lib.dto.command.CommandArgumentDto
-import multiproject.lib.dto.command.CommandResult
+import multiproject.lib.dto.command.Validator
+import multiproject.lib.dto.response.Response
+import multiproject.lib.exceptions.InvalidArgumentException
+import multiproject.lib.utils.ExecutableInput
 
 /**
  * Command
  *
  * @constructor Create empty Command
  */
-abstract class Command {
+abstract class Command(val controller: Controller) {
+
     open val needObject = false
     open val fields: Map<String, CommandArgumentDto> = mapOf()
     open val fileReaderSource = false
@@ -22,7 +24,7 @@ abstract class Command {
      * @param args
      * @return
      */
-    abstract fun execute(args: List<Any?> = listOf(), data: MutableMap<String, Any?> = mutableMapOf()): CommandResult?
+    abstract fun execute(input: ExecutableInput): Response
 
     /**
      * Get argument

@@ -14,6 +14,7 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import multiproject.lib.dto.command.CommandResult
+import multiproject.lib.dto.request.PathDto
 
 /**
  * Command resolver
@@ -24,7 +25,7 @@ class CommandResolver {
 
     companion object {
         val client: ClientUdpChannel by inject(ClientUdpChannel::class.java, named("client"))
-        var commands: List<CommandDto> = listOf()
+        private var commands: List<CommandDto> = listOf()
 
         fun getCommandByName(name: String): CommandDto? {
             val commands = this.commands.filter { it.name == name }
@@ -37,11 +38,12 @@ class CommandResolver {
         fun updateCommandList(commandList: List<CommandDto>) {
             if (commandList.isNotEmpty())
                 commands = commandList.filter { !it.hideFromClient }
-            println(commands);
+            println(commands)
         }
 
         fun loadCommands() {
-            val response: ResponseDto = client.sendRequest(RequestDto("_load", data = RequestDataDto(mapOf(), listOf())))
+            val response: ResponseDto = client.sendRequest(RequestDto(
+                PathDto("system", "_load"), data = RequestDataDto(mapOf(), listOf())))
             updateCommandList(response.commands)
         }
     }
@@ -92,9 +94,9 @@ class CommandResolver {
         if (arguments.isNotEmpty()) {
             val objectData = ObjectBuilder(arguments).getEntityData()
 //            println(objectData)
-            return CommandResult("Command resolved", true, client.sendRequest(RequestDto(name, data = RequestDataDto(objectData, inlineData))))
+            return CommandResult("Command resolved", true, client.sendRequest(RequestDto(PathDto("collection", name), data = RequestDataDto(objectData, inlineData))))
         }
 
-        return CommandResult("Command resolved", true, client.sendRequest(RequestDto(name, data = RequestDataDto(mapOf(),  inlineData))))
+        return CommandResult("Command resolved", true, client.sendRequest(RequestDto(PathDto("collection", name), data = RequestDataDto(mapOf(),  inlineData))))
     }
 }

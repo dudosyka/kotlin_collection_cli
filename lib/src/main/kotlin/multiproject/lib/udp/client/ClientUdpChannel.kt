@@ -3,6 +3,7 @@ package multiproject.lib.udp.client
 import multiproject.lib.dto.request.RequestDto
 import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.dto.Serializer
+import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.dto.request.RequestDirectionInterpreter
 import multiproject.lib.udp.UdpChannel
@@ -27,7 +28,7 @@ class ClientUdpChannel: UdpChannel() {
                         ByteBuffer.wrap(
                             Serializer.serializeRequest(
                                 RequestDto(
-                                    "",
+                                    PathDto("", ""),
                                     headers = mutableMapOf(
                                         "requestDirection" to RequestDirectionInterpreter.interpret(RequestDirection.FROM_CLIENT)
                                     )
@@ -44,7 +45,7 @@ class ClientUdpChannel: UdpChannel() {
                     connectionLost = true
                     if (attemptNum <= 0)
                         onConnectionRefusedCallback.process(RequestDto(
-                            "ping",
+                            PathDto("ping", ""),
                             headers = mutableMapOf(
                                 "requestDirection" to RequestDirectionInterpreter.interpret(RequestDirection.FROM_CLIENT)
                             )
@@ -61,10 +62,10 @@ class ClientUdpChannel: UdpChannel() {
         )
     }
     fun sendRequest(data: RequestDto): ResponseDto {
-        data.headers["requestDirection"] = RequestDirectionInterpreter.interpret(RequestDirection.FROM_CLIENT);
+        data.headers["requestDirection"] = RequestDirectionInterpreter.interpret(RequestDirection.FROM_CLIENT)
         val response = super.send(this.servers.first().address, data)
-        println("Response resolved: $response");
-        return response;
+        println("Response resolved: $response")
+        return response
     }
     override fun run() {
         channel.connect(this.servers.first().address)

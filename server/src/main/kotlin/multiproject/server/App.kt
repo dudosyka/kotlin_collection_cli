@@ -3,26 +3,30 @@
  */
 package multiproject.server
 
-import multiproject.lib.dto.ConnectedServer
-import multiproject.lib.udp.UdpConfig
+import multiproject.lib.dto.request.PathDto
+import multiproject.lib.dto.request.RequestDto
+import multiproject.lib.dto.response.ResponseCode
+import multiproject.lib.dto.response.ResponseDto
+import multiproject.lib.request.Request
+import multiproject.lib.udp.SocketAddressInterpreter
 import multiproject.lib.udp.interfaces.OnConnect
 import multiproject.lib.udp.interfaces.OnReceive
-import multiproject.server.collection.item.EntityBuilder
+import multiproject.lib.udp.server.ServerUdpChannel
+import multiproject.lib.udp.server.runServer
 import multiproject.server.collection.Collection
-import multiproject.server.command.CommandResolver
+import multiproject.server.collection.item.EntityBuilder
+import multiproject.server.command.*
+import multiproject.server.command.system.SystemDumpCommand
+import multiproject.server.command.system.SystemLoadCommand
 import multiproject.server.dump.DumpManager
 import multiproject.server.dump.FileDumpManager
 import multiproject.server.entities.flat.Flat
 import multiproject.server.entities.flat.FlatBuilder
 import multiproject.server.entities.flat.FlatCollection
-import multiproject.lib.udp.server.ServerUdpChannel
-import multiproject.lib.udp.server.runServer
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
-import java.net.InetAddress
-import java.net.InetSocketAddress
 
 class App (filePath: String) {
     init {
@@ -38,15 +42,93 @@ class App (filePath: String) {
             }
             single<ServerUdpChannel>(named("server")) {
                 runServer {
+                    applyRouter {
+                        addController {
+                            name = "collection"
+                            addRoute {
+                                name = "help"
+                                command = HelpCommand(this@addController)
+                            }
+                            addRoute {
+                                name = "info"
+                                command = InfoCommand(this@addController)
+                            }
+                            addRoute {
+                                name = "add"
+                                command = AddCommand(this@addController)
+                            }
+                            addRoute {
+                                name = "show"
+                                command = ShowCommand(this@addController)
+                            }
+                            addRoute {
+                                name = "update"
+                                command = UpdateCommand(this@addController)
+                            }
+                            addRoute {
+                                name = "remove_by_id"
+                                command = RemoveByIdCommand(this@addController)
+                            }
+                            addRoute {
+                                name = "clear"
+                                command = ClearCommand(this@addController)
+                            }
+                            addRoute {
+                                name = "load"
+                                command = LoadCommand(this@addController)
+                            }
+                            addRoute {
+                                name = "execute_script"
+                                command = ExecuteScriptCommand(this@addController)
+                            }
+                            addRoute {
+                                name = "remove_at"
+                                command = RemoveAtCommand(this@addController)
+                            }
+                            addRoute {
+                                name = "add_if_max"
+                                command = AddIfMaxCommand(this@addController)
+                            }
+                            addRoute {
+                                name = "reorder"
+                                command = ReorderCommand(this@addController)
+                            }
+                            addRoute {
+                                name = "count_by_number_of_rooms"
+                                command = CountByNumberOfRoomsCommand(this@addController)
+                            }
+                            addRoute {
+                                name = "count_less_than_time_to_metro_by_transport"
+                                command = CountLessThanTimeToMetroByTransportCommand(this@addController)
+                            }
+                            addRoute {
+                                name = "filter_less_than_furnish"
+                                command = FilterLessThanFurnish(this@addController)
+                            }
+                        }
+                        addController {
+                            name = "system"
+                            addRoute {
+                                name = "_load"
+                                command = SystemLoadCommand(this@addController)
+                            }
+                            addRoute {
+                                name = "_dump"
+                                command = SystemDumpCommand(this@addController)
+                            }
+                        }
+                    }
                     receiveCallback = OnReceive {
                         _, address, data -> run {
-                            if (data.command == "")
+                            if (data.pathDto.route == "")
                                 return@run
 
-                            CommandResolver.author = address
+                            val request = Request(data, SocketAddressInterpreter.interpret(address))
+                        val dto = router.run(request).dto ?: ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, "Resolver error")
+
                             this.emit(
                                 address,
-                                CommandResolver.run( data.command, data.data?.inlineArguments, data.data?.arguments ).apply {
+                                dto.apply {
                                     headers.putAll(data.headers)
                                 }
                             )
@@ -54,7 +136,9 @@ class App (filePath: String) {
                     }
                     firstConnectCallback = OnConnect {
                         _, address, data -> run {
-                            this.emit(address, CommandResolver.getCommandsInfo().apply { headers.putAll(data.headers) })
+                            val response = router.getCommandsInfo("collection")
+                            println(response)
+                        this.emit(address, ResponseDto(ResponseCode.SUCCESS, "", commands = response).apply { headers.putAll(data.headers) })
                         }
                     }
                     bindOn(
@@ -73,11 +157,11 @@ class App (filePath: String) {
 
 
 fun main() {
+    val server: ServerUdpChannel by inject(ServerUdpChannel::class.java, named("server"))
     try {
         App("/Users/dudosyka/IdeaProjects/lab5Kotlin/data.csv")
-        val server: ServerUdpChannel by inject(ServerUdpChannel::class.java, named("server"))
         server.run()
     } finally {
-        CommandResolver.run("_dump", listOf(), mapOf())
+        server.selfExecute(RequestDto(PathDto("system", "_dump")))
     }
 }

@@ -1,9 +1,14 @@
 package multiproject.server.command
 
-import multiproject.lib.dto.command.CommandResult
+import multiproject.lib.dto.response.Response
+import multiproject.lib.dto.response.ResponseCode
+import multiproject.lib.dto.response.ResponseDto
+import multiproject.lib.exceptions.FileDumpException
+import multiproject.lib.udp.server.router.Command
+import multiproject.lib.udp.server.router.Controller
+import multiproject.lib.utils.ExecutableInput
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
-import multiproject.lib.exceptions.FileDumpException
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 
@@ -12,15 +17,15 @@ import org.koin.java.KoinJavaComponent
  *
  * @constructor Create empty Save command
  */
-class SaveCommand: Command() {
+class SaveCommand(controller: Controller) : Command(controller) {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     override val description: String = "Dump collection to the file"
-    override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
+    override fun execute(input: ExecutableInput): Response {
         return try {
             this.collection.dump()
-            CommandResult("Collection is successfully dumped!")
+            Response(ResponseDto(ResponseCode.SUCCESS, "Collection is successfully dumped!"))
         } catch (e: FileDumpException) {
-            CommandResult(e.message, false)
+            Response(ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, e.message))
         }
     }
 }

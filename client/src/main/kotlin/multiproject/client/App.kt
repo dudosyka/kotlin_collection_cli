@@ -13,6 +13,7 @@ import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
 import multiproject.client.file.FileReader
 import multiproject.lib.dto.ConnectedServer
+import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.request.RequestDto
 import multiproject.lib.exceptions.CommandNotFound
 import multiproject.lib.exceptions.InvalidArgumentException
@@ -99,7 +100,7 @@ fun main() {
             else {
                 if (result.body == "exit") {
                     readNextLine = false
-                    client.sendRequest(RequestDto("_dump"))
+                    client.sendRequest(RequestDto(PathDto(controller = "system",route = "_dump")))
                     writer.writeLine("Application stopping...")
                     client.stop()
                 } else {

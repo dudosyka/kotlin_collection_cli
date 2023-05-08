@@ -1,11 +1,16 @@
 package multiproject.server.command
 
+import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.FieldType
 import multiproject.lib.dto.command.Validator
+import multiproject.lib.dto.response.Response
+import multiproject.lib.dto.response.ResponseCode
+import multiproject.lib.dto.response.ResponseDto
+import multiproject.lib.udp.server.router.Command
+import multiproject.lib.udp.server.router.Controller
+import multiproject.lib.utils.ExecutableInput
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
-import multiproject.lib.dto.command.CommandArgumentDto
-import multiproject.lib.dto.command.CommandResult
-import multiproject.lib.dto.command.FieldType
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 
@@ -14,7 +19,7 @@ import org.koin.java.KoinJavaComponent
  *
  * @constructor Create empty Remove at command
  */
-class RemoveAtCommand: Command() {
+class RemoveAtCommand(controller: Controller) : Command(controller) {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     override val fields: Map<String, CommandArgumentDto> = mapOf(
         "index" to CommandArgumentDto(
@@ -26,13 +31,13 @@ class RemoveAtCommand: Command() {
         )
     )
     override val description: String = "Remove element on specified index"
-    override fun execute(args: List<Any?>, data: MutableMap<String, Any?>): CommandResult {
-        val index = this.getArgument(args, "index", 0, Validator(
+    override fun execute(input: ExecutableInput): Response {
+        val index = this.getArgument(input.args, "index", 0, Validator(
             CommandArgumentDto(name = "index", type = FieldType.INT, required = true)
         )
         )
 
         collection.removeAt(index as Int)
-        return CommandResult("Item with index $index successfully removed!")
+        return Response(ResponseDto( ResponseCode.SUCCESS,"Item with index $index successfully removed!"))
     }
 }
