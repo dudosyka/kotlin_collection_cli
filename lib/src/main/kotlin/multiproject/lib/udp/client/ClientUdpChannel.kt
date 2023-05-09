@@ -17,6 +17,9 @@ class ClientUdpChannel: UdpChannel() {
     private var connectionLost: Boolean = false
     private var attemptNum: Int = 0
     private var pingReconnect: TimerTask? = null
+    lateinit var defaultController: String
+    var authorized: Boolean = false
+    private var token: String = ""
     private fun pingServer() {
         pingReconnect = object: TimerTask() {
             override fun run() {
@@ -63,16 +66,21 @@ class ClientUdpChannel: UdpChannel() {
     }
     fun sendRequest(data: RequestDto): ResponseDto {
         data.headers["requestDirection"] = RequestDirectionInterpreter.interpret(RequestDirection.FROM_CLIENT)
+        if (authorized)
+            data.headers["token"] = token
         val response = super.send(this.servers.first().address, data)
         println("Response resolved: $response")
         return response
+    }
+    fun auth(token: String) {
+        this.authorized = true
+        this.token = token
     }
     override fun run() {
         channel.connect(this.servers.first().address)
         channel.configureBlocking(false)
         this.pingServer()
     }
-
     override fun stop() {
         this.pingReconnect!!.cancel()
         super.stop()

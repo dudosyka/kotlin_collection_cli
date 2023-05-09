@@ -1,11 +1,10 @@
 package multiproject.server.command
 
+import multiproject.lib.dto.command.ExecutableInput
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.udp.server.router.Command
 import multiproject.lib.udp.server.router.Controller
-import multiproject.lib.utils.ExecutableInput
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
 import multiproject.server.collection.sort.CollectionSortType
@@ -25,6 +24,6 @@ class ReorderCommand(controller: Controller) : Command(controller) {
     override val description: String = "Sort items and show collection"
     override fun execute(input: ExecutableInput): Response {
         this.collection.sort(CollectionSortType.ASC)
-        return Response(ResponseDto(ResponseCode.SUCCESS, collection.toString()))
+        return Response(ResponseCode.SUCCESS, collection.toString())
     }
 }

@@ -5,13 +5,12 @@ import multiproject.lib.dto.command.FieldType
 import multiproject.lib.dto.command.Validator
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.udp.server.router.Command
 import multiproject.lib.udp.server.router.Controller
-import multiproject.lib.utils.ExecutableInput
+import multiproject.lib.dto.command.ExecutableInput
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
-import multiproject.server.entities.flat.Furnish
+import multiproject.server.modules.flat.Furnish
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 
@@ -41,9 +40,9 @@ class FilterLessThanFurnish(controller: Controller) : Command(controller) {
         )
 
         if (!validator.validate(furnish))
-            return Response(ResponseDto(ResponseCode.VALIDATION_ERROR, validator.describe()))
+            return Response(ResponseCode.VALIDATION_ERROR, validator.describe())
 
-        return Response(ResponseDto(ResponseCode.SUCCESS, collection.filterLessThanBy(furnish!!).toString()))
+        return Response(ResponseCode.SUCCESS, collection.filterLessThanBy(furnish!!).toString())
 }
 
 }

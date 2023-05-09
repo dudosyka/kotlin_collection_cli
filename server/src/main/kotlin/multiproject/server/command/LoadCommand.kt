@@ -2,11 +2,10 @@ package multiproject.server.command
 
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.dto.response.ResponseDto
-import multiproject.lib.exceptions.FileDumpException
+import multiproject.server.exceptions.FileDumpException
 import multiproject.lib.udp.server.router.Command
 import multiproject.lib.udp.server.router.Controller
-import multiproject.lib.utils.ExecutableInput
+import multiproject.lib.dto.command.ExecutableInput
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
 import org.koin.core.qualifier.named
@@ -19,15 +18,15 @@ class LoadCommand(controller: Controller) : Command(controller) {
     /**
      * Execute
      *
-     * @param args
+     * @param input
      * @return
      */
     override fun execute(input: ExecutableInput): Response {
         return try {
             this.collection.loadDump()
-            Response(ResponseDto(ResponseCode.SUCCESS, "Collection successfully restored!"))
+            Response(ResponseCode.SUCCESS, "Collection successfully restored!")
         } catch (e: FileDumpException) {
-            Response(ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, e.message))
+            Response(ResponseCode.INTERNAL_SERVER_ERROR, e.message)
         }
     }
 }

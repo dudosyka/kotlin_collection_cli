@@ -9,5 +9,5 @@ data class ResponseDto(
     val code: ResponseCode,
     val result: String,
     val headers: MutableMap<String, @Serializable(with = RequestDataSerializer::class) Any?> = mutableMapOf(),
-    val commands: List<CommandDto> = listOf()
+    val commands: Map<String, List<CommandDto>> = mapOf()
 )

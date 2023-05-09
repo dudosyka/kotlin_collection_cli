@@ -4,7 +4,7 @@ import multiproject.lib.dto.command.CommandArgumentDto
 import multiproject.lib.dto.command.Validator
 import multiproject.lib.dto.response.Response
 import multiproject.lib.exceptions.InvalidArgumentException
-import multiproject.lib.utils.ExecutableInput
+import multiproject.lib.dto.command.ExecutableInput
 
 /**
  * Command
@@ -21,7 +21,7 @@ abstract class Command(val controller: Controller) {
     /**
      * Execute
      *
-     * @param args
+     * @param input: ExecutableInput
      * @return
      */
     abstract fun execute(input: ExecutableInput): Response

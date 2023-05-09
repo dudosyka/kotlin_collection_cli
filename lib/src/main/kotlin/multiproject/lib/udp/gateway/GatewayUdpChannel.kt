@@ -14,10 +14,10 @@ class GatewayUdpChannel: UdpChannel() {
 
         val data = initiator.dto.apply(updateWith)
 
-        val response: ResponseDto = this.send(serverAddress, data)
-        println("Response received: from $serverAddress with data $response")
-        this.emit(initiator.from, response)
+        val dto: ResponseDto = this.send(serverAddress, data)
+        println("Response received: from $serverAddress with data $dto")
+        this.emit(initiator.from, dto)
 
-        return Response(response)
+        return Response(dto)
     }
 }

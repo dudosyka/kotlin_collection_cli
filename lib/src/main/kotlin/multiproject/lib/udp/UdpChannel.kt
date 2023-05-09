@@ -10,7 +10,6 @@ import multiproject.lib.udp.interfaces.OnConnectionRestored
 import multiproject.lib.udp.disconnect.CloseOnDisconnectStrategy
 import multiproject.lib.udp.disconnect.DisconnectStrategy
 import multiproject.lib.udp.interfaces.OnDisconnectAttempt
-import multiproject.lib.udp.interfaces.OnConnect
 import multiproject.lib.udp.interfaces.OnReceive
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -19,38 +18,24 @@ import java.net.ServerSocket
 import java.net.SocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
-import java.nio.channels.SocketChannel
 
 abstract class UdpChannel {
-    var onConnectionRefusedCallback: OnConnectionRefused = OnConnectionRefused {
-            _ ->
-    }
-    var onConnectionRestoredCallback: OnConnectionRestored = OnConnectionRestored {
-            _ ->
-    }
-    var receiveCallback: OnReceive = OnReceive {
-            _, _, _ ->
-    }
-    var firstConnectCallback: OnConnect = OnConnect {
-            _, _, _ ->
-    }
-    var onDisconnectAttempt: OnDisconnectAttempt = OnDisconnectAttempt {
-            _ ->
-    }
+    var onConnectionRefusedCallback: OnConnectionRefused = OnConnectionRefused { _ -> }
+    var onConnectionRestoredCallback: OnConnectionRestored = OnConnectionRestored { _ -> }
+    var receiveCallback: OnReceive = OnReceive { _, _ -> }
+    var firstConnectCallback: OnReceive = OnReceive { _, _ -> }
+    var onDisconnectAttempt: OnDisconnectAttempt = OnDisconnectAttempt { _ -> }
     protected val channel: DatagramChannel = DatagramChannel.open()
     var disconnectStrategy: DisconnectStrategy = CloseOnDisconnectStrategy()
-    var wasDisconnected: Boolean = false
+    private var wasDisconnected: Boolean = false
     private var connections: MutableList<SocketAddress> = mutableListOf()
     var servers: MutableList<ConnectedServer> = mutableListOf()
-    fun serversList(): MutableList<ConnectedServer> {
-        return this.servers
-    }
     fun bindOn(address: InetSocketAddress?) {
         if (address == null) {
-            val socket = ServerSocket(0);
-            val port = socket.localPort;
+            val socket = ServerSocket(0)
+            val port = socket.localPort
             channel.bind(InetSocketAddress(InetAddress.getLocalHost(), port))
-            return;
+            return
         }
         channel.bind(address)
     }
@@ -74,7 +59,7 @@ abstract class UdpChannel {
     }
     fun emit(address: InetSocketAddress, data: RequestDto) {
         val dataString = Serializer.serializeRequest(data)
-        println("Emit to ${address} with data: $data");
+        println("Emit to $address with data: $data")
         channel.send(ByteBuffer.wrap(dataString.toByteArray()), address)
     }
     fun emit(address: SocketAddress, data: ResponseDto) {
@@ -83,7 +68,7 @@ abstract class UdpChannel {
         channel.send(ByteBuffer.wrap(dataString.toByteArray()), address)
     }
     open fun send(address: InetSocketAddress, data: RequestDto): ResponseDto {
-        println("Send to ${address} with data: $data")
+        println("Send to $address with data: $data")
         val dataString = Serializer.serializeRequest(data)
         val response = try {
             channel.send(ByteBuffer.wrap(dataString.toByteArray()), address)
@@ -91,7 +76,7 @@ abstract class UdpChannel {
                 disconnectStrategy.attemptNum = 0
                 wasDisconnected = false
                 onConnectionRestoredCallback.process(Serializer.deserializeResponse(this.getMessage()))
-                val response = ResponseDto(ResponseCode.SUCCESS, "");
+                val response = ResponseDto(ResponseCode.SUCCESS, "")
                 response
             } else {
                 val response = Serializer.deserializeResponse(this.getMessage())
@@ -105,19 +90,19 @@ abstract class UdpChannel {
             val response = disconnectStrategy.onDisconnect(this, address)
             response
         }
-        println("Returned response from $address with data $response");
-        return response;
+        println("Returned response from $address with data $response")
+        return response
     }
-    private fun onMessage(address: SocketAddress, data: String) {
-        val dto = Serializer.deserializeRequest(data);
-        println("Received request. from ${address} with data ${dto}")
-        this.receiveCallback.process(channel, address, dto);
+    protected fun onMessage(address: SocketAddress, data: String) {
+        val dto = Serializer.deserializeRequest(data)
+        println("Received request. from $address with data $dto")
+        this.receiveCallback.process(address, dto)
     }
-    private fun onNewConnection(address: SocketAddress, data: String) {
-        val dto = Serializer.deserializeRequest(data);
-        println("Received first request. from ${address} with data ${dto}")
+    protected open fun onNewConnection(address: SocketAddress, data: String) {
+        val dto = Serializer.deserializeRequest(data)
+        println("Received first request. from $address with data $dto")
         connections.add(address)
-        this.firstConnectCallback.process(channel, address, dto)
+        this.firstConnectCallback.process(address, dto)
     }
     private fun receive() {
         while (true) {
@@ -140,7 +125,7 @@ abstract class UdpChannel {
         channel.close()
     }
     open fun run() {
-        println("Bind on: ${this.channel.localAddress}");
+        println("Bind on: ${this.channel.localAddress}")
         this.receive()
     }
 }

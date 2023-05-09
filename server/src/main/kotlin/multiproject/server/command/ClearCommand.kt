@@ -1,11 +1,10 @@
 package multiproject.server.command
 
+import multiproject.lib.dto.command.ExecutableInput
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.udp.server.router.Command
 import multiproject.lib.udp.server.router.Controller
-import multiproject.lib.utils.ExecutableInput
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
 import org.koin.core.qualifier.named
@@ -21,6 +20,6 @@ class ClearCommand(controller: Controller) : Command(controller) {
     override val description: String = "Clear the collection"
     override fun execute(input: ExecutableInput): Response {
         collection.clear()
-        return Response(ResponseDto(ResponseCode.SUCCESS, "Collection is successfully cleared!"))
+        return Response(ResponseCode.SUCCESS, "Collection is successfully cleared!")
     }
 }

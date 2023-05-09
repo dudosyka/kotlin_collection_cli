@@ -3,14 +3,13 @@ package multiproject.server.command
 import multiproject.lib.dto.command.CommandArgumentDto
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.udp.server.router.Controller
-import multiproject.lib.utils.ExecutableInput
+import multiproject.lib.dto.command.ExecutableInput
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
 import multiproject.server.collection.item.EntityBuilder
-import multiproject.server.entities.flat.Flat
-import multiproject.server.entities.flat.RoomsComparator
+import multiproject.server.modules.flat.Flat
+import multiproject.server.modules.flat.RoomsComparator
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 
@@ -31,9 +30,9 @@ open class AddIfMaxCommand(controller: Controller) : AddCommand(controller) {
         val result = collection.addIfMax(RoomsComparator(), entity)
 
         return if (!result) {
-            Response(ResponseDto(ResponseCode.VALIDATION_ERROR,"Failed! number of rooms is lower than max in collection"))
+            Response(ResponseCode.VALIDATION_ERROR,"Failed! number of rooms is lower than max in collection")
         } else {
-            Response(ResponseDto(ResponseCode.SUCCESS, "Item successfully created"))
+            Response(ResponseCode.SUCCESS, "Item successfully created")
         }
     }
 }

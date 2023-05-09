@@ -8,6 +8,7 @@ import multiproject.lib.udp.UdpChannel
 import multiproject.lib.udp.UdpConfig
 import multiproject.lib.udp.server.router.Router
 import java.net.InetSocketAddress
+import java.net.SocketAddress
 
 class ServerUdpChannel: UdpChannel() {
     lateinit var router: Router
@@ -20,8 +21,12 @@ class ServerUdpChannel: UdpChannel() {
         return SocketAddressInterpreter.interpret(this.channel.localAddress)
     }
 
-    fun selfExecute(request: RequestDto) {
-        this.router.run(Request(request, this.getAddress()))
+    fun selfExecute(request: RequestDto, from: InetSocketAddress? = null) {
+        this.router.run(Request(request, from ?: this.getAddress()))
+    }
+
+    override fun onNewConnection(address: SocketAddress, data: String) {
+        this.onMessage(address, data)
     }
 
     override fun run() {

@@ -1,0 +1,15 @@
+package multiproject.resolver.resolvers.server
+
+import multiproject.lib.dto.ConnectedServer
+import multiproject.lib.request.Request
+import multiproject.lib.request.RequestResolver
+import multiproject.lib.udp.gateway.GatewayUdpChannel
+import org.koin.core.qualifier.named
+import org.koin.java.KoinJavaComponent
+
+class ServerFirstRequestResolver : RequestResolver() {
+    override val gateway: GatewayUdpChannel by KoinJavaComponent.inject(GatewayUdpChannel::class.java, named("server"))
+    override fun resolve(request: Request) {
+        gateway.addServer(ConnectedServer(0, request.from))
+    }
+}

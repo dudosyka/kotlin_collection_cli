@@ -21,4 +21,6 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.10")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
     implementation("io.insert-koin:koin-core:3.3.3")
+    implementation("io.jsonwebtoken:jjwt-api:0.11.1")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.1")
 }

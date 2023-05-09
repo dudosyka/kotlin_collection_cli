@@ -9,7 +9,6 @@ import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.request.Request
 import multiproject.lib.udp.SocketAddressInterpreter
-import multiproject.lib.udp.interfaces.OnConnect
 import multiproject.lib.udp.interfaces.OnReceive
 import multiproject.lib.udp.server.ServerUdpChannel
 import multiproject.lib.udp.server.runServer
@@ -18,11 +17,14 @@ import multiproject.server.collection.item.EntityBuilder
 import multiproject.server.command.*
 import multiproject.server.command.system.SystemDumpCommand
 import multiproject.server.command.system.SystemLoadCommand
+import multiproject.server.command.user.AuthCommand
+import multiproject.server.command.user.GetByTokenCommand
 import multiproject.server.dump.DumpManager
 import multiproject.server.dump.FileDumpManager
-import multiproject.server.entities.flat.Flat
-import multiproject.server.entities.flat.FlatBuilder
-import multiproject.server.entities.flat.FlatCollection
+import multiproject.server.modules.flat.Flat
+import multiproject.server.modules.flat.FlatBuilder
+import multiproject.server.modules.flat.FlatCollection
+import multiproject.server.middlewares.auth.AuthMiddleware
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -108,6 +110,7 @@ class App (filePath: String) {
                         }
                         addController {
                             name = "system"
+                            needAuth = false
                             addRoute {
                                 name = "_load"
                                 command = SystemLoadCommand(this@addController)
@@ -117,14 +120,34 @@ class App (filePath: String) {
                                 command = SystemDumpCommand(this@addController)
                             }
                         }
+                        addController {
+                            name = "user"
+                            addRoute {
+                                name = "auth"
+                                authorizationEndpoint = true
+                                command = AuthCommand(this@addController)
+                                needAuth = false
+                            }
+                            addRoute {
+                                name = "get"
+                                command = GetByTokenCommand(this@addController)
+                                addMiddleware(AuthMiddleware)
+                            }
+                            addRoute {
+                                name = "help"
+                                command = HelpCommand(this@addController)
+                                needAuth = false
+                            }
+                        }
+
                     }
                     receiveCallback = OnReceive {
-                        _, address, data -> run {
+                        address, data -> run {
                             if (data.pathDto.route == "")
                                 return@run
 
                             val request = Request(data, SocketAddressInterpreter.interpret(address))
-                        val dto = router.run(request).dto ?: ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, "Resolver error")
+                            val dto = router.run(request).dto ?: ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, "Resolver error")
 
                             this.emit(
                                 address,
@@ -132,13 +155,6 @@ class App (filePath: String) {
                                     headers.putAll(data.headers)
                                 }
                             )
-                        }
-                    }
-                    firstConnectCallback = OnConnect {
-                        _, address, data -> run {
-                            val response = router.getCommandsInfo("collection")
-                            println(response)
-                        this.emit(address, ResponseDto(ResponseCode.SUCCESS, "", commands = response).apply { headers.putAll(data.headers) })
                         }
                     }
                     bindOn(

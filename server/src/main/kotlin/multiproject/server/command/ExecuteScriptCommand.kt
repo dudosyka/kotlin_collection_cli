@@ -1,13 +1,12 @@
 package multiproject.server.command
 
 import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.ExecutableInput
 import multiproject.lib.dto.command.FieldType
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.udp.server.router.Command
 import multiproject.lib.udp.server.router.Controller
-import multiproject.lib.utils.ExecutableInput
 
 /**
  * Execute script command
@@ -26,6 +25,6 @@ class ExecuteScriptCommand(controller: Controller) : Command(controller) {
     override val fileReaderSource: Boolean = true
     override val description: String = "Run script"
     override fun execute(input: ExecutableInput): Response {
-        return Response(ResponseDto(ResponseCode.SUCCESS, ""))
+        return Response(ResponseCode.SUCCESS, "")
     }
 }

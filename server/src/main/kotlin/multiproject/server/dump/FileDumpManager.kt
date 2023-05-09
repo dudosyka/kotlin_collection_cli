@@ -4,7 +4,7 @@ import kotlinx.serialization.*
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.csv.Csv
 import multiproject.server.collection.item.Entity
-import multiproject.lib.exceptions.FileDumpException
+import multiproject.server.exceptions.FileDumpException
 import java.io.*
 
 /**
@@ -16,7 +16,7 @@ import java.io.*
  * @constructor Create empty File dump manager
  */
 @OptIn(ExperimentalSerializationApi::class)
-class FileDumpManager<T : Entity> (val filePath: String, private val serializer: KSerializer<T>): DumpManager<T>() {
+class FileDumpManager<T : Entity> (private val filePath: String, private val serializer: KSerializer<T>): DumpManager<T>() {
 
     override fun loadDump(): MutableList<T> {
         try {

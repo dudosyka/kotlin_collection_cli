@@ -1,32 +1,19 @@
 package multiproject.lib.dto
 
-import kotlinx.serialization.*
-import kotlinx.serialization.json.*
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import multiproject.lib.dto.request.RequestDto
-import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.dto.response.ResponseDto
 
-class Serializer {
-    companion object {
-        fun serializeResponse(data: ResponseDto): String {
-            return Json.encodeToString(data)
-        }
+object Serializer {
 
-        fun serializeRequest(data: RequestDto): String {
-            return Json.encodeToString(data)
-        }
+    private val json = Json { ignoreUnknownKeys = true }
+    fun serializeResponse(data: ResponseDto): String = json.encodeToString(data)
 
-        fun deserializeResponse(data: String): ResponseDto {
-            return try {
-                Json.decodeFromString<ResponseDto>(data)
-            } catch (e: Exception) {
-                println(data)
-                ResponseDto(ResponseCode.BAD_REQUEST, "serialization error")
-            }
-        }
+    fun serializeRequest(data: RequestDto): String = json.encodeToString(data)
 
-        fun deserializeRequest(data: String): RequestDto {
-            return Json.decodeFromString<RequestDto>(data)
-        }
-    }
+    fun deserializeResponse(data: String): ResponseDto = json.decodeFromString<ResponseDto>(data)
+
+    fun deserializeRequest(data: String): RequestDto = json.decodeFromString<RequestDto>(data)
 }

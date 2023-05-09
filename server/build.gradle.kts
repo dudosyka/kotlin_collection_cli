@@ -12,7 +12,12 @@ plugins {
 dependencies {
     implementation("org.apache.commons:commons-text")
     implementation(project(":lib"))
-//    implementation(":lib:jar")
+    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+    implementation("io.jsonwebtoken:jjwt-impl:0.11.5")
+//    implementation("io.jsonwebtoken:jjwt-impl:0.11.1")
+//    implementation("io.jsonwebtoken:jjwt-impl:0.11.0")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
+//    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.0", "io.jsonwebtoken:jjwt-jackson:0.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
     implementation("io.insert-koin:koin-core:3.3.3")
     implementation("de.brudaswen.kotlinx.serialization:kotlinx-serialization-csv:2.0.0")

@@ -3,6 +3,7 @@ package multiproject.lib.dto.response
 enum class ResponseCode {
     SUCCESS,
     BAD_REQUEST,
+    FORBIDDEN,
     ITEM_NOT_FOUND,
     NOT_FOUND,
     VALIDATION_ERROR,

@@ -1,14 +1,13 @@
 package multiproject.server.command
 
 import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.ExecutableInput
 import multiproject.lib.dto.command.FieldType
 import multiproject.lib.dto.command.Validator
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.udp.server.router.Command
 import multiproject.lib.udp.server.router.Controller
-import multiproject.lib.utils.ExecutableInput
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
 import org.koin.core.qualifier.named
@@ -39,6 +38,6 @@ class RemoveByIdCommand(controller: Controller) : Command(controller) {
         )
         )
         collection.removeById(id as Int)
-        return Response(ResponseDto( ResponseCode.SUCCESS,"Item with id = $id successfully removed!"))
+        return Response( ResponseCode.SUCCESS,"Item with id = $id successfully removed!")
     }
 }

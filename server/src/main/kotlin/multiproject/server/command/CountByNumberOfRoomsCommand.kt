@@ -1,14 +1,13 @@
 package multiproject.server.command
 
 import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.ExecutableInput
 import multiproject.lib.dto.command.FieldType
 import multiproject.lib.dto.command.Validator
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.udp.server.router.Command
 import multiproject.lib.udp.server.router.Controller
-import multiproject.lib.utils.ExecutableInput
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
 import org.koin.core.qualifier.named
@@ -38,7 +37,7 @@ class CountByNumberOfRoomsCommand(controller: Controller) : Command(controller) 
         )
         )
 
-        return Response(ResponseDto(ResponseCode.SUCCESS, collection.countBy(numberOfRooms as Int).toString()))
+        return Response(ResponseCode.SUCCESS, collection.countBy(numberOfRooms as Int).toString())
 }
 
 }

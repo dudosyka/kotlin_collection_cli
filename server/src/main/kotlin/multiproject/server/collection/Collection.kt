@@ -2,11 +2,12 @@ package multiproject.server.collection
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import multiproject.lib.exceptions.*
 import multiproject.server.collection.item.Entity
 import multiproject.server.collection.sort.CollectionSortType
 import multiproject.server.collection.sort.IdComparator
 import multiproject.server.dump.DumpManager
+import multiproject.server.exceptions.ItemNotFoundException
+import multiproject.server.exceptions.NotUniqueIdException
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 import java.time.ZonedDateTime
@@ -72,7 +73,7 @@ abstract class Collection<T : Entity> {
      * @param index
      * @return
      */
-    fun getItem(index: Int): T {
+    private fun getItem(index: Int): T {
         this.lastAccessTimestamp = ZonedDateTime.now()
         return this.items.elementAt(index)
     }
@@ -83,7 +84,7 @@ abstract class Collection<T : Entity> {
      * @param id
      * @return
      */
-    fun getIndexById(id: Int): Int? {
+    private fun getIndexById(id: Int): Int? {
         this.items.withIndex().forEach {
             if (it.value.id == id)
                 return it.index

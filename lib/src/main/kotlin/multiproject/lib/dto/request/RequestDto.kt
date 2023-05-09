@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 data class RequestDto(
     var pathDto: PathDto,
     var headers: MutableMap<String, @Serializable(with=RequestDataSerializer::class) Any?> = mutableMapOf(),
-    var data: RequestDataDto? = null,
+    var data: RequestDataDto = RequestDataDto(),
 )

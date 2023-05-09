@@ -1,6 +1,6 @@
 package multiproject.client.command
 
-import multiproject.lib.exceptions.CommandNotFound
+import multiproject.client.exceptions.CommandNotFound
 import multiproject.client.io.IOData
 import multiproject.lib.udp.client.ClientUdpChannel
 import multiproject.lib.dto.request.RequestDataDto
@@ -25,25 +25,25 @@ class CommandResolver {
 
     companion object {
         val client: ClientUdpChannel by inject(ClientUdpChannel::class.java, named("client"))
-        private var commands: List<CommandDto> = listOf()
+        private var commands: Map<String, List<CommandDto>> = mapOf()
 
-        fun getCommandByName(name: String): CommandDto? {
-            val commands = this.commands.filter { it.name == name }
+        fun getCommandByName(controller: String, name: String): CommandDto? {
+            val commands = this.commands[controller]?.filter { it.name == name } ?: listOf()
             return if (commands.isNotEmpty())
                 commands.first()
             else
                 null
         }
 
-        fun updateCommandList(commandList: List<CommandDto>) {
+        fun updateCommandList(commandList: Map<String, List<CommandDto>>) {
             if (commandList.isNotEmpty())
-                commands = commandList.filter { !it.hideFromClient }
+                commands = commandList.map { controller -> controller.key to controller.value.filter { !it.hideFromClient }.filter { if (client.authorized) true else !it.needAuth } }.toMap()
             println(commands)
         }
 
         fun loadCommands() {
             val response: ResponseDto = client.sendRequest(RequestDto(
-                PathDto("system", "_load"), data = RequestDataDto(mapOf(), listOf())))
+                PathDto("system", "_load"), data = RequestDataDto(mutableMapOf(), listOf())))
             updateCommandList(response.commands)
         }
     }
@@ -55,13 +55,20 @@ class CommandResolver {
      */
     fun handle(commandLine: String): CommandResult {
         val split = commandLine.split(" ")
-        val name = split[0]
+        val route = split[0].split(".")
+        var name = route[0]
+        var controller = client.defaultController
+        if (route.size > 1) {
+            controller = route[0]
+            name = route[1]
+        }
+
         val args = split.subList(1, split.size)
 
         if (name == "exit")
             return CommandResult("exit")
 
-        val command: CommandDto = getCommandByName(name) ?: throw CommandNotFound(name)
+        val command: CommandDto = getCommandByName(controller, name) ?: throw CommandNotFound(controller, name)
 
         val inlineData: List<Any> = InlineArgumentsValidator(
             args,
@@ -91,12 +98,19 @@ class CommandResolver {
 
         val arguments = command.arguments.filter { !it.value.inline }
 
-        if (arguments.isNotEmpty()) {
+
+        val result = if (arguments.isNotEmpty()) {
             val objectData = ObjectBuilder(arguments).getEntityData()
-//            println(objectData)
-            return CommandResult("Command resolved", true, client.sendRequest(RequestDto(PathDto("collection", name), data = RequestDataDto(objectData, inlineData))))
+             client.sendRequest(RequestDto(PathDto(controller, name), data = RequestDataDto(objectData, inlineData)))
+        } else {
+            client.sendRequest(RequestDto(PathDto(controller, name), data = RequestDataDto(mutableMapOf(),  inlineData)))
         }
 
-        return CommandResult("Command resolved", true, client.sendRequest(RequestDto(PathDto("collection", name), data = RequestDataDto(mapOf(),  inlineData))))
+        if (command.authorizedEndpoint && result.code.toString() == "SUCCESS") {
+            client.auth(result.result)
+            loadCommands()
+        }
+
+        return CommandResult("Command resolved", true, result)
     }
 }

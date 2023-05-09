@@ -10,8 +10,12 @@ import multiproject.lib.udp.SocketAddressInterpreter
 import multiproject.lib.udp.UdpConfig
 import multiproject.lib.udp.gateway.GatewayUdpChannel
 import multiproject.lib.udp.gateway.runGateway
-import multiproject.lib.udp.interfaces.OnConnect
 import multiproject.lib.udp.interfaces.OnReceive
+import multiproject.resolver.resolvers.*
+import multiproject.resolver.resolvers.client.ClientFirstRequestResolver
+import multiproject.resolver.resolvers.client.ClientRequestResolver
+import multiproject.resolver.resolvers.server.ServerFirstRequestResolver
+import multiproject.resolver.resolvers.server.ServerRequestResolver
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -24,38 +28,43 @@ class App {
             single<GatewayUdpChannel>(named("server")) {
                 runGateway {
                     receiveCallback = OnReceive {
-                        _, address, data -> run {
+                        address, data -> run {
                             if (data.pathDto.controller == "")
                                 return@run
 
-                        val inetAddress = SocketAddressInterpreter.interpret(address)
-                            val request = Request(data, inetAddress)
-
-                        if (RequestDirectionInterpreter.interpret(request.requestDirection) == RequestDirection.FROM_CLIENT) {
-                                request.acceptResolver(ClientRequestResolver())
-                            } else if (RequestDirectionInterpreter.interpret(request.requestDirection) == RequestDirection.FROM_SERVER) {
-                                request.acceptResolver(ServerRequestResolver())
-                            } else {
-                                request.acceptResolver(UnknownRequestResolver())
-                            }
-                        }
-                    }
-                    firstConnectCallback = OnConnect {
-                        _, address, data -> run {
                             val inetAddress = SocketAddressInterpreter.interpret(address)
                             val request = Request(data, inetAddress)
 
-                        if (RequestDirectionInterpreter.interpret(request.requestDirection) == RequestDirection.FROM_CLIENT) {
-                                request.acceptResolver(ClientFirstRequestResolver())
-                                return@run
-                        } else if (RequestDirectionInterpreter.interpret(request.requestDirection) == RequestDirection.FROM_SERVER) {
-                                request.acceptResolver(ServerFirstRequestResolver())
-                                return@run
-                        } else {
-                                request.acceptResolver(FirstRequestResolver())
-                                return@run
+                        when (RequestDirectionInterpreter.interpret(request.requestDirection)) {
+                                RequestDirection.FROM_CLIENT -> {
+                                    request.acceptResolver(ClientRequestResolver())
+                                }
+                                RequestDirection.FROM_SERVER -> {
+                                    request.acceptResolver(ServerRequestResolver())
+                                }
+                                else -> {
+                                    request.acceptResolver(UnknownRequestResolver())
+                                }
+                            }
                         }
+                    }
+                    firstConnectCallback = OnReceive {
+                        address, data -> run {
 
+                            val inetAddress = SocketAddressInterpreter.interpret(address)
+                            val request = Request(data, inetAddress)
+
+                        when (RequestDirectionInterpreter.interpret(request.requestDirection)) {
+                                RequestDirection.FROM_CLIENT -> {
+                                    request.acceptResolver(ClientFirstRequestResolver())
+                                }
+                                RequestDirection.FROM_SERVER -> {
+                                    request.acceptResolver(ServerFirstRequestResolver())
+                                }
+                                else -> {
+                                    request.acceptResolver(UnknownRequestResolver())
+                                }
+                            }
                         }
                     }
                     bindOn(

@@ -1,6 +1,8 @@
 package multiproject.lib.exceptions
 
 import multiproject.lib.dto.command.Validator
+import multiproject.lib.dto.response.ResponseCode
+import multiproject.lib.utils.ExecuteException
 
 /**
  * Validation field exception
@@ -9,7 +11,7 @@ import multiproject.lib.dto.command.Validator
  * @property validator
  * @constructor Create empty Validation field exception
  */
-class ValidationFieldException(private val propertyName: String, val validator: Validator) : Exception() {
+class ValidationFieldException(private val propertyName: String, val validator: Validator) : ExecuteException(ResponseCode.VALIDATION_ERROR) {
     override val message: String
         get() = "Validation failed! ${validator.describe()}"
 }

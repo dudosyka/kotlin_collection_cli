@@ -15,9 +15,9 @@ import multiproject.client.file.FileReader
 import multiproject.lib.dto.ConnectedServer
 import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.request.RequestDto
-import multiproject.lib.exceptions.CommandNotFound
+import multiproject.client.exceptions.CommandNotFound
 import multiproject.lib.exceptions.InvalidArgumentException
-import multiproject.lib.exceptions.RecursiveScriptException
+import multiproject.client.exceptions.RecursiveScriptException
 import multiproject.lib.exceptions.ValidationFieldException
 import multiproject.lib.udp.UdpConfig
 import multiproject.lib.udp.interfaces.OnConnectionRefused
@@ -41,6 +41,7 @@ class App {
             }
             single<ClientUdpChannel>(named("client")) {
                 runClient {
+                    defaultController = "collection"
                     onConnectionRestoredCallback = OnConnectionRestored {
                         response -> run {
                             CommandResolver.updateCommandList(response.commands)

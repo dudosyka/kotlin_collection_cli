@@ -3,9 +3,12 @@ package multiproject.lib.udp.server.router
 import multiproject.lib.dto.command.CommandDto
 import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.response.Response
+import multiproject.lib.dto.response.ResponseCode
+import multiproject.lib.utils.ExecuteException
 import multiproject.lib.exceptions.RouteNotFound
 import multiproject.lib.request.Request
-import multiproject.lib.utils.RequestToExecutableInterpreter
+import multiproject.lib.request.RequestToExecutableInterpreter
+import multiproject.lib.request.middleware.MiddlewareException
 
 class Router {
     private val controllers: MutableList<Controller> = mutableListOf()
@@ -16,29 +19,34 @@ class Router {
     private fun getRoute(path: PathDto): Pair<Controller, Route> {
         val controller: Controller = this.controllers.find {
             it.name == path.controller
-        } ?: throw RouteNotFound()
+        } ?: throw RouteNotFound(path)
 
         val route: Route = controller.routes.find {
             it.name == path.route
-        } ?: throw RouteNotFound()
+        } ?: throw RouteNotFound(path)
 
         return Pair(controller, route)
     }
+
     fun getRoutes(controllerName: String): List<Route> {
         val controller: Controller = this.controllers.find {
             it.name == controllerName
-        } ?: throw RouteNotFound()
+        } ?: throw RouteNotFound(PathDto(controllerName, ""))
 
         return controller.routes
     }
-    fun getCommandsInfo(controllerName: String): List<CommandDto> {
-        return this.getRoutes(controllerName).map {
-            CommandDto(
-                name = it.name,
-                arguments = it.command.fields,
-                hideFromClient = it.command.hideFromClient,
-                fileReaderSource = it.command.fileReaderSource
-            )
+    fun getCommandsInfo(): Map<String, List<CommandDto>> {
+        return this.controllers.associate { controller ->
+            controller.name to this.getRoutes(controller.name).map {
+                CommandDto(
+                    name = it.name,
+                    needAuth = controller.needAuth && it.needAuth,
+                    authorizedEndpoint = it.authorizationEndpoint,
+                    arguments = it.command.fields,
+                    hideFromClient = it.command.hideFromClient,
+                    fileReaderSource = it.command.fileReaderSource
+                )
+            }
         }
     }
 
@@ -46,14 +54,22 @@ class Router {
 
         val path = getRoute(request.dto.pathDto)
 
-        path.first.middlewares.forEach {
-            request.applyMiddleware(it())
-        }
+        return try {
+            path.first.middlewares.forEach {
+                request.applyMiddleware(it())
+            }
 
-        path.second.middlewares.forEach {
-            request.applyMiddleware(it())
-        }
+            path.second.middlewares.forEach {
+                request.applyMiddleware(it())
+            }
 
-        return path.second.command.execute(requestInterpreter.interpret(request))
+            path.second.command.execute(requestInterpreter.interpret(request))
+        } catch (e: Exception) {
+            Response(ResponseCode.INTERNAL_SERVER_ERROR, e.message ?: "")
+        } catch (e: MiddlewareException) {
+            Response(ResponseCode.BAD_REQUEST, e.message)
+        } catch (e: ExecuteException) {
+            Response(e.code, e.message)
+        }
     }
 }
