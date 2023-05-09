@@ -11,9 +11,12 @@ import org.koin.java.KoinJavaComponent
 import java.time.ZonedDateTime
 
 class HouseBuilder: EntityBuilder<House>() {
+    override val tableName: String
+        get() = "house"
     private val collection: Collection<Human> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     @Transient
     override val fields: MutableMap<String, CommandArgumentDto> = mutableMapOf(
+        "id" to CommandArgumentDto(name = "id", show = false),
         "name" to CommandArgumentDto(
             name = "name",
             required = false,

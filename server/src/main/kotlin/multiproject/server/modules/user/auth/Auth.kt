@@ -1,4 +1,4 @@
-package multiproject.server.modules.auth
+package multiproject.server.modules.user.auth
 
 import multiproject.server.exceptions.ForbiddenException
 import java.time.LocalDateTime
@@ -12,7 +12,12 @@ class Auth(
         if (login == "aboba" && password == "pass") {
             val id = 2
             val curDate = LocalDateTime.now().toLocalDate()
-            return JwtUtil.sign(JwtBody(subject = id, expirationDate = Date(curDate.year, curDate.monthValue, curDate.dayOfMonth + 1)))
+            return JwtUtil.sign(
+                JwtBody(
+                    subject = id,
+                    expirationDate = Date(curDate.year, curDate.monthValue, curDate.dayOfMonth + 1)
+                )
+            )
         } else
             throw ForbiddenException()
     }

@@ -10,7 +10,10 @@ data class CommandArgumentDto(
     val min: Int? = null,
     val max: Int? = null,
     val required: Boolean = false,
+    val show: Boolean = true,
     val inline: Boolean = false,
     val nested: Map<String, CommandArgumentDto>? = null,
-    val choisable: List<String>? = null
+    val nestedTable: String? = null,
+    val nestedJoinOn: Pair<String, String>? = null,
+    val choisable: List<String>? = null,
 )

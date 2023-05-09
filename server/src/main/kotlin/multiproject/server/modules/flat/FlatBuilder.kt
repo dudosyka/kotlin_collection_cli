@@ -14,9 +14,14 @@ import org.koin.java.KoinJavaComponent
 import java.time.ZonedDateTime
 
 class FlatBuilder: EntityBuilder<Flat>() {
+
+    override val tableName: String
+        get() = "flat"
+
     private val collection: Collection<Human> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     @Transient
     override val fields: MutableMap<String, CommandArgumentDto> = mutableMapOf(
+        "id" to CommandArgumentDto(name = "id", show = false),
         "name" to CommandArgumentDto(
             name = "name",
             required = true,
@@ -49,12 +54,16 @@ class FlatBuilder: EntityBuilder<Flat>() {
         "coordinates" to CommandArgumentDto(
             name = "coordinates",
             required = true,
-            nested = CoordinatesBuilder().fields
+            nested = CoordinatesBuilder().fields,
+            nestedTable = CoordinatesBuilder().tableName,
+            nestedJoinOn = Pair("coordinates", "id")
         ),
         "house" to CommandArgumentDto(
             name = "house",
             required = true,
-            nested = HouseBuilder().fields
+            nested = HouseBuilder().fields,
+            nestedTable = HouseBuilder().tableName,
+            nestedJoinOn = Pair("house", "id")
         ),
         "furnish" to CommandArgumentDto(
             name = "furnish",
@@ -62,7 +71,6 @@ class FlatBuilder: EntityBuilder<Flat>() {
             type = FieldType.ENUM,
             choisable = Furnish.values().map { it.toString() }
         ),
-
     )
 
     /**

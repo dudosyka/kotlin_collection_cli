@@ -12,4 +12,8 @@ import java.time.ZonedDateTime
 abstract class Entity {
     abstract var id: Int
     abstract var creationDate: ZonedDateTime
+
+    open fun update(tableName: String, onUpdate: Map<String, Any>) {
+
+    }
 }

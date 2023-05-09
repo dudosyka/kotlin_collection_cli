@@ -10,6 +10,8 @@ import multiproject.lib.dto.command.CommandArgumentDto
  */
 abstract class EntityBuilder<T: Entity> {
 
+    abstract val tableName: String
+
     abstract val fields: Map<String, CommandArgumentDto>
 
     /**

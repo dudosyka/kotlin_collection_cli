@@ -17,6 +17,7 @@ dependencies {
 //    implementation("io.jsonwebtoken:jjwt-impl:0.11.1")
 //    implementation("io.jsonwebtoken:jjwt-impl:0.11.0")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
+    runtimeOnly("org.postgresql:postgresql:42.5.2")
 //    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.0", "io.jsonwebtoken:jjwt-jackson:0.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
     implementation("io.insert-koin:koin-core:3.3.3")

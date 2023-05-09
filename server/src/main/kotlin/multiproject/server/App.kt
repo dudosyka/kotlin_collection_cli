@@ -19,8 +19,9 @@ import multiproject.server.command.system.SystemDumpCommand
 import multiproject.server.command.system.SystemLoadCommand
 import multiproject.server.command.user.AuthCommand
 import multiproject.server.command.user.GetByTokenCommand
+import multiproject.server.database.DatabaseManager
 import multiproject.server.dump.DumpManager
-import multiproject.server.dump.FileDumpManager
+import multiproject.server.dump.PostgresqlDumpManager
 import multiproject.server.modules.flat.Flat
 import multiproject.server.modules.flat.FlatBuilder
 import multiproject.server.modules.flat.FlatCollection
@@ -30,17 +31,20 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
 
-class App (filePath: String) {
+class App () {
     init {
         val module = module {
             single<Collection<Flat>>(named("collection")) {
                 FlatCollection(mutableListOf())
             }
             single<DumpManager<Flat>>(named("dumpManager")) {
-                FileDumpManager(filePath, Flat.serializer())
+                PostgresqlDumpManager(FlatBuilder())
             }
             single<EntityBuilder<Flat>>(named("builder")) {
                 FlatBuilder()
+            }
+            single<DatabaseManager>(named("dbManager")) {
+                DatabaseManager()
             }
             single<ServerUdpChannel>(named("server")) {
                 runServer {
@@ -174,8 +178,10 @@ class App (filePath: String) {
 
 fun main() {
     val server: ServerUdpChannel by inject(ServerUdpChannel::class.java, named("server"))
+    val collection: Collection<Flat> by inject(Collection::class.java, named("collection"))
     try {
-        App("/Users/dudosyka/IdeaProjects/lab5Kotlin/data.csv")
+        App()
+        collection.loadDump()
         server.run()
     } finally {
         server.selfExecute(RequestDto(PathDto("system", "_dump")))

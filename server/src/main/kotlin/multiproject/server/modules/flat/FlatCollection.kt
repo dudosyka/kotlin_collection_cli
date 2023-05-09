@@ -3,6 +3,7 @@ package multiproject.server.modules.flat
 import multiproject.server.collection.Collection
 
 class FlatCollection(override var items: MutableList<Flat>) : Collection<Flat>(items) {
+
     override fun sortBy(comparator: Comparator<Flat>) {
         this.items.sortWith(comparator)
     }

@@ -1,4 +1,4 @@
-package multiproject.server.modules.auth
+package multiproject.server.modules.user.auth
 
 import multiproject.server.exceptions.BadJwtSubject
 import java.util.Date

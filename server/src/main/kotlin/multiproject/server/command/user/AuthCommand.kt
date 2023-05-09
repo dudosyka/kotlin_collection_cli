@@ -7,7 +7,7 @@ import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.udp.server.ServerUdpChannel
 import multiproject.lib.udp.server.router.Command
 import multiproject.lib.udp.server.router.Controller
-import multiproject.server.modules.auth.Auth
+import multiproject.server.modules.user.auth.Auth
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 

@@ -11,7 +11,11 @@ import multiproject.lib.dto.command.CommandArgumentDto
  * @constructor Create empty Coordinates builder
  */
 class CoordinatesBuilder : EntityBuilder<Coordinates>() {
+    override val tableName: String
+        get() = "coordinates"
+
     override val fields = mapOf(
+        "id" to CommandArgumentDto(name = "id", show = false),
         "x" to CommandArgumentDto(name = "x", type = FieldType.INT, min = 0),
         "y" to CommandArgumentDto(name = "x", type = FieldType.INT, min = 0)
     )

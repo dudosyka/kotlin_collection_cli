@@ -16,6 +16,8 @@ import java.time.ZonedDateTime
  * @constructor Create empty Human builder
  */
 class HumanBuilder : EntityBuilder<Human>() {
+    override val tableName: String
+        get() = "human"
     private val collection: Collection<Human> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     @Transient
     override val fields: MutableMap<String, CommandArgumentDto> = mutableMapOf(

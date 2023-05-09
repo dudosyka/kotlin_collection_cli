@@ -4,7 +4,7 @@ import io.jsonwebtoken.JwtException
 import multiproject.lib.request.Request
 import multiproject.lib.request.middleware.Middleware
 import multiproject.server.exceptions.ForbiddenException
-import multiproject.server.modules.auth.Auth
+import multiproject.server.modules.user.auth.Auth
 
 object AuthMiddleware: Middleware() {
 
