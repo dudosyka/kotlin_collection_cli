@@ -5,6 +5,8 @@ import multiproject.lib.dto.request.RequestDto
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.dto.Serializer
+import multiproject.lib.dto.request.RequestDirection
+import multiproject.lib.request.resolver.RequestResolver
 import multiproject.lib.udp.interfaces.OnConnectionRefused
 import multiproject.lib.udp.interfaces.OnConnectionRestored
 import multiproject.lib.udp.disconnect.CloseOnDisconnectStrategy
@@ -20,16 +22,17 @@ import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 
 abstract class UdpChannel {
-    var onConnectionRefusedCallback: OnConnectionRefused = OnConnectionRefused { _ -> }
-    var onConnectionRestoredCallback: OnConnectionRestored = OnConnectionRestored { _ -> }
+    var onConnectionRefusedCallback: OnConnectionRefused = OnConnectionRefused { }
+    var onConnectionRestoredCallback: OnConnectionRestored = OnConnectionRestored { }
     var receiveCallback: OnReceive = OnReceive { _, _ -> }
     var firstConnectCallback: OnReceive = OnReceive { _, _ -> }
     var onDisconnectAttempt: OnDisconnectAttempt = OnDisconnectAttempt { _ -> }
     protected val channel: DatagramChannel = DatagramChannel.open()
     var disconnectStrategy: DisconnectStrategy = CloseOnDisconnectStrategy()
-    private var wasDisconnected: Boolean = false
+    var wasDisconnected: Boolean = false
     private var connections: MutableList<SocketAddress> = mutableListOf()
     var servers: MutableList<ConnectedServer> = mutableListOf()
+    lateinit var requestResolver: RequestResolver
     fun bindOn(address: InetSocketAddress?) {
         if (address == null) {
             val socket = ServerSocket(0)
@@ -72,22 +75,27 @@ abstract class UdpChannel {
         val dataString = Serializer.serializeRequest(data)
         val response = try {
             channel.send(ByteBuffer.wrap(dataString.toByteArray()), address)
-            return if (wasDisconnected) {
+
+            val msg = this.getMessage()
+            val returnedFromServer = Serializer.deserializeResponse(msg)
+
+            if (returnedFromServer.code.toString() == ResponseCode.CONNECTION_REFUSED.toString())
+                throw PortUnreachableException()
+
+            if (wasDisconnected) {
                 disconnectStrategy.attemptNum = 0
                 wasDisconnected = false
-                onConnectionRestoredCallback.process(Serializer.deserializeResponse(this.getMessage()))
-                val response = ResponseDto(ResponseCode.SUCCESS, "")
-                response
-            } else {
-                val response = Serializer.deserializeResponse(this.getMessage())
-                response
+                onConnectionRestoredCallback.process(returnedFromServer)
             }
+
+            returnedFromServer
+
         } catch (e: PortUnreachableException) {
             if (this.disconnectStrategy.attemptNum == 0) {
                 wasDisconnected = true
-                onConnectionRefusedCallback.process(data)
+                onConnectionRefusedCallback.process()
             }
-            val response = disconnectStrategy.onDisconnect(this, address)
+            val response = disconnectStrategy.onDisconnect(this, address, RequestDirection.FROM_CLIENT)
             response
         }
         println("Returned response from $address with data $response")

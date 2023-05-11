@@ -1,5 +1,6 @@
 package multiproject.lib.sd
 
+import multiproject.lib.udp.UdpChannel
 import multiproject.lib.udp.gateway.GatewayUdpChannel
 import java.net.InetSocketAddress
 
@@ -16,8 +17,10 @@ object GatewayBalancer {
         return gateway.servers.first().address
     }
 
-    fun dropPendingRequest(gateway: GatewayUdpChannel, address: InetSocketAddress) {
-        gateway.servers.filter { it.address.port == address.port && it.address.hostName == address.hostName }.first().pendingRequest--
+    fun removeServer(gateway: UdpChannel, serverAddress: InetSocketAddress) {
+        gateway.servers.removeIf {
+            it.address == serverAddress
+        }
     }
 
 }

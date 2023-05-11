@@ -1,9 +1,9 @@
 package multiproject.lib.exceptions
 
 import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.utils.ExecuteException
+import multiproject.lib.request.resolver.ResolveError
 
-class NoAvailableServers: ExecuteException(ResponseCode.CONNECTION_REFUSED) {
+class NoAvailableServers: ResolveError(ResponseCode.CONNECTION_REFUSED) {
     override val message: String
         get() = "No available servers. Try to reconnect later."
 }

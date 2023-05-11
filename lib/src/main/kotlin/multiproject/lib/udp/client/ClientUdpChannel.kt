@@ -13,8 +13,6 @@ import java.nio.ByteBuffer
 import java.util.*
 
 class ClientUdpChannel: UdpChannel() {
-    private var ping: Boolean = true
-    private var connectionLost: Boolean = false
     private var attemptNum: Int = 0
     private var pingReconnect: TimerTask? = null
     lateinit var defaultController: String
@@ -23,7 +21,7 @@ class ClientUdpChannel: UdpChannel() {
     private fun pingServer() {
         pingReconnect = object: TimerTask() {
             override fun run() {
-                if (!ping)
+                if (attemptNum > 0)
                     return
 
                 try {
@@ -40,21 +38,13 @@ class ClientUdpChannel: UdpChannel() {
                         ),
                         servers.first().address
                     )
-                    if (connectionLost)
-                        onConnectionRestoredCallback.process(Serializer.deserializeResponse(getMessage()))
-                    connectionLost = false
-                    attemptNum = 0
                 } catch (e: PortUnreachableException) {
-                    connectionLost = true
+                    wasDisconnected = true
                     if (attemptNum <= 0)
-                        onConnectionRefusedCallback.process(RequestDto(
-                            PathDto("ping", ""),
-                            headers = mutableMapOf(
-                                "requestDirection" to RequestDirectionInterpreter.interpret(RequestDirection.FROM_CLIENT)
-                            )
-                        ))
+                        onConnectionRefusedCallback.process()
                     attemptNum++
                     println("Reconnect attempt #$attemptNum")
+                    sendRequest(RequestDto(PathDto("system", "_load")))
                 } catch (e: Exception) {
                     println(e)
                 }
@@ -69,7 +59,6 @@ class ClientUdpChannel: UdpChannel() {
         if (authorized)
             data.headers["token"] = token
         val response = super.send(this.servers.first().address, data)
-        println("Response resolved: $response")
         return response
     }
     fun auth(token: String) {

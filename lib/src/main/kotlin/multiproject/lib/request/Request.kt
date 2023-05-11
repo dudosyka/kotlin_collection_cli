@@ -13,8 +13,5 @@ open class Request(dto: RequestDto?, val from: InetSocketAddress) {
     }
 
     val requestDirection: Long? by RequestHeaderDelegate(request = dto)
-    fun acceptResolver(resolver: RequestResolver) {
-        resolver.resolve(this)
-    }
     fun applyMiddleware(middleware: Request.() -> Unit): Request = this.apply(middleware)
 }

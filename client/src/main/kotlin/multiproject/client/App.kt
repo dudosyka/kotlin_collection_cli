@@ -52,7 +52,7 @@ class App {
                         println("Callback. Connection refused")
                     }
                     onDisconnectAttempt = OnDisconnectAttempt {
-                        attemptNum -> println("Reconnect attempt #$attemptNum")
+                        attemptNum -> println("Try to reconnect... Reconnect attempt #$attemptNum")
                     }
                     addServer(
                         address = ConnectedServer(0, InetSocketAddress(UdpConfig.serverAddress, UdpConfig.serverPort))
