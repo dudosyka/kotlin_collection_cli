@@ -52,7 +52,7 @@ class Router {
 
     fun run(request: Request): Response {
 
-        val path = getRoute(request.dto.pathDto)
+        val path = getRoute(request.path)
 
         return try {
             path.first.middlewares.forEach {

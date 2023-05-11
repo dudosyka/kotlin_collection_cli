@@ -1,8 +1,8 @@
 package multiproject.lib.udp.interfaces
 
-import multiproject.lib.dto.request.RequestDto
+import multiproject.lib.request.Request
 import java.net.SocketAddress
 
 fun interface OnReceive {
-    fun process(address: SocketAddress, data: RequestDto)
+    fun process(address: SocketAddress, data: Request)
 }

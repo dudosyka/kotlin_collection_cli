@@ -17,10 +17,10 @@ object RequestDirectionInterpreter {
     fun interpret(input: RequestDirection): Long? {
         return when (input) {
             RequestDirection.FROM_CLIENT -> {
-                1
+                1L
             }
             RequestDirection.FROM_SERVER -> {
-                2
+                2L
             }
             else -> {
                 null

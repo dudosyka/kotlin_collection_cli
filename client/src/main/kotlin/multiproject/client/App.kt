@@ -14,11 +14,11 @@ import org.koin.java.KoinJavaComponent.inject
 import multiproject.client.file.FileReader
 import multiproject.lib.dto.ConnectedServer
 import multiproject.lib.dto.request.PathDto
-import multiproject.lib.dto.request.RequestDto
 import multiproject.client.exceptions.CommandNotFound
 import multiproject.lib.exceptions.InvalidArgumentException
 import multiproject.client.exceptions.RecursiveScriptException
 import multiproject.lib.exceptions.ValidationFieldException
+import multiproject.lib.request.Request
 import multiproject.lib.udp.UdpConfig
 import multiproject.lib.udp.interfaces.OnConnectionRefused
 import multiproject.lib.udp.interfaces.OnConnectionRestored
@@ -58,7 +58,7 @@ class App {
                         address = ConnectedServer(0, InetSocketAddress(UdpConfig.serverAddress, UdpConfig.serverPort))
                     )
                     disconnectStrategy = RestoreOnDisconnectStrategy()
-                    bindOn(InetSocketAddress( "127.0.0.1", 7071))
+                    bindOn(null)
                 }
             }
         }
@@ -101,7 +101,7 @@ fun main() {
             else {
                 if (result.body == "exit") {
                     readNextLine = false
-                    client.sendRequest(RequestDto(PathDto(controller = "system",route = "_dump")))
+                    client.sendRequest(Request(PathDto(controller = "system",route = "_dump")))
                     writer.writeLine("Application stopping...")
                     client.stop()
                 } else {

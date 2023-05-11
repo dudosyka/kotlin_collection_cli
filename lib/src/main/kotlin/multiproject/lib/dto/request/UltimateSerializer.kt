@@ -7,8 +7,11 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.*
+import multiproject.lib.exceptions.InvalidSocketAddress
+import multiproject.lib.udp.SocketAddressInterpreter
+import java.net.InetSocketAddress
 
-class RequestDataSerializer(
+class UltimateSerializer(
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("data", PrimitiveKind.STRING)
 ) : KSerializer<Any?> {
 
@@ -21,6 +24,7 @@ class RequestDataSerializer(
             is String -> JsonPrimitive(value)
             is Iterable<*> -> JsonArray(value.map { anyToJsonElement(it) })
             is Map<*, *> -> JsonObject(value.map { it.key.toString() to anyToJsonElement(it.value) }.toMap())
+            is InetSocketAddress -> JsonPrimitive(SocketAddressInterpreter.interpret(value))
             else -> throw Exception("Not implemented type ${value::class}=${value}}")
         }
     }
@@ -37,7 +41,13 @@ class RequestDataSerializer(
             if (content.equals("false", ignoreCase = true)){
                 return false
             }
-            return content
+
+            return try {
+                SocketAddressInterpreter.interpret(content)
+            } catch (e: InvalidSocketAddress) {
+                content
+            }
+
         }
 
         val longValue = content.toLongOrNull()

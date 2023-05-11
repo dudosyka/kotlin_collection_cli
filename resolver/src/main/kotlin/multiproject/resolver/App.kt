@@ -1,7 +1,5 @@
 package multiproject.resolver
 
-import multiproject.lib.request.Request
-import multiproject.lib.udp.SocketAddressInterpreter
 import multiproject.lib.udp.UdpConfig
 import multiproject.lib.udp.gateway.GatewayUdpChannel
 import multiproject.lib.udp.gateway.runGateway
@@ -18,23 +16,17 @@ class App {
             single<GatewayUdpChannel>(named("server")) {
                 runGateway {
                     requestResolver = GatewayRequestResolver()
-                    receiveCallback = OnReceive { from, requestData ->
+                    receiveCallback = OnReceive { address, request ->
                         run {
-                            if (requestData.pathDto.controller == "")
+                            if (request.isEmptyPath())
                                 return@run
 
-                            val inetAddress = SocketAddressInterpreter.interpret(from)
-                            val request = Request(requestData, inetAddress)
-
+                            request setSender address
                             requestResolver(request)
                         }
                     }
-                    firstConnectCallback = OnReceive { from, requestData ->
+                    firstConnectCallback = OnReceive { _, request ->
                         run {
-
-                            val inetAddress = SocketAddressInterpreter.interpret(from)
-                            val request = Request(requestData, inetAddress)
-
                             requestResolver(request, true)
                         }
                     }

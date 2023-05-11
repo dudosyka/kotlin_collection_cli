@@ -4,7 +4,7 @@
 package multiproject.server
 
 import multiproject.lib.dto.request.PathDto
-import multiproject.lib.dto.request.RequestDto
+import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.request.Request
@@ -19,6 +19,7 @@ import multiproject.server.command.system.SystemDumpCommand
 import multiproject.server.command.system.SystemLoadCommand
 import multiproject.server.command.user.AuthCommand
 import multiproject.server.command.user.GetByTokenCommand
+import multiproject.server.command.user.LongCommand
 import multiproject.server.database.DatabaseManager
 import multiproject.server.dump.DumpManager
 import multiproject.server.dump.PostgresqlDumpManager
@@ -133,6 +134,11 @@ class App () {
                                 needAuth = false
                             }
                             addRoute {
+                                name = "long"
+                                command = LongCommand(this@addController)
+                                needAuth = false
+                            }
+                            addRoute {
                                 name = "get"
                                 command = GetByTokenCommand(this@addController)
                                 addMiddleware(AuthMiddleware)
@@ -146,18 +152,22 @@ class App () {
 
                     }
                     receiveCallback = OnReceive {
-                        address, data -> run {
-                            if (data.pathDto.route == "")
+                        address, request -> run {
+                            if (request.isEmptyPath())
                                 return@run
 
-                            val request = Request(data, SocketAddressInterpreter.interpret(address))
-                            val dto = router.run(request).dto ?: ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, "Resolver error")
+                            println("Request received from $address: $request")
+
+                            val response = router.run(request).dto ?: ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, "Resolver error")
+
+                            request.apply {
+                                this.response = response
+                                this setDirection RequestDirection.FROM_SERVER
+                            }
 
                             this.emit(
-                                address,
-                                dto.apply {
-                                    headers.putAll(data.headers)
-                                }
+                                SocketAddressInterpreter.interpret(address),
+                                request
                             )
                         }
                     }
@@ -184,6 +194,6 @@ fun main() {
         collection.loadDump()
         server.run()
     } finally {
-        server.selfExecute(RequestDto(PathDto("system", "_dump")))
+        server.selfExecute(Request(PathDto("system", "_dump")))
     }
 }

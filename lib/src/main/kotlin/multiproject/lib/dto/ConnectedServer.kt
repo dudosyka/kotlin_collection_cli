@@ -1,9 +1,9 @@
 package multiproject.lib.dto
 
 import java.net.InetSocketAddress
-import java.net.SocketAddress
 
 data class ConnectedServer(
     var pendingRequest: Int,
-    val address: InetSocketAddress
+    val address: InetSocketAddress,
+    var temporaryUnavailable: Pair<Long, Boolean> = Pair(0, false), //if true, first item contains time when server become unavailable
 )

@@ -12,7 +12,7 @@ object AuthMiddleware: Middleware() {
         try {
             val authModule = Auth()
             return {
-                dto.data.arguments["user"] = authModule.auth(dto.headers["token"]?.toString() ?: "")
+                data.arguments["user"] = authModule.auth(getHeader("token")?.toString() ?: "")
             }
         } catch (e: JwtException) {
             throw ForbiddenException()

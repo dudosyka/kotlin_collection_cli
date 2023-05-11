@@ -1,13 +1,14 @@
 package multiproject.lib.udp.client
 
-import multiproject.lib.dto.request.RequestDto
 import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.dto.Serializer
 import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.request.RequestDirection
-import multiproject.lib.dto.request.RequestDirectionInterpreter
+import multiproject.lib.dto.response.ResponseCode
+import multiproject.lib.request.Request
 import multiproject.lib.udp.UdpChannel
 import multiproject.lib.udp.UdpConfig
+import java.net.InetSocketAddress
 import java.net.PortUnreachableException
 import java.nio.ByteBuffer
 import java.util.*
@@ -28,12 +29,12 @@ class ClientUdpChannel: UdpChannel() {
                     channel.send(
                         ByteBuffer.wrap(
                             Serializer.serializeRequest(
-                                RequestDto(
+                                Request(
                                     PathDto("", ""),
-                                    headers = mutableMapOf(
-                                        "requestDirection" to RequestDirectionInterpreter.interpret(RequestDirection.FROM_CLIENT)
-                                    )
-                                )
+                                ).apply {
+                                    this setFrom channel.localAddress
+                                    this setDirection RequestDirection.FROM_CLIENT
+                                }
                             ).toByteArray()
                         ),
                         servers.first().address
@@ -44,7 +45,7 @@ class ClientUdpChannel: UdpChannel() {
                         onConnectionRefusedCallback.process()
                     attemptNum++
                     println("Reconnect attempt #$attemptNum")
-                    sendRequest(RequestDto(PathDto("system", "_load")))
+                    sendRequest(Request(PathDto("system", "_load")))
                 } catch (e: Exception) {
                     println(e)
                 }
@@ -54,12 +55,13 @@ class ClientUdpChannel: UdpChannel() {
             pingReconnect, UdpConfig.timeout, UdpConfig.reconnectTimeout
         )
     }
-    fun sendRequest(data: RequestDto): ResponseDto {
-        data.headers["requestDirection"] = RequestDirectionInterpreter.interpret(RequestDirection.FROM_CLIENT)
+    fun sendRequest(request: Request): ResponseDto {
+        request setDirection RequestDirection.FROM_CLIENT
         if (authorized)
-            data.headers["token"] = token
-        val response = super.send(this.servers.first().address, data)
-        return response
+            request setHeader Pair("token", token)
+        request setFrom channel.localAddress
+        val result = send(this.servers.first().address, request)
+        return result.response
     }
     fun auth(token: String) {
         this.authorized = true
@@ -68,8 +70,43 @@ class ClientUdpChannel: UdpChannel() {
     override fun run() {
         channel.connect(this.servers.first().address)
         channel.configureBlocking(false)
+        println("Socket bind on ${this.channel.localAddress}")
         this.pingServer()
     }
+
+    override fun send(address: InetSocketAddress, data: Request): Request  {
+        println("Send to $address with data: $data")
+        val dataString = Serializer.serializeRequest(data)
+        val response = try {
+            channel.send(ByteBuffer.wrap(dataString.toByteArray()), address)
+
+            val msg = this.getMessage()
+            val returnedFromServer = Serializer.deserializeRequest(msg)
+
+            if (returnedFromServer checkCode ResponseCode.CONNECTION_REFUSED)
+                throw PortUnreachableException()
+
+            if (wasDisconnected) {
+                disconnectStrategy.attemptNum = 0
+                wasDisconnected = false
+                onConnectionRestoredCallback.process(data.response)
+            }
+
+            returnedFromServer
+
+        } catch (e: PortUnreachableException) {
+            if (this.disconnectStrategy.attemptNum == 0) {
+                wasDisconnected = true
+                onConnectionRefusedCallback.process()
+            }
+            val response = disconnectStrategy.onDisconnect(this, address, RequestDirection.FROM_CLIENT)
+            data.response = response
+            data
+        }
+        println("Returned response from $address with data $response")
+        return response
+    }
+
     override fun stop() {
         this.pingReconnect!!.cancel()
         super.stop()

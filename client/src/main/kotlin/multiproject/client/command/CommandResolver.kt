@@ -4,7 +4,6 @@ import multiproject.client.exceptions.CommandNotFound
 import multiproject.client.io.IOData
 import multiproject.lib.udp.client.ClientUdpChannel
 import multiproject.lib.dto.request.RequestDataDto
-import multiproject.lib.dto.request.RequestDto
 import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.dto.command.CommandDto
 import org.koin.core.qualifier.named
@@ -15,6 +14,7 @@ import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import multiproject.lib.dto.command.CommandResult
 import multiproject.lib.dto.request.PathDto
+import multiproject.lib.request.Request
 
 /**
  * Command resolver
@@ -42,8 +42,9 @@ class CommandResolver {
         }
 
         fun loadCommands() {
-            val response: ResponseDto = client.sendRequest(RequestDto(
-                PathDto("system", "_load"), data = RequestDataDto(mutableMapOf(), listOf())))
+            val response: ResponseDto = client.sendRequest(
+                Request(PathDto("system", "_load"), data = RequestDataDto(mutableMapOf(), listOf()))
+            )
             updateCommandList(response.commands)
         }
     }
@@ -101,9 +102,9 @@ class CommandResolver {
 
         val result = if (arguments.isNotEmpty()) {
             val objectData = ObjectBuilder(arguments).getEntityData()
-             client.sendRequest(RequestDto(PathDto(controller, name), data = RequestDataDto(objectData, inlineData)))
+             client.sendRequest(Request(PathDto(controller, name), data = RequestDataDto(objectData, inlineData)))
         } else {
-            client.sendRequest(RequestDto(PathDto(controller, name), data = RequestDataDto(mutableMapOf(),  inlineData)))
+            client.sendRequest(Request(PathDto(controller, name), data = RequestDataDto(mutableMapOf(),  inlineData)))
         }
 
         if (command.authorizedEndpoint && result.code.toString() == "SUCCESS") {

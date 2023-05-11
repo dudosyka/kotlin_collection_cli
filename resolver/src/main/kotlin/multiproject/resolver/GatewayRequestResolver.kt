@@ -3,7 +3,6 @@ package multiproject.resolver
 import multiproject.lib.dto.ConnectedServer
 import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.request.RequestDirection
-import multiproject.lib.dto.request.RequestDirectionInterpreter
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.exceptions.BadRequestException
@@ -17,39 +16,35 @@ import org.koin.java.KoinJavaComponent.inject
 class GatewayRequestResolver: RequestResolver() {
     private val gateway: GatewayUdpChannel by inject(GatewayUdpChannel::class.java, named("server"))
     override fun resolveFirst(request: Request) {
-        when (RequestDirectionInterpreter.interpret(request.requestDirection)) {
-            RequestDirection.FROM_CLIENT -> {
-                gateway.sendThrough(request) {
-                    pathDto = PathDto("system","_load")
-                }
+        if (request directionIs RequestDirection.FROM_CLIENT)
+            gateway.sendThrough(request) {
+                path = PathDto("system","_load")
             }
-            RequestDirection.FROM_SERVER -> {
-                gateway.addServer(ConnectedServer(0, request.from))
-            }
-            else -> {
-                throw BadRequestException("Unknown request")
-            }
-        }
+        else if (request directionIs RequestDirection.FROM_SERVER)
+            gateway.addServer(ConnectedServer(0, request.getFrom()))
+        else
+            throw BadRequestException("Unknown request")
     }
 
     override fun resolve(request: Request) {
-        when (RequestDirectionInterpreter.interpret(request.requestDirection)) {
-            RequestDirection.FROM_CLIENT -> {
-                gateway.sendThrough(request) {}
-            }
-            RequestDirection.FROM_SERVER -> {
-                gateway.send(request.from, request.dto)
-            }
-            else -> {
-                throw BadRequestException("Unknown request")
-            }
+        if (request directionIs RequestDirection.FROM_CLIENT)
+            gateway.sendThrough(request) {}
+        else if (request directionIs RequestDirection.FROM_SERVER) {
+            gateway clearPending request
+            gateway.servers.find { it.address == request.getSender() }?.temporaryUnavailable = Pair(0, false)
+            gateway.emit(request.getFrom(), request)
         }
+        else
+            throw BadRequestException("Unknown request")
     }
 
     override fun resolveError(request: Request, e: ResolveError) {
-        println(e.message)
-        if (e.code == ResponseCode.CONNECTION_REFUSED)
-            gateway.emit(request.from, ResponseDto( e.code, result = "Server unavailable. Connection refused." ))
+        if (e.code == ResponseCode.CONNECTION_REFUSED) {
+            request.apply {
+                response = ResponseDto(e.code, result = "Server unavailable. Connection refused.")
+            }
+            gateway.emit(request.getFrom(), request)
+        }
     }
 
 }

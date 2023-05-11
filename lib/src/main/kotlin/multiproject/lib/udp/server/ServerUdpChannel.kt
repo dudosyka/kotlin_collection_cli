@@ -1,9 +1,8 @@
 package multiproject.lib.udp.server
 
 import multiproject.lib.dto.request.PathDto
-import multiproject.lib.dto.request.RequestDto
+import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.request.Request
-import multiproject.lib.udp.SocketAddressInterpreter
 import multiproject.lib.udp.UdpChannel
 import multiproject.lib.udp.UdpConfig
 import multiproject.lib.udp.server.router.Router
@@ -17,12 +16,8 @@ class ServerUdpChannel: UdpChannel() {
         this.router = Router().apply(init)
     }
 
-    private fun getAddress(): InetSocketAddress {
-        return SocketAddressInterpreter.interpret(this.channel.localAddress)
-    }
-
-    fun selfExecute(request: RequestDto, from: InetSocketAddress? = null) {
-        this.router.run(Request(request, from ?: this.getAddress()))
+    fun selfExecute(request: Request) {
+        this.router.run(request.apply { this setFrom getChannelAddress()})
     }
 
     override fun onNewConnection(address: SocketAddress, data: String) {
@@ -32,15 +27,12 @@ class ServerUdpChannel: UdpChannel() {
     override fun run() {
         this.emit(
             InetSocketAddress(UdpConfig.serverAddress, UdpConfig.serverPort),
-            RequestDto(
-                PathDto(
-                    route = "_bind",
-                    controller = "system"
-                ),
-                headers = mutableMapOf(
-                    "requestDirection" to 2
-                )
-            )
+            Request(
+                PathDto(route = "_bind", controller = "system")
+            ).apply {
+                this setDirection RequestDirection.FROM_SERVER
+                this setFrom channel.localAddress
+            },
         )
         super.run()
     }
