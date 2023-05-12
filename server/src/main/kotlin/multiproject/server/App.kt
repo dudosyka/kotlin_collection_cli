@@ -22,6 +22,7 @@ import multiproject.server.command.system.SystemLoadCommand
 import multiproject.server.command.user.AuthCommand
 import multiproject.server.command.user.GetByTokenCommand
 import multiproject.server.command.user.LongCommand
+import multiproject.server.command.user.RegCommand
 import multiproject.server.database.DatabaseManager
 import multiproject.server.dump.DumpManager
 import multiproject.server.dump.PostgresqlDumpManager
@@ -142,6 +143,11 @@ class App () {
                             addRoute {
                                 name = "long"
                                 command = LongCommand(this@addController)
+                                needAuth = false
+                            }
+                            addRoute {
+                                name = "signup"
+                                command = RegCommand(this@addController)
                                 needAuth = false
                             }
                             addRoute {

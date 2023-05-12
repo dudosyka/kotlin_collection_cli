@@ -23,32 +23,39 @@ class DatabaseManager {
         try {
             connection = DriverManager.getConnection(connectionUrl)
         } catch (e: SQLException) {
-            log( "SQL. Error during connection: ${e.message}")
+            log( "Error during connection: ${e.message}")
         }
-        log("SQL. Connection init.")
+        log("Connection init.")
     }
     private fun log(message: String, logLevel: LogLevel = LogLevel.INFO) {
         logger(logLevel, "SQL. $message")
     }
     private fun execute(sql: String, data: PreparedStatement.() -> Unit): ResultSet {
         val statement = connection.prepareStatement(sql).apply(data)
-        log("SQL. executed: $sql")
+        log("executed: $sql")
         return statement.executeQuery()
     }
     private fun executeUpdate(sql: String, data: PreparedStatement.() -> Unit): Int {
         val statement = connection.prepareStatement(sql).apply(data)
-        log("SQL. executed: $sql")
-        return statement.executeUpdate()
+        log("executed: $sql")
+        return try {
+            statement.executeUpdate()
+        } catch (e: Exception) {
+            log("$e", LogLevel.ERROR)
+            0
+        }
     }
     private fun stringifyPredicates(predicates: Map<String, DatabasePredicate>): String {
-        val result = predicates.map { "${it.key} ${it.value.column} ${it.value.op} ${it.value.value}" }.joinToString(" ")
+        val result = predicates.map { "${it.key}.${it.value.column} ${it.value.op} ${it.value.value}" }.joinToString(" ")
         return if (result.isNotEmpty()) "where $result" else result
     }
-    fun findOne(tableName: String, fieldsOnSelect: List<String>, predicates: Map<String, DatabasePredicate>): String = "select ${fieldsOnSelect.joinToString(",") { "$tableName.$it as $tableName$$it" }} } from $tableName ${stringifyPredicates(predicates)}"
+    fun <T: Entity> findOne(entityBuilder: EntityBuilder<T>, predicates: Map<String, DatabasePredicate>): T? {
+        return this.findAll(entityBuilder, predicates).takeIf { it.size > 0 }?.first()
+    }
     private fun buildFromRow(tableName: String, fields: Map<String, CommandArgumentDto>, row: ResultSet): MutableMap<String, Any?> {
         return fields.map {
             val columnIndex = "$tableName$${it.key}"
-            if (it.value.nested != null)
+            if (it.value.nested != null && it.value.show)
                 it.key to buildFromRow(it.value.nestedTable!!, it.value.nested!!, row)
             else
                 it.key to when (it.value.type) {
@@ -72,11 +79,16 @@ class DatabaseManager {
             joinQueries.add("left join ${model.value.nestedTable} on ${model.value.nestedTable}.${model.value.nestedJoinOn!!.second} = ${entity.tableName}.${model.value.nestedJoinOn!!.first}")
         }
 
-        val queryResult = execute("select ${fieldsOnSelect.joinToString(",") } from ${entity.tableName} ${joinQueries.joinToString(" ")} ${stringifyPredicates(predicates)}") {}
-
         val data = mutableListOf<T>()
-        while (queryResult.next()) {
-            data.add(entity.build(buildFromRow(entity.tableName, entity.fields, queryResult)))
+        try {
+            val queryResult = execute("select ${fieldsOnSelect.joinToString(",") } from ${entity.tableName} ${joinQueries.joinToString(" ")} ${stringifyPredicates(predicates)}") {}
+
+            while (queryResult.next()) {
+                data.add(entity.build(buildFromRow(entity.tableName, entity.fields, queryResult)))
+            }
+
+        } catch (e: Exception) {
+            log("$e", LogLevel.ERROR)
         }
 
         return data
@@ -109,7 +121,6 @@ class DatabaseManager {
             log("SQL. Execution error: ${e.message}", LogLevel.ERROR)
         }
     }
-
     private data class InsertTemplate(
         val schema: Map<String, CommandArgumentDto>,
         val statement: PreparedStatement,
@@ -117,7 +128,6 @@ class DatabaseManager {
         val level: Int,
         val data: MutableList<Map<String, Any?>> = mutableListOf()
     )
-
     private fun generateInsertTemplate(tableName: String, schema: Map<String, CommandArgumentDto>, itemsCount: Int, level: Int): InsertTemplate {
         val schemaFields = schema.map {
             if (it.value.nested != null) it.value.nestedJoinOn!!.first else it.key
@@ -168,31 +178,42 @@ class DatabaseManager {
             return
         val item = items.first()
         val query = mutableListOf<String>()
-        val inserts = mutableMapOf<String, InsertTemplate>()
-        inserts[item.tableName] = this.generateInsertTemplate(item.tableName, item.fieldsSchema, items.size, 1)
         query.add("truncate table ${item.tableName} cascade")
         item.fieldsSchema.forEach {
-            if (it.value.nested != null) {
+            if (it.value.nested != null)
                 query.add("truncate table ${it.value.nestedTable} cascade")
-                inserts[it.value.nestedTable!!] = this.generateInsertTemplate(it.value.nestedTable!!, it.value.nested!!, items.size, 2)
+        }
+        try {
+            query.forEach {
+                executeUpdate(it) {}
             }
+            this.insert(items)
+        } catch (e: Exception) {
+            log("$e", LogLevel.FATAL)
+        }
+    }
+    fun <T: Entity> insert(items: MutableList<T>) {
+        if (items.size == 0)
+            return
+        val item = items.first()
+        val inserts = mutableMapOf<String, InsertTemplate>()
+        inserts[item.tableName] = this.generateInsertTemplate(item.tableName, item.fieldsSchema, items.size, 1)
+        item.fieldsSchema.forEach {
+            if (it.value.nested != null)
+                inserts[it.value.nestedTable!!] = this.generateInsertTemplate(it.value.nestedTable!!, it.value.nested!!, items.size, 2)
         }
         items.forEach {
             entityToRow(it.fieldsSchema, it.pureData.toMutableMap(), it.tableName, inserts)
         }
 
         try {
-            query.forEach {
-                executeUpdate(it) {}
-            }
-
             inserts.map {
                 it.value
             }.toMutableList().apply { this.sortByDescending { it.level } }.forEach {
                 it.statement.executeUpdate()
             }
         } catch (e: Exception) {
-            log(e.message ?: "$e", LogLevel.FATAL)
+            log("$e", LogLevel.ERROR)
         }
     }
 }

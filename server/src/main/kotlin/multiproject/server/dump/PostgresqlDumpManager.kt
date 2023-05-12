@@ -10,7 +10,7 @@ import org.koin.java.KoinJavaComponent.inject
 
 class PostgresqlDumpManager<T: Entity>(private val entityBuilder: EntityBuilder<T>): DumpManager<T>() {
     private val dbManager: DatabaseManager by inject(DatabaseManager::class.java, named("dbManager"))
-    private val logger: Logger by inject(Logger::class.java, named("dbManager"))
+    private val logger: Logger by inject(Logger::class.java, named("logger"))
     init {
         dbManager.initModel(entityBuilder)
     }

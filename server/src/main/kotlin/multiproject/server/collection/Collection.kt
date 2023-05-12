@@ -7,7 +7,7 @@ import multiproject.server.collection.sort.CollectionSortType
 import multiproject.server.collection.sort.IdComparator
 import multiproject.server.dump.DumpManager
 import multiproject.server.exceptions.ItemNotFoundException
-import multiproject.server.exceptions.NotUniqueIdException
+import multiproject.server.exceptions.NotUniqueException
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 import java.time.ZonedDateTime
@@ -36,7 +36,7 @@ abstract class Collection<T : Entity> {
     private fun checkUniqueId(items: MutableList<T>) {
         val set: Set<Int> = items.map { it.id }.toSortedSet()
         if (set.size < items.size)
-            throw NotUniqueIdException()
+            throw NotUniqueException("id")
     }
     /**
      * Sort
@@ -127,8 +127,6 @@ abstract class Collection<T : Entity> {
             this.lastInsertId = this.items.last().id
         else
             this.lastInsertId = 0
-
-        this.dump()
     }
 
     /**

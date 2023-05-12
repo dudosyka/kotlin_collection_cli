@@ -7,12 +7,13 @@ import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.udp.server.ServerUdpChannel
 import multiproject.lib.udp.server.router.Command
 import multiproject.lib.udp.server.router.Controller
+import multiproject.server.exceptions.NotUniqueException
 import multiproject.server.modules.user.User
 import multiproject.server.modules.user.UserBuilder
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 
-class AuthCommand(controller: Controller) : Command(controller) {
+class RegCommand(controller: Controller) : Command(controller) {
     val server: ServerUdpChannel by KoinJavaComponent.inject(ServerUdpChannel::class.java, named("server"))
     override val fields: Map<String, CommandArgumentDto> = UserBuilder().fields
     /**
@@ -22,6 +23,12 @@ class AuthCommand(controller: Controller) : Command(controller) {
      * @return
      */
     override fun execute(input: ExecutableInput): Response {
-        return Response(ResponseCode.SUCCESS, User.login(input.data["login"]?.toString() ?: "", input.data["password"]?.toString() ?: ""), commands = server.router.getCommandsInfo())
+        return if (User.getByLogin(input.data["login"]?.toString() ?: throw NotUniqueException("login")) != null) {
+            input.data["password"] = User.hash(input.data["password"].toString())
+            User.create(input.data)
+            Response(ResponseCode.SUCCESS, "Account successfully created!")
+        } else {
+            throw NotUniqueException("login")
+        }
     }
 }

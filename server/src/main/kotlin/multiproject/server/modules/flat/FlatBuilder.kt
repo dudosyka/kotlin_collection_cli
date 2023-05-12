@@ -9,6 +9,7 @@ import multiproject.server.modules.house.HouseBuilder
 import multiproject.lib.dto.command.FieldType
 import multiproject.server.modules.human.Human
 import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.server.modules.user.UserBuilder
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 import java.time.ZonedDateTime
@@ -65,6 +66,15 @@ class FlatBuilder: EntityBuilder<Flat>() {
             nestedTable = HouseBuilder().tableName,
             nestedJoinOn = Pair("house", "id")
         ),
+        "author" to CommandArgumentDto(
+            name = "author",
+            type = FieldType.INT,
+            show = false,
+            required = false,
+            nested = UserBuilder().fields,
+            nestedTable = UserBuilder().tableName,
+            nestedJoinOn = Pair("author", "id")
+        ),
         "furnish" to CommandArgumentDto(
             name = "furnish",
             required = false,
@@ -95,6 +105,8 @@ class FlatBuilder: EntityBuilder<Flat>() {
         val house: MutableMap<String, Any?>? by FieldDelegate(map = map, fields["house"]!!)
         val houseEntity = HouseBuilder().build(house!!)
 
-        return Flat(id, ZonedDateTime.now(),name!!,area!!,numberOfRooms!!,numberOfBathrooms!!,timeToMetroByTransport?.toInt()!!, coordinatesEntity, furnishValue, houseEntity, fields, map)
+        val author: Long? by FieldDelegate(map = map, fields["author"]!!)
+
+        return Flat(id, ZonedDateTime.now(),name!!,area!!,numberOfRooms!!,numberOfBathrooms!!,timeToMetroByTransport?.toInt()!!, coordinatesEntity, furnishValue, houseEntity, author!!, fields, map)
     }
 }

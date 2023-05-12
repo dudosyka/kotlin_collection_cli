@@ -21,6 +21,7 @@ class Flat(
     private var coordinates: Coordinates,
     var furnish: Furnish?,
     private var house: House?,
+    var author: Long?,
     @Transient override val fieldsSchema: Map<String, CommandArgumentDto> = mapOf(),
     @Transient override val pureData: Map<String, Any?> = mapOf()
 ): Entity() {

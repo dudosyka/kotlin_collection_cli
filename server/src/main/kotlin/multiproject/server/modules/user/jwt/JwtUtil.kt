@@ -1,4 +1,4 @@
-package multiproject.server.modules.user.auth
+package multiproject.server.modules.user.jwt
 
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys

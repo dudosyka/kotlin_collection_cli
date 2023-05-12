@@ -14,6 +14,7 @@ import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import multiproject.lib.dto.command.CommandResult
 import multiproject.lib.dto.request.PathDto
+import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.request.Request
 import multiproject.lib.utils.LogLevel
 import multiproject.lib.utils.Logger
@@ -114,6 +115,7 @@ class CommandResolver {
         if (command.authorizedEndpoint && result.code.toString() == "SUCCESS") {
             client.auth(result.result)
             loadCommands()
+            return CommandResult("Command resolved", true, ResponseDto(ResponseCode.SUCCESS, "Successfully authorized!"))
         }
 
         return CommandResult("Command resolved", true, result)
