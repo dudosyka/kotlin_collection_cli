@@ -15,7 +15,6 @@ class RestoreOnDisconnectStrategy: DisconnectStrategy() {
 
         val reconnectTask: TimerTask = object: TimerTask() {
             override fun run() {
-                println("On disconnect triggered")
                 attemptNum++
                 if (channel.wasDisconnected)
                     channel.send(

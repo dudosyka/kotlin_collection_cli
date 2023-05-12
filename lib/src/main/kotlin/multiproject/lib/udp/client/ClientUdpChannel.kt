@@ -1,13 +1,14 @@
 package multiproject.lib.udp.client
 
 import multiproject.lib.dto.response.ResponseDto
-import multiproject.lib.dto.Serializer
+import multiproject.lib.utils.Serializer
 import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.request.Request
 import multiproject.lib.udp.UdpChannel
 import multiproject.lib.udp.UdpConfig
+import multiproject.lib.utils.LogLevel
 import java.net.InetSocketAddress
 import java.net.PortUnreachableException
 import java.nio.ByteBuffer
@@ -44,10 +45,9 @@ class ClientUdpChannel: UdpChannel() {
                     if (attemptNum <= 0)
                         onConnectionRefusedCallback.process()
                     attemptNum++
-                    println("Reconnect attempt #$attemptNum")
                     sendRequest(Request(PathDto("system", "_load")))
                 } catch (e: Exception) {
-                    println(e)
+                    logger(LogLevel.ERROR, "Error in ping timer: $e")
                 }
             }
         }
@@ -70,12 +70,11 @@ class ClientUdpChannel: UdpChannel() {
     override fun run() {
         channel.connect(this.servers.first().address)
         channel.configureBlocking(false)
-        println("Socket bind on ${this.channel.localAddress}")
         this.pingServer()
     }
 
     override fun send(address: InetSocketAddress, data: Request): Request  {
-        println("Send to $address with data: $data")
+        logger(LogLevel.INFO, "Send to $address with data: $data")
         val dataString = Serializer.serializeRequest(data)
         val response = try {
             channel.send(ByteBuffer.wrap(dataString.toByteArray()), address)
@@ -89,21 +88,23 @@ class ClientUdpChannel: UdpChannel() {
             if (wasDisconnected) {
                 disconnectStrategy.attemptNum = 0
                 wasDisconnected = false
-                onConnectionRestoredCallback.process(data.response)
+                onConnectionRestoredCallback.process(returnedFromServer.response)
             }
 
             returnedFromServer
 
         } catch (e: PortUnreachableException) {
-            if (this.disconnectStrategy.attemptNum == 0) {
+            if (this.disconnectStrategy.attemptNum >= 0)
                 wasDisconnected = true
+
+            if (this.disconnectStrategy.attemptNum == 0)
                 onConnectionRefusedCallback.process()
-            }
+
             val response = disconnectStrategy.onDisconnect(this, address, RequestDirection.FROM_CLIENT)
             data.response = response
             data
         }
-        println("Returned response from $address with data $response")
+        logger(LogLevel.INFO, "Returned response from $address with data $response")
         return response
     }
 

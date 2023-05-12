@@ -4,7 +4,7 @@ import multiproject.lib.dto.command.CommandDto
 import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.utils.ExecuteException
+import multiproject.lib.exceptions.ExecuteException
 import multiproject.lib.exceptions.RouteNotFound
 import multiproject.lib.request.Request
 import multiproject.lib.request.RequestToExecutableInterpreter

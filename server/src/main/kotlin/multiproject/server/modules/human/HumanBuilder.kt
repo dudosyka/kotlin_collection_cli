@@ -48,6 +48,6 @@ class HumanBuilder : EntityBuilder<Human>() {
         val fatnessValue: Fatness = Fatness.valueOf(fatness!!)
         val creationDate = ZonedDateTime.now()
         val position: MutableMap<String, Any?>? by FieldDelegate(map = map, fields["position"]!!)
-        return Human(id, name, fatnessValue, CoordinatesBuilder().build(position!!), creationDate)
+        return Human(id, name, fatnessValue, CoordinatesBuilder().build(position!!), creationDate, fields, map)
     }
 }

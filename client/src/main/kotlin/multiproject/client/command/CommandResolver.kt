@@ -15,6 +15,8 @@ import java.io.InputStreamReader
 import multiproject.lib.dto.command.CommandResult
 import multiproject.lib.dto.request.PathDto
 import multiproject.lib.request.Request
+import multiproject.lib.utils.LogLevel
+import multiproject.lib.utils.Logger
 
 /**
  * Command resolver
@@ -24,6 +26,7 @@ import multiproject.lib.request.Request
 class CommandResolver {
 
     companion object {
+        val logger: Logger by inject(Logger::class.java, named("logger"))
         val client: ClientUdpChannel by inject(ClientUdpChannel::class.java, named("client"))
         private var commands: Map<String, List<CommandDto>> = mapOf()
 
@@ -36,9 +39,10 @@ class CommandResolver {
         }
 
         fun updateCommandList(commandList: Map<String, List<CommandDto>>) {
+            logger(LogLevel.DEBUG, "$commandList")
             if (commandList.isNotEmpty())
                 commands = commandList.map { controller -> controller.key to controller.value.filter { !it.hideFromClient }.filter { if (client.authorized) true else !it.needAuth } }.toMap()
-            println(commands)
+            logger(LogLevel.DEBUG, "$commands")
         }
 
         fun loadCommands() {

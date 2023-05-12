@@ -8,7 +8,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.*
 import multiproject.lib.exceptions.InvalidSocketAddress
-import multiproject.lib.udp.SocketAddressInterpreter
+import multiproject.lib.utils.SocketAddressInterpreter
 import java.net.InetSocketAddress
 
 class UltimateSerializer(

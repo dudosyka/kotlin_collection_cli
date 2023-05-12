@@ -3,6 +3,7 @@ package multiproject.lib.sd
 import multiproject.lib.dto.ConnectedServer
 import multiproject.lib.udp.UdpChannel
 import multiproject.lib.udp.gateway.GatewayUdpChannel
+import multiproject.lib.utils.LogLevel
 import java.net.InetSocketAddress
 
 object GatewayBalancer {
@@ -11,10 +12,10 @@ object GatewayBalancer {
             this.sortBy { it.pendingRequest }
         }
 
-        println("Gateway available adresses: $availableServers")
+        gateway.logger(LogLevel.INFO,"Gateway available adresses: $availableServers")
         if (availableServers.isEmpty())
             return null
-        println("Gateway has chosen address: ${availableServers.first().address}")
+        gateway.logger(LogLevel.INFO, "Gateway has chosen address: ${availableServers.first().address}")
         gateway.servers.find { availableServers.first().address == it.address }!!.pendingRequest++
         return availableServers.first()
     }

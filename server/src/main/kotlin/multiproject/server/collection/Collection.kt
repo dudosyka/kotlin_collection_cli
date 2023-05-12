@@ -127,6 +127,8 @@ abstract class Collection<T : Entity> {
             this.lastInsertId = this.items.last().id
         else
             this.lastInsertId = 0
+
+        this.dump()
     }
 
     /**

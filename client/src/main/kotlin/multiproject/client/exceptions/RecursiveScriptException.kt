@@ -1,7 +1,7 @@
 package multiproject.client.exceptions
 
 import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.utils.ExecuteException
+import multiproject.lib.exceptions.ExecuteException
 
 /**
  * Recursive script exception

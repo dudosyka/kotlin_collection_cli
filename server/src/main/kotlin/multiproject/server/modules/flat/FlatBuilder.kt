@@ -21,7 +21,7 @@ class FlatBuilder: EntityBuilder<Flat>() {
     private val collection: Collection<Human> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     @Transient
     override val fields: MutableMap<String, CommandArgumentDto> = mutableMapOf(
-        "id" to CommandArgumentDto(name = "id", show = false),
+        "id" to CommandArgumentDto(name = "id", type = FieldType.INT, show = false),
         "name" to CommandArgumentDto(
             name = "name",
             required = true,
@@ -95,6 +95,6 @@ class FlatBuilder: EntityBuilder<Flat>() {
         val house: MutableMap<String, Any?>? by FieldDelegate(map = map, fields["house"]!!)
         val houseEntity = HouseBuilder().build(house!!)
 
-        return Flat(id, ZonedDateTime.now(),name!!,area!!,numberOfRooms!!,numberOfBathrooms!!,timeToMetroByTransport?.toInt()!!, coordinatesEntity, furnishValue, houseEntity)
+        return Flat(id, ZonedDateTime.now(),name!!,area!!,numberOfRooms!!,numberOfBathrooms!!,timeToMetroByTransport?.toInt()!!, coordinatesEntity, furnishValue, houseEntity, fields, map)
     }
 }

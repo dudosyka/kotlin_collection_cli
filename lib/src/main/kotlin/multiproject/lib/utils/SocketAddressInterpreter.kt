@@ -1,4 +1,4 @@
-package multiproject.lib.udp
+package multiproject.lib.utils
 
 import multiproject.lib.exceptions.InvalidSocketAddress
 import java.net.InetSocketAddress

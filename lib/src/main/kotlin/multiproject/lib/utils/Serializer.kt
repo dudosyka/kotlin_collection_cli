@@ -1,4 +1,4 @@
-package multiproject.lib.dto
+package multiproject.lib.utils
 
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString

@@ -1,6 +1,8 @@
 package multiproject.server.modules.flat
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import multiproject.lib.dto.command.CommandArgumentDto
 import multiproject.server.collection.item.Entity
 import multiproject.server.collection.item.ZonedDateTimeSerializer
 import multiproject.server.modules.house.House
@@ -18,8 +20,13 @@ class Flat(
     var timeToMetroByTransport: Int,
     private var coordinates: Coordinates,
     var furnish: Furnish?,
-    private var house: House?
+    private var house: House?,
+    @Transient override val fieldsSchema: Map<String, CommandArgumentDto> = mapOf(),
+    @Transient override val pureData: Map<String, Any?> = mapOf()
 ): Entity() {
+    override val tableName: String
+        get() = "flat"
+
     override fun toString(): String {
         return "Flat {\n" +
                 "\tid=$id,\n" +

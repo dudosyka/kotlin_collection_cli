@@ -25,10 +25,12 @@ import multiproject.lib.udp.interfaces.OnConnectionRestored
 import multiproject.lib.udp.client.runClient
 import multiproject.lib.udp.interfaces.OnDisconnectAttempt
 import multiproject.lib.udp.disconnect.RestoreOnDisconnectStrategy
+import multiproject.lib.utils.Logger
 import java.net.InetSocketAddress
 
 class App {
     init {
+        val logger = Logger()
         val module = module {
             factory<Reader>(named("reader")) {
                 if (IOData.current == "file")
@@ -39,8 +41,12 @@ class App {
             single<Writer>(named("writer")) {
                 ConsoleWriter()
             }
+            single<Logger>(named("logger")) {
+                logger
+            }
             single<ClientUdpChannel>(named("client")) {
                 runClient {
+                    this.logger = logger
                     defaultController = "collection"
                     onConnectionRestoredCallback = OnConnectionRestored {
                         response -> run {
@@ -49,7 +55,7 @@ class App {
                         }
                     }
                     onConnectionRefusedCallback = OnConnectionRefused {
-                        println("Callback. Connection refused")
+                        println("Connection lost")
                     }
                     onDisconnectAttempt = OnDisconnectAttempt {
                         attemptNum -> println("Try to reconnect... Reconnect attempt #$attemptNum")

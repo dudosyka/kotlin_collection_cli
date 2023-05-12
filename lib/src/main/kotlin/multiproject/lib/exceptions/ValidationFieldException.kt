@@ -2,7 +2,6 @@ package multiproject.lib.exceptions
 
 import multiproject.lib.dto.command.Validator
 import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.utils.ExecuteException
 
 /**
  * Validation field exception

@@ -1,7 +1,7 @@
 package multiproject.lib.udp
 
 import multiproject.lib.dto.ConnectedServer
-import multiproject.lib.dto.Serializer
+import multiproject.lib.utils.Serializer
 import multiproject.lib.request.Request
 import multiproject.lib.request.resolver.RequestResolver
 import multiproject.lib.udp.interfaces.OnConnectionRefused
@@ -10,6 +10,8 @@ import multiproject.lib.udp.disconnect.CloseOnDisconnectStrategy
 import multiproject.lib.udp.disconnect.DisconnectStrategy
 import multiproject.lib.udp.interfaces.OnDisconnectAttempt
 import multiproject.lib.udp.interfaces.OnReceive
+import multiproject.lib.utils.LogLevel
+import multiproject.lib.utils.Logger
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.ServerSocket
@@ -29,8 +31,9 @@ abstract class UdpChannel {
     private var connections: MutableList<SocketAddress> = mutableListOf()
     var servers: MutableList<ConnectedServer> = mutableListOf()
     lateinit var requestResolver: RequestResolver
+    var logger: Logger = Logger()
 
-    fun getChannelAddress() = channel.localAddress
+    fun getChannelAddress(): SocketAddress = channel.localAddress
     fun bindOn(address: InetSocketAddress?) {
         if (address == null) {
             val socket = ServerSocket(0)
@@ -38,7 +41,7 @@ abstract class UdpChannel {
             channel.bind(InetSocketAddress(InetAddress.getLocalHost(), port))
             return
         }
-        println("Socket bind on $address")
+        logger(LogLevel.ERROR, "Socket bind on $address")
         channel.bind(address)
     }
     fun addServer(address: ConnectedServer) {
@@ -62,19 +65,19 @@ abstract class UdpChannel {
     fun emit(address: InetSocketAddress, data: Request) {
         val dataString = Serializer.serializeRequest(data)
         data setSender channel.localAddress
-        println("Emit to $address with data: $data")
+        logger(LogLevel.INFO, "Emit to $address with data: $data")
         channel.send(ByteBuffer.wrap(dataString.toByteArray()), address)
     }
     open fun send(address: InetSocketAddress, data: Request): Request = TODO("not yet implemented")
 
     protected fun onMessage(address: SocketAddress, data: String) {
         val request = Serializer.deserializeRequest(data)
-        println("Received request. from $address with data $request")
+        logger(LogLevel.INFO, "Received request. from $address with data $request")
         this.receiveCallback.process(address, request)
     }
     protected open fun onNewConnection(address: SocketAddress, data: String) {
         val request = Serializer.deserializeRequest(data)
-        println("Received first request. from $address with data $request")
+        logger(LogLevel.INFO, "Received first request. from $address with data $request")
         connections.add(address)
         this.firstConnectCallback.process(address, request)
     }
@@ -99,7 +102,6 @@ abstract class UdpChannel {
         channel.close()
     }
     open fun run() {
-        println("Bind on: ${this.channel.localAddress}")
         this.receive()
     }
 }

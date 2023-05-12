@@ -4,7 +4,8 @@ import kotlinx.serialization.Serializable
 import multiproject.lib.dto.request.*
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.dto.response.ResponseDto
-import multiproject.lib.udp.SocketAddressInterpreter
+import multiproject.lib.utils.RequestDirectionInterpreter
+import multiproject.lib.utils.SocketAddressInterpreter
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 

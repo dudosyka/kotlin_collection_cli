@@ -1,6 +1,7 @@
 package multiproject.server.collection.item
 
 import kotlinx.serialization.Serializable
+import multiproject.lib.dto.command.CommandArgumentDto
 import java.time.ZonedDateTime
 
 /**
@@ -13,7 +14,8 @@ abstract class Entity {
     abstract var id: Int
     abstract var creationDate: ZonedDateTime
 
-    open fun update(tableName: String, onUpdate: Map<String, Any>) {
+    abstract val fieldsSchema: Map<String, CommandArgumentDto>
+    abstract val pureData: Map<String, Any?>
 
-    }
+    abstract val tableName: String
 }

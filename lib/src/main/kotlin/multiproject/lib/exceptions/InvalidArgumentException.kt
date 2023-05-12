@@ -1,7 +1,6 @@
 package multiproject.lib.exceptions
 
 import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.utils.ExecuteException
 
 /**
  * Invalid argument exception

@@ -4,6 +4,8 @@ import multiproject.lib.udp.UdpConfig
 import multiproject.lib.udp.gateway.GatewayUdpChannel
 import multiproject.lib.udp.gateway.runGateway
 import multiproject.lib.udp.interfaces.OnReceive
+import multiproject.lib.utils.LogLevel
+import multiproject.lib.utils.Logger
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -11,10 +13,12 @@ import org.koin.java.KoinJavaComponent.inject
 import java.net.InetSocketAddress
 
 class App {
+    val logger = Logger(LogLevel.DEBUG)
     init {
         val module = module {
             single<GatewayUdpChannel>(named("server")) {
                 runGateway {
+                    this.logger = this@App.logger
                     requestResolver = GatewayRequestResolver()
                     receiveCallback = OnReceive { address, request ->
                         run {
@@ -27,6 +31,8 @@ class App {
                     }
                     firstConnectCallback = OnReceive { _, request ->
                         run {
+                            if (request.isEmptyPath())
+                                return@run
                             requestResolver(request, true)
                         }
                     }
@@ -46,11 +52,11 @@ class App {
 
 
 fun main() {
+    val app = App()
     try {
-        App()
         val server: GatewayUdpChannel by inject(GatewayUdpChannel::class.java, named("server"))
         server.run()
     } catch (e: Exception) {
-        println("Fatal error! ${e.message}")
+        app.logger(LogLevel.FATAL, "Fatal error! ${e.message}")
     }
 }

@@ -17,8 +17,11 @@ class GatewayRequestResolver: RequestResolver() {
     private val gateway: GatewayUdpChannel by inject(GatewayUdpChannel::class.java, named("server"))
     override fun resolveFirst(request: Request) {
         if (request directionIs RequestDirection.FROM_CLIENT)
-            gateway.sendThrough(request) {
-                path = PathDto("system","_load")
+            if (gateway isPendingClient request) throw ResolveError(ResponseCode.CONNECTION_REFUSED)
+            else {
+                gateway.sendThrough(request) {
+                    path = PathDto("system", "_load")
+                }
             }
         else if (request directionIs RequestDirection.FROM_SERVER)
             gateway.addServer(ConnectedServer(0, request.getFrom()))
@@ -31,7 +34,10 @@ class GatewayRequestResolver: RequestResolver() {
             gateway.sendThrough(request) {}
         else if (request directionIs RequestDirection.FROM_SERVER) {
             gateway clearPending request
-            gateway.servers.find { it.address == request.getSender() }?.temporaryUnavailable = Pair(0, false)
+            gateway.servers.find { it.address == request.getSender() }?.apply {
+                temporaryUnavailable = Pair(0, false)
+                pendingRequest--
+            }
             gateway.emit(request.getFrom(), request)
         }
         else

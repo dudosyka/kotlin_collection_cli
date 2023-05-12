@@ -8,10 +8,12 @@ import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.request.Request
-import multiproject.lib.udp.SocketAddressInterpreter
+import multiproject.lib.utils.SocketAddressInterpreter
 import multiproject.lib.udp.interfaces.OnReceive
 import multiproject.lib.udp.server.ServerUdpChannel
 import multiproject.lib.udp.server.runServer
+import multiproject.lib.utils.LogLevel
+import multiproject.lib.utils.Logger
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.EntityBuilder
 import multiproject.server.command.*
@@ -34,6 +36,7 @@ import org.koin.java.KoinJavaComponent.inject
 
 class App () {
     init {
+        val logger = Logger(LogLevel.INFO)
         val module = module {
             single<Collection<Flat>>(named("collection")) {
                 FlatCollection(mutableListOf())
@@ -46,6 +49,9 @@ class App () {
             }
             single<DatabaseManager>(named("dbManager")) {
                 DatabaseManager()
+            }
+            single<Logger>(named("logger")) {
+                logger
             }
             single<ServerUdpChannel>(named("server")) {
                 runServer {
@@ -149,14 +155,11 @@ class App () {
                                 needAuth = false
                             }
                         }
-
                     }
                     receiveCallback = OnReceive {
                         address, request -> run {
                             if (request.isEmptyPath())
                                 return@run
-
-                            println("Request received from $address: $request")
 
                             val response = router.run(request).dto ?: ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, "Resolver error")
 

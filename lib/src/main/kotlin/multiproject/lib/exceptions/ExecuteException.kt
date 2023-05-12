@@ -1,4 +1,4 @@
-package multiproject.lib.utils
+package multiproject.lib.exceptions
 
 import multiproject.lib.dto.response.ResponseCode
 

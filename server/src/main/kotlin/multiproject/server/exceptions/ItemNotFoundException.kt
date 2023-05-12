@@ -1,7 +1,7 @@
 package multiproject.server.exceptions
 
 import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.utils.ExecuteException
+import multiproject.lib.exceptions.ExecuteException
 
 /**
  * Item not found exception
