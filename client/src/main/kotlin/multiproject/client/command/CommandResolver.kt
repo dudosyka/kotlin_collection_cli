@@ -3,22 +3,22 @@ package multiproject.client.command
 import multiproject.client.exceptions.CommandNotFound
 import multiproject.client.io.IOData
 import multiproject.client.io.Writer
-import multiproject.lib.udp.client.ClientUdpChannel
-import multiproject.lib.dto.request.RequestDataDto
-import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.dto.command.CommandDto
+import multiproject.lib.dto.command.CommandResult
+import multiproject.lib.dto.request.PathDto
+import multiproject.lib.dto.request.RequestDataDto
+import multiproject.lib.dto.response.ResponseCode
+import multiproject.lib.dto.response.ResponseDto
+import multiproject.lib.request.Request
+import multiproject.lib.udp.client.ClientUdpChannel
+import multiproject.lib.utils.LogLevel
+import multiproject.lib.utils.Logger
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
-import multiproject.lib.dto.command.CommandResult
-import multiproject.lib.dto.request.PathDto
-import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.request.Request
-import multiproject.lib.utils.LogLevel
-import multiproject.lib.utils.Logger
 
 /**
  * Command resolver
@@ -108,12 +108,16 @@ class CommandResolver {
         val arguments = command.arguments.filter { !it.value.inline }
 
 
-        val result = if (arguments.isNotEmpty()) {
+        val request = if (arguments.isNotEmpty()) {
             val objectData = ObjectBuilder(arguments).getEntityData()
-             client.sendRequest(Request(PathDto(controller, name), data = RequestDataDto(objectData, inlineData)))
+             Request(PathDto(controller, name), data = RequestDataDto(objectData, inlineData))
         } else {
-            client.sendRequest(Request(PathDto(controller, name), data = RequestDataDto(mutableMapOf(),  inlineData)))
+            Request(PathDto(controller, name), data = RequestDataDto(mutableMapOf(),  inlineData))
         }
+
+        request setSyncType command.commandSyncType
+
+        val result = client.sendRequest(request)
 
         if (command.authorizedEndpoint && result.code.toString() == "SUCCESS") {
             client.auth(result.result)

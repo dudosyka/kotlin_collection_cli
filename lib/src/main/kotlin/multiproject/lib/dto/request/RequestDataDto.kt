@@ -1,6 +1,7 @@
 package multiproject.lib.dto.request
 
 import kotlinx.serialization.Serializable
+import multiproject.lib.utils.UltimateSerializer
 
 @Serializable
 data class RequestDataDto (

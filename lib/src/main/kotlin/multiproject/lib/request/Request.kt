@@ -1,18 +1,23 @@
 package multiproject.lib.request
 
 import kotlinx.serialization.Serializable
-import multiproject.lib.dto.request.*
+import multiproject.lib.dto.request.PathDto
+import multiproject.lib.dto.request.RequestDataDto
+import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.dto.response.ResponseDto
+import multiproject.lib.udp.gateway.SyncHelper
+import multiproject.lib.udp.server.router.CommandSyncType
 import multiproject.lib.utils.RequestDirectionInterpreter
 import multiproject.lib.utils.SocketAddressInterpreter
+import multiproject.lib.utils.UltimateSerializer
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 
 @Serializable
 open class Request(
     var path: PathDto,
-    private var headers: MutableMap<String, @Serializable(with=UltimateSerializer::class) Any?> = mutableMapOf(),
+    var headers: MutableMap<String, @Serializable(with= UltimateSerializer::class) Any?> = mutableMapOf(),
     var data: RequestDataDto = RequestDataDto(),
     var response: ResponseDto = ResponseDto(ResponseCode.SUCCESS)
 ) {
@@ -42,6 +47,21 @@ open class Request(
     fun getFrom(): InetSocketAddress = SocketAddressInterpreter.interpret(this.getHeader("from").toString())
     infix fun setSender(address: SocketAddress) = this setHeader Pair("sender", SocketAddressInterpreter.interpret(address))
     fun getSender(): InetSocketAddress = SocketAddressInterpreter.interpret(this.getHeader("sender").toString())
+    infix fun setSyncType(syncType: CommandSyncType) = this setHeader Pair("commandSyncType", syncType)
+    fun getSyncType(): CommandSyncType {
+        val syncType = this.getHeader("commandSyncType")
+        return if (syncType == null)
+            CommandSyncType(false)
+        else
+            syncType as CommandSyncType
+    }
+    fun getSyncHelper(): SyncHelper {
+        val syncHelper = this.getHeader("sync")
+        return if (syncHelper == null)
+            SyncHelper()
+        else
+            syncHelper as SyncHelper
+    }
 
     // ------------- Response managing ---------------- //
     infix fun checkCode(code: ResponseCode): Boolean {

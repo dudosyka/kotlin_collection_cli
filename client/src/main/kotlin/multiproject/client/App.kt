@@ -21,6 +21,7 @@ import multiproject.lib.udp.disconnect.RestoreOnDisconnectStrategy
 import multiproject.lib.udp.interfaces.OnConnectionRefused
 import multiproject.lib.udp.interfaces.OnConnectionRestored
 import multiproject.lib.udp.interfaces.OnDisconnectAttempt
+import multiproject.lib.utils.LogLevel
 import multiproject.lib.utils.Logger
 import org.koin.core.context.GlobalContext
 import org.koin.core.qualifier.named
@@ -30,7 +31,7 @@ import java.net.InetSocketAddress
 
 class App {
     init {
-        val logger = Logger()
+        val logger = Logger(LogLevel.DEBUG)
         val writer = ConsoleWriter()
         val module = module {
             factory<Reader>(named("reader")) {

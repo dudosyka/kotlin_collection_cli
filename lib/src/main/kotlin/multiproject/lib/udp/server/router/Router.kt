@@ -46,7 +46,8 @@ class Router(val logger: Logger) {
                     authorizedEndpoint = it.authorizationEndpoint,
                     arguments = it.command.fields,
                     hideFromClient = it.command.hideFromClient,
-                    fileReaderSource = it.command.fileReaderSource
+                    fileReaderSource = it.command.fileReaderSource,
+                    commandSyncType = it.command.commandSyncType
                 )
             }
         }

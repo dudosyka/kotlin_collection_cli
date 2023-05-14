@@ -18,7 +18,7 @@ class App {
         val module = module {
             single<GatewayUdpChannel>(named("server")) {
                 runGateway {
-                    this.logger = this@App.logger
+                    logger = this@App.logger
                     requestResolver = GatewayRequestResolver()
                     receiveCallback = OnReceive { address, request ->
                         run {
@@ -50,7 +50,6 @@ class App {
     }
 }
 
-
 fun main() {
     val app = App()
     try {
@@ -58,5 +57,6 @@ fun main() {
         server.run()
     } catch (e: Exception) {
         app.logger(LogLevel.FATAL, "Fatal error!", e)
+        throw e
     }
 }

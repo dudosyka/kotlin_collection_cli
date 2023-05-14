@@ -8,12 +8,12 @@ import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.request.Request
-import multiproject.lib.utils.SocketAddressInterpreter
 import multiproject.lib.udp.interfaces.OnReceive
 import multiproject.lib.udp.server.ServerUdpChannel
 import multiproject.lib.udp.server.runServer
 import multiproject.lib.utils.LogLevel
 import multiproject.lib.utils.Logger
+import multiproject.lib.utils.SocketAddressInterpreter
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.EntityBuilder
 import multiproject.server.command.*
@@ -26,10 +26,10 @@ import multiproject.server.command.user.SignupCommand
 import multiproject.server.database.DatabaseManager
 import multiproject.server.dump.DumpManager
 import multiproject.server.dump.PostgresqlDumpManager
+import multiproject.server.middlewares.auth.AuthMiddleware
 import multiproject.server.modules.flat.Flat
 import multiproject.server.modules.flat.FlatBuilder
 import multiproject.server.modules.flat.FlatCollection
-import multiproject.server.middlewares.auth.AuthMiddleware
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -37,7 +37,7 @@ import org.koin.java.KoinJavaComponent.inject
 
 class App {
     init {
-        val logger = Logger(LogLevel.INFO)
+        val logger = Logger(LogLevel.DEBUG)
         val module = module {
             single<Collection<Flat>>(named("collection")) {
                 FlatCollection(mutableListOf())
@@ -56,6 +56,7 @@ class App {
             }
             single<ServerUdpChannel>(named("server")) {
                 runServer {
+                    this.logger = logger
                     applyRouter {
                         addController {
                             name = "collection"
@@ -173,6 +174,7 @@ class App {
                             request.apply {
                                 this.response = response
                                 this setDirection RequestDirection.FROM_SERVER
+                                this setSender getChannelAddress()
                             }
 
                             this.emit(

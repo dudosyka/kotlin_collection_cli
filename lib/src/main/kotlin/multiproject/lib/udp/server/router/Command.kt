@@ -1,10 +1,10 @@
 package multiproject.lib.udp.server.router
 
 import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.ExecutableInput
 import multiproject.lib.dto.command.Validator
 import multiproject.lib.dto.response.Response
 import multiproject.lib.exceptions.InvalidArgumentException
-import multiproject.lib.dto.command.ExecutableInput
 
 /**
  * Command
@@ -18,6 +18,7 @@ abstract class Command(val controller: Controller) {
     open val fileReaderSource = false
     open val description = "no description."
     open val hideFromClient = false
+    open val commandSyncType: CommandSyncType = CommandSyncType(sync = false, blocking = false)
     /**
      * Execute
      *

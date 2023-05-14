@@ -1,6 +1,7 @@
-package multiproject.lib.dto.request
+package multiproject.lib.utils
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -8,7 +9,8 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.*
 import multiproject.lib.exceptions.InvalidSocketAddress
-import multiproject.lib.utils.SocketAddressInterpreter
+import multiproject.lib.udp.gateway.SyncHelper
+import multiproject.lib.udp.server.router.CommandSyncType
 import java.net.InetSocketAddress
 
 class UltimateSerializer(
@@ -25,6 +27,8 @@ class UltimateSerializer(
             is Iterable<*> -> JsonArray(value.map { anyToJsonElement(it) })
             is Map<*, *> -> JsonObject(value.map { it.key.toString() to anyToJsonElement(it.value) }.toMap())
             is InetSocketAddress -> JsonPrimitive(SocketAddressInterpreter.interpret(value))
+            is SyncHelper -> JsonPrimitive(Serializer.serializeSyncHelper(value))
+            is CommandSyncType -> JsonPrimitive(Serializer.serializeSyncType(value))
             else -> throw Exception("Not implemented type ${value::class}=${value}}")
         }
     }
@@ -42,12 +46,25 @@ class UltimateSerializer(
                 return false
             }
 
-            return try {
-                SocketAddressInterpreter.interpret(content)
+            var result: Any = try {
+                return SocketAddressInterpreter.interpret(content)
             } catch (e: InvalidSocketAddress) {
                 content
             }
 
+            result = try {
+                return Serializer.deserializeSyncType(content)
+            } catch (e: SerializationException) {
+                result
+            }
+
+            result = try {
+                return Serializer.deserializeSyncHelper(content)
+            } catch (e: SerializationException) {
+                result
+            }
+
+            return result
         }
 
         val longValue = content.toLongOrNull()
