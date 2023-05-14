@@ -1,6 +1,6 @@
 package multiproject.lib.dto.command
 
-class Validator (val argumentDto: CommandArgumentDto, var value: Any? = null) {
+class Validator (private val argumentDto: CommandArgumentDto, var value: Any? = null) {
 
     private fun validateString(value: String): Boolean {
         if (argumentDto.max != null && value.length > argumentDto.max)

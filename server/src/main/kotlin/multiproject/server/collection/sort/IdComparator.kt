@@ -5,7 +5,7 @@ import multiproject.server.collection.item.Entity
 /**
  * Id comparator
  *
- * @constructor Create empty Id comparator
+ * @constructor Create empty id comparator
  */
 class IdComparator: Comparator<Entity> {
     /**

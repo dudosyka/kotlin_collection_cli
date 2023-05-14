@@ -13,7 +13,7 @@ import multiproject.server.modules.user.UserBuilder
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 
-class RegCommand(controller: Controller) : Command(controller) {
+class SignupCommand(controller: Controller) : Command(controller) {
     val server: ServerUdpChannel by KoinJavaComponent.inject(ServerUdpChannel::class.java, named("server"))
     override val fields: Map<String, CommandArgumentDto> = UserBuilder().fields
     /**
@@ -23,7 +23,8 @@ class RegCommand(controller: Controller) : Command(controller) {
      * @return
      */
     override fun execute(input: ExecutableInput): Response {
-        return if (User.getByLogin(input.data["login"]?.toString() ?: throw NotUniqueException("login")) != null) {
+        val checkLogin = User.getByLogin(input.data["login"]?.toString() ?: throw NotUniqueException("login"))
+        return if (checkLogin == null) {
             input.data["password"] = User.hash(input.data["password"].toString())
             User.create(input.data)
             Response(ResponseCode.SUCCESS, "Account successfully created!")

@@ -47,7 +47,7 @@ class ClientUdpChannel: UdpChannel() {
                     attemptNum++
                     sendRequest(Request(PathDto("system", "_load")))
                 } catch (e: Exception) {
-                    logger(LogLevel.ERROR, "Error in ping timer: $e")
+                    logger(LogLevel.ERROR, "Error in ping timer:", e)
                 }
             }
         }

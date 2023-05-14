@@ -41,7 +41,7 @@ class DatabaseManager {
         return try {
             statement.executeUpdate()
         } catch (e: Exception) {
-            log("$e", LogLevel.ERROR)
+            log("$e ${e.stackTraceToString()}", LogLevel.ERROR)
             0
         }
     }
@@ -55,9 +55,9 @@ class DatabaseManager {
     private fun buildFromRow(tableName: String, fields: Map<String, CommandArgumentDto>, row: ResultSet): MutableMap<String, Any?> {
         return fields.map {
             val columnIndex = "$tableName$${it.key}"
-            if (it.value.nested != null && it.value.show)
+            if (it.value.nested != null)
                 it.key to buildFromRow(it.value.nestedTable!!, it.value.nested!!, row)
-            else
+            else {
                 it.key to when (it.value.type) {
                     FieldType.STRING -> row.getString(columnIndex)
                     FieldType.LONG -> row.getInt(columnIndex).toLong()
@@ -66,6 +66,7 @@ class DatabaseManager {
                     FieldType.BOOLEAN -> row.getInt(columnIndex) == 1
                     else -> row.getString(columnIndex)
                 }
+            }
         }.toMap().toMutableMap()
     }
     fun <T: Entity> findAll(entity: EntityBuilder<T>, predicates: Map<String, DatabasePredicate> = mapOf()): MutableList<T> {
@@ -88,7 +89,7 @@ class DatabaseManager {
             }
 
         } catch (e: Exception) {
-            log("$e", LogLevel.ERROR)
+            log("$e ${e.stackTraceToString()}", LogLevel.ERROR)
         }
 
         return data
@@ -118,15 +119,16 @@ class DatabaseManager {
                 executeUpdate(it) {}
             }
         } catch (e: SQLException) {
-            log("SQL. Execution error: ${e.message}", LogLevel.ERROR)
+            log("SQL. Execution error: ${e.message} ${e.stackTraceToString()}", LogLevel.ERROR)
         }
     }
     private data class InsertTemplate(
-        val schema: Map<String, CommandArgumentDto>,
-        val statement: PreparedStatement,
-        var index: Int = 1,
-        val level: Int,
-        val data: MutableList<Map<String, Any?>> = mutableListOf()
+            val schema: Map<String, CommandArgumentDto>,
+            val statement: PreparedStatement,
+            var index: Int = 1,
+            val level: Int,
+            var currId: Int,
+            val data: MutableList<Map<String, Any?>> = mutableListOf()
     )
     private fun generateInsertTemplate(tableName: String, schema: Map<String, CommandArgumentDto>, itemsCount: Int, level: Int): InsertTemplate {
         val schemaFields = schema.map {
@@ -142,25 +144,28 @@ class DatabaseManager {
         return InsertTemplate(
             schema,
             statement,
-            level = level
+            level = level,
+            currId = getStartId(tableName)
         )
     }
     private fun entityToRow(schema: Map<String, CommandArgumentDto>, row: MutableMap<String, Any?>, tableName: String, inserts: MutableMap<String, InsertTemplate>) {
         val insert = inserts[tableName]
         val statement = insert!!.statement
-        println("${schema.size}, $statement, $row")
         schema.forEach {
             val item = row[it.key]
-            if (it.value.nested != null) {
+            if (it.value.nested != null && it.value.show) {
                 val nestedValues = row[it.key]!! as MutableMap<String, Any?>
-                statement.setLong(insert.index, nestedValues[it.value.nestedJoinOn!!.second].toString().toLong())
+                val nestedInsert = inserts[it.value.nestedTable!!]!!
+                nestedInsert.currId++
+                nestedValues[it.value.nestedJoinOn!!.second] = nestedInsert.currId
+                statement.setInt(insert.index, nestedInsert.currId)
                 entityToRow(
                     it.value.nested!!,
                     nestedValues,
                     it.value.nestedTable!!,
                     inserts
                 )
-            } else
+            } else if (!it.value.autoIncrement) {
                 when (it.value.type) {
                     FieldType.STRING -> statement.setString(insert.index, item.toString())
                     FieldType.LONG -> statement.setLong(insert.index, item.toString().toLong())
@@ -169,10 +174,23 @@ class DatabaseManager {
                     FieldType.BOOLEAN -> statement.setBoolean(insert.index, item == 1)
                     else -> statement.setString(insert.index, item.toString())
                 }
+            } else if (it.value.autoIncrement && it.value.nested != null) {
+                val nestedValues = row[it.key]!! as MutableMap<String, Any?>
+                statement.setInt(insert.index, nestedValues[it.value.nestedJoinOn!!.second].toString().toInt())
+            } else if (it.value.autoIncrement) {
+                statement.setInt(insert.index, insert.currId)
+            }
             insert.index++
         }
         statement.addBatch()
     }
+    fun getStartId(tableName: String): Int {
+        val query = "select nextval('${tableName}_id_seq')"
+        val result = this.execute(query) {}
+        result.next()
+        return result.getInt(1)
+    }
+
     fun <T: Entity> replaceAll(items: MutableList<T>) {
         if (items.size == 0)
             return
@@ -180,7 +198,7 @@ class DatabaseManager {
         val query = mutableListOf<String>()
         query.add("truncate table ${item.tableName} cascade")
         item.fieldsSchema.forEach {
-            if (it.value.nested != null)
+            if (it.value.nested != null && it.value.show)
                 query.add("truncate table ${it.value.nestedTable} cascade")
         }
         try {
@@ -189,7 +207,7 @@ class DatabaseManager {
             }
             this.insert(items)
         } catch (e: Exception) {
-            log("$e", LogLevel.FATAL)
+            log("$e ${e.stackTraceToString()}", LogLevel.FATAL)
         }
     }
     fun <T: Entity> insert(items: MutableList<T>) {
@@ -199,21 +217,27 @@ class DatabaseManager {
         val inserts = mutableMapOf<String, InsertTemplate>()
         inserts[item.tableName] = this.generateInsertTemplate(item.tableName, item.fieldsSchema, items.size, 1)
         item.fieldsSchema.forEach {
-            if (it.value.nested != null)
+            if (it.value.nested != null && it.value.show)
                 inserts[it.value.nestedTable!!] = this.generateInsertTemplate(it.value.nestedTable!!, it.value.nested!!, items.size, 2)
         }
         items.forEach {
-            entityToRow(it.fieldsSchema, it.pureData.toMutableMap(), it.tableName, inserts)
+            inserts[it.tableName]!!.currId++
+            val data = it.pureData.toMutableMap()
+            data.apply {
+                this["id"] = inserts[it.tableName]!!.currId
+            }
+            entityToRow(it.fieldsSchema, data, it.tableName, inserts)
         }
 
         try {
             inserts.map {
                 it.value
             }.toMutableList().apply { this.sortByDescending { it.level } }.forEach {
+                log("executed: ${it.statement}")
                 it.statement.executeUpdate()
             }
         } catch (e: Exception) {
-            log("$e", LogLevel.ERROR)
+            log("$e ${e.stackTraceToString()}", LogLevel.ERROR)
         }
     }
 }

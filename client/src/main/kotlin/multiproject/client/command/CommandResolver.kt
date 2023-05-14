@@ -2,6 +2,7 @@ package multiproject.client.command
 
 import multiproject.client.exceptions.CommandNotFound
 import multiproject.client.io.IOData
+import multiproject.client.io.Writer
 import multiproject.lib.udp.client.ClientUdpChannel
 import multiproject.lib.dto.request.RequestDataDto
 import multiproject.lib.dto.response.ResponseDto
@@ -29,6 +30,7 @@ class CommandResolver {
     companion object {
         val logger: Logger by inject(Logger::class.java, named("logger"))
         val client: ClientUdpChannel by inject(ClientUdpChannel::class.java, named("client"))
+        private val writer: Writer by inject(Writer::class.java, named("writer"))
         private var commands: Map<String, List<CommandDto>> = mapOf()
 
         fun getCommandByName(controller: String, name: String): CommandDto? {
@@ -43,6 +45,7 @@ class CommandResolver {
             logger(LogLevel.DEBUG, "$commandList")
             if (commandList.isNotEmpty())
                 commands = commandList.map { controller -> controller.key to controller.value.filter { !it.hideFromClient }.filter { if (client.authorized) true else !it.needAuth } }.toMap()
+            writer.writeLine("Commands list updated from server!")
             logger(LogLevel.DEBUG, "$commands")
         }
 

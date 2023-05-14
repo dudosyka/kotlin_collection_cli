@@ -9,8 +9,10 @@ import multiproject.lib.exceptions.RouteNotFound
 import multiproject.lib.request.Request
 import multiproject.lib.request.RequestToExecutableInterpreter
 import multiproject.lib.request.middleware.MiddlewareException
+import multiproject.lib.utils.LogLevel
+import multiproject.lib.utils.Logger
 
-class Router {
+class Router(val logger: Logger) {
     private val controllers: MutableList<Controller> = mutableListOf()
     private val requestInterpreter = RequestToExecutableInterpreter()
     fun addController(init: Controller.() -> Unit) {
@@ -65,10 +67,13 @@ class Router {
 
             path.second.command.execute(requestInterpreter.interpret(request))
         } catch (e: Exception) {
-            Response(ResponseCode.INTERNAL_SERVER_ERROR, e.message ?: "")
+            logger(LogLevel.FATAL, "Fatal error!", error = e)
+            Response(ResponseCode.INTERNAL_SERVER_ERROR, "$e")
         } catch (e: MiddlewareException) {
+            logger(LogLevel.INFO, "Middleware exception!", error = e)
             Response(ResponseCode.BAD_REQUEST, e.message)
         } catch (e: ExecuteException) {
+            logger(LogLevel.INFO, "Execute exception!", error = e)
             Response(e.code, e.message)
         }
     }

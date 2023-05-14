@@ -1,28 +1,22 @@
 package multiproject.server.modules.flat
 
 import kotlinx.serialization.Transient
-import multiproject.server.collection.Collection
 import multiproject.server.collection.item.EntityBuilder
 import multiproject.server.collection.item.FieldDelegate
 import multiproject.server.modules.coordinates.CoordinatesBuilder
 import multiproject.server.modules.house.HouseBuilder
 import multiproject.lib.dto.command.FieldType
-import multiproject.server.modules.human.Human
 import multiproject.lib.dto.command.CommandArgumentDto
 import multiproject.server.modules.user.UserBuilder
-import org.koin.core.qualifier.named
-import org.koin.java.KoinJavaComponent
-import java.time.ZonedDateTime
 
 class FlatBuilder: EntityBuilder<Flat>() {
 
     override val tableName: String
         get() = "flat"
 
-    private val collection: Collection<Human> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     @Transient
     override val fields: MutableMap<String, CommandArgumentDto> = mutableMapOf(
-        "id" to CommandArgumentDto(name = "id", type = FieldType.INT, show = false),
+        "id" to CommandArgumentDto(name = "id", type = FieldType.INT, show = false, autoIncrement = true),
         "name" to CommandArgumentDto(
             name = "name",
             required = true,
@@ -71,6 +65,7 @@ class FlatBuilder: EntityBuilder<Flat>() {
             type = FieldType.INT,
             show = false,
             required = false,
+            autoIncrement = true,
             nested = UserBuilder().fields,
             nestedTable = UserBuilder().tableName,
             nestedJoinOn = Pair("author", "id")
@@ -90,7 +85,7 @@ class FlatBuilder: EntityBuilder<Flat>() {
      * @return
      */
     override fun build(map: MutableMap<String, Any?>): Flat {
-        val id: Int = collection.getUniqueId()
+        val id: Long? by FieldDelegate(map = map, fields["id"]!!)
         val name: String? by FieldDelegate(map = map, fields["name"]!!)
         val area: Float? by FieldDelegate(map = map, fields["area"]!!)
         val numberOfRooms: Long? by FieldDelegate(map = map, fields["numberOfRooms"]!!)
@@ -105,8 +100,12 @@ class FlatBuilder: EntityBuilder<Flat>() {
         val house: MutableMap<String, Any?>? by FieldDelegate(map = map, fields["house"]!!)
         val houseEntity = HouseBuilder().build(house!!)
 
-        val author: Long? by FieldDelegate(map = map, fields["author"]!!)
+        val author: MutableMap<String, Any?>? by FieldDelegate(map = map, fields["author"]!!)
+        val userEntity = UserBuilder().build(author!!)
 
-        return Flat(id, ZonedDateTime.now(),name!!,area!!,numberOfRooms!!,numberOfBathrooms!!,timeToMetroByTransport?.toInt()!!, coordinatesEntity, furnishValue, houseEntity, author!!, fields, map)
+        return Flat(id!!.toInt(),name!!,area!!,numberOfRooms!!,numberOfBathrooms!!,timeToMetroByTransport?.toInt()!!, coordinatesEntity, furnishValue, houseEntity, userEntity).apply {
+            pureData = map
+            fieldsSchema = fields
+        }
     }
 }

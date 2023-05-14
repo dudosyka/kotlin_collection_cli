@@ -3,34 +3,35 @@ package multiproject.client
 import multiproject.client.command.CommandResolver
 import multiproject.client.console.ConsoleReader
 import multiproject.client.console.ConsoleWriter
+import multiproject.client.exceptions.CommandNotFound
+import multiproject.client.exceptions.RecursiveScriptException
+import multiproject.client.file.FileReader
 import multiproject.client.io.IOData
 import multiproject.client.io.Reader
 import multiproject.client.io.Writer
+import multiproject.lib.dto.ConnectedServer
+import multiproject.lib.dto.request.PathDto
+import multiproject.lib.exceptions.InvalidArgumentException
+import multiproject.lib.exceptions.ValidationFieldException
+import multiproject.lib.request.Request
+import multiproject.lib.udp.UdpConfig
 import multiproject.lib.udp.client.ClientUdpChannel
+import multiproject.lib.udp.client.runClient
+import multiproject.lib.udp.disconnect.RestoreOnDisconnectStrategy
+import multiproject.lib.udp.interfaces.OnConnectionRefused
+import multiproject.lib.udp.interfaces.OnConnectionRestored
+import multiproject.lib.udp.interfaces.OnDisconnectAttempt
+import multiproject.lib.utils.Logger
 import org.koin.core.context.GlobalContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
-import multiproject.client.file.FileReader
-import multiproject.lib.dto.ConnectedServer
-import multiproject.lib.dto.request.PathDto
-import multiproject.client.exceptions.CommandNotFound
-import multiproject.lib.exceptions.InvalidArgumentException
-import multiproject.client.exceptions.RecursiveScriptException
-import multiproject.lib.exceptions.ValidationFieldException
-import multiproject.lib.request.Request
-import multiproject.lib.udp.UdpConfig
-import multiproject.lib.udp.interfaces.OnConnectionRefused
-import multiproject.lib.udp.interfaces.OnConnectionRestored
-import multiproject.lib.udp.client.runClient
-import multiproject.lib.udp.interfaces.OnDisconnectAttempt
-import multiproject.lib.udp.disconnect.RestoreOnDisconnectStrategy
-import multiproject.lib.utils.Logger
 import java.net.InetSocketAddress
 
 class App {
     init {
         val logger = Logger()
+        val writer = ConsoleWriter()
         val module = module {
             factory<Reader>(named("reader")) {
                 if (IOData.current == "file")
@@ -39,7 +40,7 @@ class App {
                     ConsoleReader()
             }
             single<Writer>(named("writer")) {
-                ConsoleWriter()
+                writer
             }
             single<Logger>(named("logger")) {
                 logger
@@ -51,14 +52,13 @@ class App {
                     onConnectionRestoredCallback = OnConnectionRestored {
                         response -> run {
                             CommandResolver.updateCommandList(response.commands)
-                            println("Commands list updated from server!")
                         }
                     }
                     onConnectionRefusedCallback = OnConnectionRefused {
-                        println("Connection lost")
+                        writer.writeLine("Connection lost")
                     }
                     onDisconnectAttempt = OnDisconnectAttempt {
-                        attemptNum -> println("Try to reconnect... Reconnect attempt #$attemptNum")
+                        attemptNum -> writer.writeLine("Try to reconnect... Reconnect attempt #$attemptNum")
                     }
                     addServer(
                         address = ConnectedServer(0, InetSocketAddress(UdpConfig.serverAddress, UdpConfig.serverPort))

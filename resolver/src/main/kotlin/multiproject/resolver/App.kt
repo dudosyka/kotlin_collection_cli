@@ -57,6 +57,6 @@ fun main() {
         val server: GatewayUdpChannel by inject(GatewayUdpChannel::class.java, named("server"))
         server.run()
     } catch (e: Exception) {
-        app.logger(LogLevel.FATAL, "Fatal error! ${e.message}")
+        app.logger(LogLevel.FATAL, "Fatal error!", e)
     }
 }

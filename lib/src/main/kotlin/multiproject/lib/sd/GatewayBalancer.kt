@@ -12,7 +12,7 @@ object GatewayBalancer {
             this.sortBy { it.pendingRequest }
         }
 
-        gateway.logger(LogLevel.INFO,"Gateway available adresses: $availableServers")
+        gateway.logger(LogLevel.INFO,"Gateway available addresses: $availableServers")
         if (availableServers.isEmpty())
             return null
         gateway.logger(LogLevel.INFO, "Gateway has chosen address: ${availableServers.first().address}")

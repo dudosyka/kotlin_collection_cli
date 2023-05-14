@@ -30,7 +30,7 @@ class GatewayUdpChannel: UdpChannel() {
             this.emit(serverAddress, initiator)
             pendingRequests[Pair(now, initiator.getFrom())] = (Pair(server, initiator))
         } catch (e: Exception) {
-            logger(LogLevel.ERROR, e.message ?: "Fatal error!")
+            logger(LogLevel.ERROR, "$e ${e.stackTraceToString()}")
             disconnectStrategy.onDisconnect(this, serverAddress, RequestDirection.FROM_SERVER)
             sendThrough(initiator) {}
         }
@@ -38,7 +38,6 @@ class GatewayUdpChannel: UdpChannel() {
 
     infix fun clearPending(request: Request) {
         pendingRequests.remove(Pair(request.getHeader("id").toString().toLong(), request.getFrom()))
-        logger(LogLevel.INFO, "Pending requests: $pendingRequests")
     }
 
     infix fun isPendingClient(request: Request): Boolean {

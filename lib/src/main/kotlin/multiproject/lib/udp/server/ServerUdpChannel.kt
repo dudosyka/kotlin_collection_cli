@@ -13,7 +13,7 @@ class ServerUdpChannel: UdpChannel() {
     lateinit var router: Router
 
     fun applyRouter(init: Router.() -> Unit) {
-        this.router = Router().apply(init)
+        this.router = Router(logger).apply(init)
     }
 
     fun selfExecute(request: Request) {

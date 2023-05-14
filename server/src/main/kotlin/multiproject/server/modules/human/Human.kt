@@ -1,12 +1,8 @@
 package multiproject.server.modules.human
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
-import multiproject.lib.dto.command.CommandArgumentDto
 import multiproject.server.collection.item.Entity
-import multiproject.server.collection.item.ZonedDateTimeSerializer
 import multiproject.server.modules.coordinates.Coordinates
-import java.time.ZonedDateTime
 
 /**
  * Human
@@ -24,9 +20,6 @@ class Human(
     var name: String?,
     private var fatness: Fatness?,
     private var position: Coordinates,
-    @Serializable(with = ZonedDateTimeSerializer::class) override var creationDate: ZonedDateTime,
-    @Transient override val fieldsSchema: Map<String, CommandArgumentDto> = mapOf(),
-    @Transient override val pureData: Map<String, Any?> = mapOf(),
 ) : Entity() {
     override val tableName: String
         get() = "human"

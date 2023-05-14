@@ -11,7 +11,9 @@ object AuthMiddleware: Middleware() {
     override fun invoke(): Request.() -> Unit {
         try {
             return {
-                data.arguments["user"] = User.checkToken(getHeader("token")?.toString() ?: "")
+                val user = User.checkToken(getHeader("token")?.toString() ?: "")
+                data.arguments["user"] = user.subject
+                data.arguments["__buildUserData"] = user.data
             }
         } catch (e: JwtException) {
             throw ForbiddenException()

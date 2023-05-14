@@ -11,6 +11,7 @@ data class CommandArgumentDto(
     val max: Int? = null,
     val required: Boolean = false,
     val show: Boolean = true,
+    val autoIncrement: Boolean = false,
     val inline: Boolean = false,
     val nested: Map<String, CommandArgumentDto>? = null,
     val nestedTable: String? = null,

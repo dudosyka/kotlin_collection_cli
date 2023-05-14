@@ -41,7 +41,7 @@ abstract class UdpChannel {
             channel.bind(InetSocketAddress(InetAddress.getLocalHost(), port))
             return
         }
-        logger(LogLevel.ERROR, "Socket bind on $address")
+        logger(LogLevel.INFO, "Socket bind on $address")
         channel.bind(address)
     }
     fun addServer(address: ConnectedServer) {
@@ -93,9 +93,6 @@ abstract class UdpChannel {
                 this.onMessage(address, data)
             }
         }
-    }
-    fun disconnect(address: SocketAddress) {
-        connections.remove(address)
     }
 
     open fun stop() {

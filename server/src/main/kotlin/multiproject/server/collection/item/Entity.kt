@@ -1,6 +1,7 @@
 package multiproject.server.collection.item
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import multiproject.lib.dto.command.CommandArgumentDto
 import java.time.ZonedDateTime
 
@@ -12,10 +13,10 @@ import java.time.ZonedDateTime
 @Serializable
 abstract class Entity {
     abstract var id: Int
-    abstract var creationDate: ZonedDateTime
+    open var creationDate: @Serializable(with=ZonedDateTimeSerializer::class)ZonedDateTime = ZonedDateTime.now()
 
-    abstract val fieldsSchema: Map<String, CommandArgumentDto>
-    abstract val pureData: Map<String, Any?>
+    @Transient open var fieldsSchema: Map<String, CommandArgumentDto> = mapOf()
+    @Transient open var pureData: Map<String, Any?> = mapOf()
 
     abstract val tableName: String
 }

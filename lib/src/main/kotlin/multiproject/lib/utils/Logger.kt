@@ -37,8 +37,10 @@ class Logger (
             this.logFile!!.close()
         }
     }
-    operator fun invoke(level: LogLevel, message: String) {
-        val logString = "[${this.getCurTimestamp()}] $message"
+    operator fun invoke(level: LogLevel, message: String? = null, error: Exception? = null) {
+        var logString = "[${this.getCurTimestamp()}] $message"
+        if (error != null)
+            logString += "\n$error \n{${error.stackTraceToString()}}"
         if (level >= logLevel) {
             println(logString)
         }

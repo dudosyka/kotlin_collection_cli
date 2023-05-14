@@ -1,18 +1,14 @@
 package multiproject.server.modules.flat
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
-import multiproject.lib.dto.command.CommandArgumentDto
 import multiproject.server.collection.item.Entity
-import multiproject.server.collection.item.ZonedDateTimeSerializer
 import multiproject.server.modules.house.House
 import multiproject.server.modules.coordinates.Coordinates
-import java.time.ZonedDateTime
+import multiproject.server.modules.user.User
 
 @Serializable
 class Flat(
     override var id: Int,
-    @Serializable(with = ZonedDateTimeSerializer::class) override var creationDate: ZonedDateTime,
     var name: String,
     private var area: Float,
     var numberOfRooms: Long,
@@ -21,9 +17,7 @@ class Flat(
     private var coordinates: Coordinates,
     var furnish: Furnish?,
     private var house: House?,
-    var author: Long?,
-    @Transient override val fieldsSchema: Map<String, CommandArgumentDto> = mapOf(),
-    @Transient override val pureData: Map<String, Any?> = mapOf()
+    private var author: User?,
 ): Entity() {
     override val tableName: String
         get() = "flat"
@@ -40,6 +34,7 @@ class Flat(
                 "\tfurnish=$furnish,\n" +
                 "\thouse=$house,\n" +
                 "\tcreationDate=$creationDate,\n" +
+                "\tauthor=$author,\n" +
                 "}"
     }
 }

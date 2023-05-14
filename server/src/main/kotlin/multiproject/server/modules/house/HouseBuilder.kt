@@ -8,7 +8,6 @@ import multiproject.lib.dto.command.CommandArgumentDto
 import multiproject.server.collection.item.FieldDelegate
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
-import java.time.ZonedDateTime
 
 class HouseBuilder: EntityBuilder<House>() {
     override val tableName: String
@@ -16,7 +15,7 @@ class HouseBuilder: EntityBuilder<House>() {
     private val collection: Collection<Human> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     @Transient
     override val fields: MutableMap<String, CommandArgumentDto> = mutableMapOf(
-        "id" to CommandArgumentDto(name = "id", type = FieldType.INT, show = false),
+        "id" to CommandArgumentDto(name = "id", type = FieldType.INT, show = false, autoIncrement = true),
         "name" to CommandArgumentDto(
             name = "name",
             required = false,
@@ -61,6 +60,9 @@ class HouseBuilder: EntityBuilder<House>() {
         val numberOfFloors: Long? by FieldDelegate(map = map, fields["numberOfFloors"]!!)
         val numberOfFlatsOnFloor: Long? by FieldDelegate(map = map, fields["numberOfFlatsOnFloor"]!!)
         val numberOfLifts: Long? by FieldDelegate(map = map, fields["numberOfLifts"]!!)
-        return House(id, ZonedDateTime.now(), name, year!!, numberOfFloors!!, numberOfFlatsOnFloor!!, numberOfLifts!!, fields, map)
+        return House(id, name, year!!, numberOfFloors!!, numberOfFlatsOnFloor!!, numberOfLifts!!).apply {
+            pureData = map
+            fieldsSchema = fields
+        }
     }
 }

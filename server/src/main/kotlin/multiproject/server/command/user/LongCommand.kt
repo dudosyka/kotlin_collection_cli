@@ -15,23 +15,10 @@ class LongCommand(controller: Controller) : Command(controller) {
      */
     override fun execute(input: ExecutableInput): Response {
         println("Processing...")
-//        var processing = true
 
-//        val reconnectTask: TimerTask = object: TimerTask() {
-//            override fun run() {
-//                println("processed!")
-//                processing = false
-//            }
-//        }
-//        Timer().schedule(
-//            reconnectTask, UdpConfig.timeout / 2
-//        )
+        Thread.sleep(5_000)
 
-//        while (processing) { }
-
-        Thread.sleep(15_000)
-
-        println("truly processed!")
+        println("Processed!")
 
         return Response(ResponseCode.SUCCESS, "success processed!")
     }

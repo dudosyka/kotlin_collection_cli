@@ -1,14 +1,14 @@
 package multiproject.server.modules.human
 
 import kotlinx.serialization.Transient
+import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.FieldType
+import multiproject.server.collection.Collection
 import multiproject.server.collection.item.EntityBuilder
 import multiproject.server.collection.item.FieldDelegate
 import multiproject.server.modules.coordinates.CoordinatesBuilder
-import multiproject.server.collection.Collection
-import multiproject.lib.dto.command.CommandArgumentDto
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
-import java.time.ZonedDateTime
 
 /**
  * Human builder
@@ -21,23 +21,29 @@ class HumanBuilder : EntityBuilder<Human>() {
     private val collection: Collection<Human> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     @Transient
     override val fields: MutableMap<String, CommandArgumentDto> = mutableMapOf(
+        "id" to CommandArgumentDto(
+            name = "id",
+            autoIncrement = true,
+                show = false,
+                type = FieldType.LONG
+        ),
         "name" to CommandArgumentDto(
             name = "name",
             required = false,
-            type = multiproject.lib.dto.command.FieldType.STRING
+            type = FieldType.STRING
         ),
         "fatness" to CommandArgumentDto(
             name = "fatness",
             required = false,
-            type = multiproject.lib.dto.command.FieldType.ENUM,
+            type = FieldType.ENUM,
             choisable = Fatness.values().map { it.toString() }
         ),
         "position" to CommandArgumentDto(
             name = "position",
             required = true,
             nested = mapOf(
-                "x" to CommandArgumentDto(name = "x", type = multiproject.lib.dto.command.FieldType.INT),
-                "y" to CommandArgumentDto(name = "x", type = multiproject.lib.dto.command.FieldType.INT)
+                "x" to CommandArgumentDto(name = "x", type = FieldType.INT),
+                "y" to CommandArgumentDto(name = "x", type = FieldType.INT)
             )
         )
     )
@@ -46,8 +52,10 @@ class HumanBuilder : EntityBuilder<Human>() {
         val name: String? by FieldDelegate(map = map, fields["name"]!!)
         val fatness: String? by FieldDelegate<String>(map = map, fields["fatness"]!!)
         val fatnessValue: Fatness = Fatness.valueOf(fatness!!)
-        val creationDate = ZonedDateTime.now()
         val position: MutableMap<String, Any?>? by FieldDelegate(map = map, fields["position"]!!)
-        return Human(id, name, fatnessValue, CoordinatesBuilder().build(position!!), creationDate, fields, map)
+        return Human(id, name, fatnessValue, CoordinatesBuilder().build(position!!)).apply {
+            pureData = map
+            fieldsSchema = fields
+        }
     }
 }

@@ -22,7 +22,7 @@ import multiproject.server.command.system.SystemLoadCommand
 import multiproject.server.command.user.AuthCommand
 import multiproject.server.command.user.GetByTokenCommand
 import multiproject.server.command.user.LongCommand
-import multiproject.server.command.user.RegCommand
+import multiproject.server.command.user.SignupCommand
 import multiproject.server.database.DatabaseManager
 import multiproject.server.dump.DumpManager
 import multiproject.server.dump.PostgresqlDumpManager
@@ -35,7 +35,7 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
 
-class App () {
+class App {
     init {
         val logger = Logger(LogLevel.INFO)
         val module = module {
@@ -59,6 +59,7 @@ class App () {
                     applyRouter {
                         addController {
                             name = "collection"
+                            addMiddleware(AuthMiddleware)
                             addRoute {
                                 name = "help"
                                 command = HelpCommand(this@addController)
@@ -147,7 +148,7 @@ class App () {
                             }
                             addRoute {
                                 name = "signup"
-                                command = RegCommand(this@addController)
+                                command = SignupCommand(this@addController)
                                 needAuth = false
                             }
                             addRoute {
