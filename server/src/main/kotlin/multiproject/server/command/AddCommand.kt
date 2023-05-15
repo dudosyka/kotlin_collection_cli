@@ -35,7 +35,7 @@ open class AddCommand(controller: Controller) : Command(controller) {
      * @return
      */
     override fun execute(input: ExecutableInput): Response {
-        val buildUserData = input.data["__buildUserData"] as Map<String, String>
+        val buildUserData = input.request.author
         val userData = mutableMapOf(
                 "id" to buildUserData["id"]!!.toLong(),
                 "login" to buildUserData["login"],

@@ -38,7 +38,9 @@ class GatewayRequestResolver: RequestResolver() {
                 temporaryUnavailable = Pair(0, false)
                 pendingRequest--
             }
-            gateway.emit(request.getFrom(), request)
+            val from = request.getFrom()
+            request.removeSystemHeaders()
+            gateway.emit(from, request)
         }
         else
             throw BadRequestException("Unknown request")

@@ -12,8 +12,7 @@ object AuthMiddleware: Middleware() {
         try {
             return {
                 val user = User.checkToken(getHeader("token")?.toString() ?: "")
-                data.arguments["user"] = user.subject
-                data.arguments["__buildUserData"] = user.data
+                this auth user.data
             }
         } catch (e: JwtException) {
             throw ForbiddenException()

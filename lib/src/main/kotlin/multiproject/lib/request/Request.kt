@@ -62,6 +62,26 @@ open class Request(
         else
             syncHelper as SyncHelper
     }
+    infix fun auth(userData: Map<String, Any>) {
+        this setHeader Pair("__buildUserData", userData)
+    }
+    val author: Map<String, String>
+        get() {
+            return try {
+                this.getHeader("__buildUserData") as? Map<String, String> ?: mapOf()
+            } catch (e: Exception) {
+                mapOf()
+            }
+        }
+    private infix fun removeHeader(key: String) = this.headers.remove(key)
+    fun removeSystemHeaders() {
+        this removeHeader "sender"
+        this removeHeader "from"
+        this removeHeader "commandSyncType"
+        this removeHeader "__buildUserData"
+        this removeHeader "sync"
+        this removeHeader "id"
+    }
 
     // ------------- Response managing ---------------- //
     infix fun checkCode(code: ResponseCode): Boolean {
