@@ -1,4 +1,4 @@
-package multiproject.server.command.user
+package multiproject.server.command.system
 
 import multiproject.lib.dto.command.ExecutableInput
 import multiproject.lib.dto.response.Response
@@ -7,9 +7,9 @@ import multiproject.lib.udp.server.router.Command
 import multiproject.lib.udp.server.router.CommandSyncType
 import multiproject.lib.udp.server.router.Controller
 
-class LongCommand(controller: Controller) : Command(controller) {
+class SyncCommand(controller: Controller) : Command(controller) {
     override val commandSyncType: CommandSyncType
-        get() = CommandSyncType(true)
+        get() = CommandSyncType(sync = true)
     /**
      * Execute
      *
@@ -19,10 +19,9 @@ class LongCommand(controller: Controller) : Command(controller) {
     override fun execute(input: ExecutableInput): Response {
         println("Processing...")
 
-        Thread.sleep(15_000)
+        Thread.sleep(10_000)
 
         println("Processed!")
-
-        return Response(ResponseCode.SUCCESS, "success processed!")
+        return Response(ResponseCode.SUCCESS, "Synchronized!")
     }
 }

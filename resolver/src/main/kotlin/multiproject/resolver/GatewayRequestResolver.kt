@@ -38,6 +38,13 @@ class GatewayRequestResolver: RequestResolver() {
                 temporaryUnavailable = Pair(0, false)
                 pendingRequest--
             }
+            println("${gateway.blockInput} ${gateway.syncInitiator} ${request.getFrom()}")
+            if (gateway.blockInput && request.getFrom() == gateway.syncInitiator?.getFrom()) {
+                val syncHelper = request.getSyncHelper()
+                gateway.blockInput = false
+                if (syncHelper.synchronizationEnded)
+                    gateway.runBlockedRequests()
+            }
             val from = request.getFrom()
             request.removeSystemHeaders()
             gateway.emit(from, request)

@@ -17,14 +17,12 @@ import java.net.SocketAddress
 @Serializable
 open class Request(
     var path: PathDto,
-    var headers: MutableMap<String, @Serializable(with= UltimateSerializer::class) Any?> = mutableMapOf(),
+    private var headers: MutableMap<String, @Serializable(with= UltimateSerializer::class) Any?> = mutableMapOf(),
     var data: RequestDataDto = RequestDataDto(),
     var response: ResponseDto = ResponseDto(ResponseCode.SUCCESS)
 ) {
 
     fun applyMiddleware(middleware: Request.() -> Unit): Request = this.apply(middleware)
-
-
     // ------------- Headers managing ---------------- //
     fun isEmptyPath(): Boolean {
         return path.route == "" && path.controller == ""
@@ -54,6 +52,9 @@ open class Request(
             CommandSyncType(false)
         else
             syncType as CommandSyncType
+    }
+    infix fun setSyncHelper(helper: SyncHelper) {
+        this setHeader Pair("sync", helper)
     }
     fun getSyncHelper(): SyncHelper {
         val syncHelper = this.getHeader("sync")

@@ -4,5 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SyncHelper (
-    val removedInstances: MutableList<Long> = mutableListOf()
+    val removedInstances: MutableList<Long> = mutableListOf(),
+    var synchronizationEnded: Boolean = false,
 )

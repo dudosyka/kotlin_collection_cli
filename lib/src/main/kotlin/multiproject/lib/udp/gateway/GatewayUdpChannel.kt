@@ -18,6 +18,10 @@ import java.util.*
 
 class GatewayUdpChannel: UdpChannel() {
     @Volatile private var pendingRequests = Collections.synchronizedMap(mutableMapOf<Pair<Long, InetSocketAddress>, Pair<ConnectedServer, Request>>())
+    private var blockedRequests = Collections.synchronizedList(mutableListOf<Request>())
+    var blockInput = false
+    var syncInitiator: Request? = null
+
     private val checkPendingRequests = object: TimerTask() {
         @Synchronized override fun run() {
             val now = ZonedDateTime.now().toEpochSecond()
@@ -34,13 +38,19 @@ class GatewayUdpChannel: UdpChannel() {
                             it
                     }
                     try {
+                        if (request.value.second.getSyncType().sync) {
+                            blockInput = false
+                            runBlockedRequests()
+                        }
                         sendThrough(req) {}
                     } catch (e: ResolveError) {
                         if (e.code == ResponseCode.CONNECTION_REFUSED) {
                             req.apply {
                                 response = ResponseDto(e.code, result = "Server unavailable. Connection refused.")
                             }
-                            emit(req.getFrom(), req)
+                            val from = req.getFrom()
+                            req.removeSystemHeaders()
+                            emit(from, req)
                         }
                     }
                     pendingRequests.remove(request.key)
@@ -60,6 +70,10 @@ class GatewayUdpChannel: UdpChannel() {
             this setHeader Pair("id", now)
             this setHeader Pair("sync", syncHelper)
         }
+        if (blockInput) {
+            blockedRequests.add(initiator)
+            return
+        }
 
         val commandSyncType: CommandSyncType = initiator.getSyncType()
 
@@ -68,6 +82,11 @@ class GatewayUdpChannel: UdpChannel() {
                 syncHelper.removedInstances.add(initiator.data.inlineArguments[commandSyncType.blockByArgument].toString().toLong())
             if (commandSyncType.blockByDataValue != null)
                 syncHelper.removedInstances.add(initiator.data.arguments[commandSyncType.blockByDataValue].toString().toLong())
+        }
+
+        if (commandSyncType.sync) {
+            this.blockInput = true
+            this.syncInitiator = initiator
         }
 
         val server = GatewayBalancer.getServer(this) ?: throw NoAvailableServers()
@@ -81,6 +100,14 @@ class GatewayUdpChannel: UdpChannel() {
             disconnectStrategy.onDisconnect(this, serverAddress, RequestDirection.FROM_SERVER)
             sendThrough(initiator) {}
         }
+    }
+
+    fun runBlockedRequests() {
+        logger(LogLevel.DEBUG, "Run blocked request")
+        blockedRequests.forEach {
+            sendThrough(it) {}
+        }
+        blockedRequests.clear()
     }
 
     infix fun clearPending(request: Request) {
