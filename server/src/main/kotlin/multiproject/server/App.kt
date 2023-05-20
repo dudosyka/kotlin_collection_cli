@@ -27,6 +27,7 @@ import multiproject.server.database.DatabaseManager
 import multiproject.server.dump.DumpManager
 import multiproject.server.dump.PostgresqlDumpManager
 import multiproject.server.middlewares.auth.AuthMiddleware
+import multiproject.server.middlewares.auth.BuildAuthorMiddleware
 import multiproject.server.modules.flat.Flat
 import multiproject.server.modules.flat.FlatBuilder
 import multiproject.server.modules.flat.FlatCollection
@@ -38,9 +39,10 @@ import org.koin.java.KoinJavaComponent.inject
 class App {
     init {
         val logger = Logger(LogLevel.DEBUG)
+        val collection = FlatCollection(mutableListOf(), FlatBuilder())
         val module = module {
             single<Collection<Flat>>(named("collection")) {
-                FlatCollection(mutableListOf())
+                collection
             }
             single<DumpManager<Flat>>(named("dumpManager")) {
                 PostgresqlDumpManager(FlatBuilder())
@@ -72,6 +74,7 @@ class App {
                             addRoute {
                                 name = "add"
                                 command = AddCommand(this@addController)
+                                addMiddleware(BuildAuthorMiddleware)
                             }
                             addRoute {
                                 name = "show"
@@ -80,14 +83,11 @@ class App {
                             addRoute {
                                 name = "update"
                                 command = UpdateCommand(this@addController)
+                                addMiddleware(BuildAuthorMiddleware)
                             }
                             addRoute {
                                 name = "remove_by_id"
                                 command = RemoveByIdCommand(this@addController)
-                            }
-                            addRoute {
-                                name = "clear"
-                                command = ClearCommand(this@addController)
                             }
                             addRoute {
                                 name = "load"
@@ -104,6 +104,7 @@ class App {
                             addRoute {
                                 name = "add_if_max"
                                 command = AddIfMaxCommand(this@addController)
+                                addMiddleware(BuildAuthorMiddleware)
                             }
                             addRoute {
                                 name = "reorder"
@@ -169,12 +170,34 @@ class App {
                             if (request.isEmptyPath())
                                 return@run
 
-                            val response = router.run(request).dto ?: ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, "Resolver error")
+                            if (request.path.controller == "_system" && request.path.route == "sync") {
+                                collection.loadDump()
+                                return@run
+                            }
+
+                            val syncType = request.getSyncType()
+                            val syncHelper = request.getSyncHelper()
+                            if (syncType.sync) {
+                                collection.pull(request.getSyncHelper().commits)
+                                syncHelper.servers.forEach {
+                                    this.emit(it!!, Request(PathDto("_system", "sync")))
+                                }
+                            }
+
+
+                            val response = router.run(request)
 
                             request.apply {
-                                this.response = response
+                                this.response = response.dto ?: ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, "Resolver error")
+
                                 this setDirection RequestDirection.FROM_SERVER
                                 this setSender getChannelAddress()
+
+                                this setSyncHelper (this.getSyncHelper().apply {
+                                    if (syncType.sync)
+                                        this.synchronizationEnded = true
+                                    this.commits.addAll(response.commits)
+                                })
                             }
 
                             this.emit(

@@ -1,13 +1,14 @@
 package multiproject.server.command
 
 import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.ExecutableInput
 import multiproject.lib.dto.command.FieldType
 import multiproject.lib.dto.command.Validator
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.udp.server.router.Command
+import multiproject.lib.udp.server.router.CommandSyncType
 import multiproject.lib.udp.server.router.Controller
-import multiproject.lib.dto.command.ExecutableInput
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
 import multiproject.server.modules.flat.Furnish
@@ -32,7 +33,8 @@ class FilterLessThanFurnish(controller: Controller) : Command(controller) {
         )
     )
     override val description: String = "Show number of items that which furniture less than specified"
-
+    override val commandSyncType: CommandSyncType
+        get() = CommandSyncType(true)
     override fun execute(input: ExecutableInput): Response {
         val furnish = input.args.firstOrNull()
         val validator = Validator(

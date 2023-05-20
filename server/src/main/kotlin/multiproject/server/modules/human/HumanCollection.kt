@@ -8,7 +8,7 @@ import multiproject.server.collection.Collection
  * @property items
  * @constructor Create empty Human collection
  */
-class HumanCollection(override var items: MutableList<Human> = mutableListOf()) : Collection<Human>(items) {
+class HumanCollection(override var items: MutableList<Human> = mutableListOf(), humanBuilder: HumanBuilder) : Collection<Human>(items, humanBuilder) {
     override fun sortBy(comparator: Comparator<Human>) {
         this.items.sortWith(comparator)
     }

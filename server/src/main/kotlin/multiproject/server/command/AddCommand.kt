@@ -1,6 +1,7 @@
 package multiproject.server.command
 
 import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.CommitDto
 import multiproject.lib.dto.command.ExecutableInput
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
@@ -12,6 +13,7 @@ import multiproject.server.collection.item.EntityBuilder
 import multiproject.server.database.DatabaseManager
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
+import java.time.ZonedDateTime
 
 /**
  * Add command
@@ -35,17 +37,16 @@ open class AddCommand(controller: Controller) : Command(controller) {
      * @return
      */
     override fun execute(input: ExecutableInput): Response {
-        val buildUserData = input.request.author
-        val userData = mutableMapOf(
-                "id" to buildUserData["id"]!!.toLong(),
-                "login" to buildUserData["login"],
-                "password" to buildUserData["password"]
-        )
         val id = dbManager.getStartId(this.entityBuilder.tableName).toLong()
         input.data["id"] = id
-        input.data["author"] = userData
         val entity = this.entityBuilder.build(input.data)
         collection.addItem(entity)
-        return Response(ResponseCode.SUCCESS, "Item successfully created.")
+        return Response(ResponseCode.SUCCESS, "Item successfully created.", commits = listOf(
+            CommitDto(
+                id = id,
+                timestamp = ZonedDateTime.now().toEpochSecond(),
+                data = input.data
+            )
+        ))
     }
 }

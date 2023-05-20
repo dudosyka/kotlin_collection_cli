@@ -1,9 +1,6 @@
 package multiproject.server.command
 
-import multiproject.lib.dto.command.CommandArgumentDto
-import multiproject.lib.dto.command.ExecutableInput
-import multiproject.lib.dto.command.FieldType
-import multiproject.lib.dto.command.Validator
+import multiproject.lib.dto.command.*
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.udp.server.router.Controller
@@ -12,6 +9,7 @@ import multiproject.server.collection.item.Entity
 import multiproject.server.collection.item.EntityBuilder
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
+import java.time.ZonedDateTime
 
 /**
  * Update command
@@ -41,6 +39,12 @@ class UpdateCommand(controller: Controller) : AddCommand(controller) {
         val entity = this.entityBuilder.build(input.data)
         collection.update(id, entity)
 
-        return Response(ResponseCode.SUCCESS, "Item successfully updated.")
+        return Response(ResponseCode.SUCCESS, "Item successfully updated.", commits = listOf(
+            CommitDto(
+                id = id.toLong(),
+                timestamp = ZonedDateTime.now().toEpochSecond(),
+                data = input.data
+            )
+        ))
     }
 }

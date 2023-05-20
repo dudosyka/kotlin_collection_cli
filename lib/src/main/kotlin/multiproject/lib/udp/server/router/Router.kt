@@ -66,11 +66,6 @@ class Router(val logger: Logger) {
                 request.applyMiddleware(it())
             }
 
-            request.apply {
-                if (this.getSyncType().sync)
-                    this setSyncHelper (this.getSyncHelper().apply { this.synchronizationEnded = true })
-            }
-
             path.second.command.execute(requestInterpreter.interpret(request))
         } catch (e: Exception) {
             logger(LogLevel.FATAL, "Fatal error!", error = e)

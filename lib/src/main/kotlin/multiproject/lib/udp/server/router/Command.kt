@@ -19,6 +19,7 @@ abstract class Command(val controller: Controller) {
     open val description = "no description."
     open val hideFromClient = false
     open val commandSyncType: CommandSyncType = CommandSyncType(sync = false, blocking = false)
+    open val needAnswer = true
     /**
      * Execute
      *

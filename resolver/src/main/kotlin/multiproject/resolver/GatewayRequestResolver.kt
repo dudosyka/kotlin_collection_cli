@@ -10,6 +10,7 @@ import multiproject.lib.request.Request
 import multiproject.lib.request.resolver.RequestResolver
 import multiproject.lib.request.resolver.ResolveError
 import multiproject.lib.udp.gateway.GatewayUdpChannel
+import multiproject.lib.utils.LogLevel
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 
@@ -38,13 +39,17 @@ class GatewayRequestResolver: RequestResolver() {
                 temporaryUnavailable = Pair(0, false)
                 pendingRequest--
             }
+            val syncHelper = request.getSyncHelper()
             println("${gateway.blockInput} ${gateway.syncInitiator} ${request.getFrom()}")
             if (gateway.blockInput && request.getFrom() == gateway.syncInitiator?.getFrom()) {
-                val syncHelper = request.getSyncHelper()
                 gateway.blockInput = false
                 if (syncHelper.synchronizationEnded)
                     gateway.runBlockedRequests()
             }
+            if (syncHelper.commits.size > 0) {
+                gateway.commits.addAll(syncHelper.commits)
+            }
+            gateway.logger(LogLevel.INFO, "Unpushed changes ${gateway.commits}")
             val from = request.getFrom()
             request.removeSystemHeaders()
             gateway.emit(from, request)

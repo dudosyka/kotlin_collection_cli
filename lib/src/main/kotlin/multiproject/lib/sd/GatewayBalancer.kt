@@ -25,5 +25,4 @@ object GatewayBalancer {
             it.address == serverAddress
         }
     }
-
 }

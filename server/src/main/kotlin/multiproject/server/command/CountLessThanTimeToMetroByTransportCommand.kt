@@ -7,6 +7,7 @@ import multiproject.lib.dto.command.Validator
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.udp.server.router.Command
+import multiproject.lib.udp.server.router.CommandSyncType
 import multiproject.lib.udp.server.router.Controller
 import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
@@ -20,6 +21,9 @@ import org.koin.java.KoinJavaComponent
  */
 class CountLessThanTimeToMetroByTransportCommand(controller: Controller) : Command(controller) {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
+
+    override val commandSyncType: CommandSyncType
+        get() = CommandSyncType(true)
 
     override val fields: Map<String, CommandArgumentDto> = mapOf(
         "filter" to CommandArgumentDto(

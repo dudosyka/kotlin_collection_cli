@@ -1,6 +1,7 @@
 package multiproject.lib.udp.gateway
 
 import multiproject.lib.dto.ConnectedServer
+import multiproject.lib.dto.command.CommitDto
 import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.dto.response.ResponseDto
@@ -21,6 +22,14 @@ class GatewayUdpChannel: UdpChannel() {
     private var blockedRequests = Collections.synchronizedList(mutableListOf<Request>())
     var blockInput = false
     var syncInitiator: Request? = null
+    var commits: MutableList<CommitDto> = mutableListOf()
+
+
+    private val checkPendingRequests2 = object: TimerTask() {
+        override fun run() {
+
+        }
+    }
 
     private val checkPendingRequests = object: TimerTask() {
         @Synchronized override fun run() {
@@ -84,13 +93,20 @@ class GatewayUdpChannel: UdpChannel() {
                 syncHelper.removedInstances.add(initiator.data.arguments[commandSyncType.blockByDataValue].toString().toLong())
         }
 
+        val server = GatewayBalancer.getServer(this) ?: throw NoAvailableServers()
+        val serverAddress = server.address
+
         if (commandSyncType.sync) {
             this.blockInput = true
             this.syncInitiator = initiator
+            initiator.apply {
+                this setSyncHelper (this.getSyncHelper().apply {
+                    commits = this@GatewayUdpChannel.commits
+                    servers = this@GatewayUdpChannel.servers.filter { it.address != serverAddress }.map { it.address }.toMutableList()
+                })
+            }
+            commits = mutableListOf()
         }
-
-        val server = GatewayBalancer.getServer(this) ?: throw NoAvailableServers()
-        val serverAddress = server.address
 
         try {
             this.emit(serverAddress, initiator)
@@ -126,6 +142,7 @@ class GatewayUdpChannel: UdpChannel() {
         Timer().scheduleAtFixedRate(
             checkPendingRequests, UdpConfig.pendingRequestCheckTimeout, UdpConfig.pendingRequestCheckTimeout
         )
+        Timer().schedule(checkPendingRequests2, UdpConfig.pendingRequestCheckTimeout)
 
         super.run()
     }

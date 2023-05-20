@@ -2,7 +2,9 @@ package multiproject.server.collection
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import multiproject.lib.dto.command.CommitDto
 import multiproject.server.collection.item.Entity
+import multiproject.server.collection.item.EntityBuilder
 import multiproject.server.collection.sort.CollectionSortType
 import multiproject.server.collection.sort.IdComparator
 import multiproject.server.dump.DumpManager
@@ -28,9 +30,11 @@ abstract class Collection<T : Entity> {
     )
     @Transient private val initializationTimestamp: ZonedDateTime = ZonedDateTime.now()
     @Transient private var lastAccessTimestamp: ZonedDateTime = initializationTimestamp
+    @Transient lateinit var builder: EntityBuilder<T>
 
-    constructor(items: MutableList<T>) {
+    constructor(items: MutableList<T>, builder: EntityBuilder<T>) {
         checkUniqueId(items)
+        this.builder = builder
     }
 
     private fun checkUniqueId(items: MutableList<T>) {
@@ -152,11 +156,11 @@ abstract class Collection<T : Entity> {
      *
      * @param index
      */
-    fun removeAt(index: Int) {
+    fun removeAt(index: Int): Long {
         this.lastAccessTimestamp = ZonedDateTime.now()
-        if (index < 0 || this.items.size < index)
-            throw ItemNotFoundException("index", index)
+        val id = this.items[index].id
         this.items.removeAt(index)
+        return id.toLong()
     }
 
     /**
@@ -280,4 +284,34 @@ abstract class Collection<T : Entity> {
      * @return
      */
     abstract fun addIfMax(comparable: Any, item: T): Boolean
+
+    fun pull(commits: List<CommitDto>) {
+        val ids = this.items.mapIndexed { key, value -> value.id.toLong() to key }.toMap()
+        val commitsById: MutableMap<Long, CommitDto> = mutableMapOf()
+        commits.forEach {
+            if (commitsById.keys.contains(it.id)) {
+                if ((commitsById[it.id]?.timestamp ?: ZonedDateTime.now().toEpochSecond()) < it.timestamp)
+                    commitsById[it.id] = it
+            }
+            else {
+                commitsById[it.id] = it
+            }
+        }
+
+        commitsById.forEach { (key, value) -> run {
+            if (ids.keys.contains(key)) {
+                if (value.data != null) {
+                    this.items[ids[key]!!] = this.builder.build(value.data!!.toMutableMap())
+                } else {
+                    this.removeAt(ids[key]!!)
+                }
+            } else {
+                if (value.data != null) {
+                    this.items.add(this.builder.build(value.data!!.toMutableMap()))
+                }
+            }
+        } }
+
+        this.dump()
+    }
 }
