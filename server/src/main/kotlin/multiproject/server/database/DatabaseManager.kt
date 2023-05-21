@@ -3,16 +3,12 @@ package multiproject.server.database
 import multiproject.lib.dto.command.CommandArgumentDto
 import multiproject.lib.dto.command.FieldType
 import multiproject.lib.utils.LogLevel
+import multiproject.lib.utils.Logger
 import multiproject.server.collection.item.Entity
 import multiproject.server.collection.item.EntityBuilder
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
-import java.sql.Connection
-import java.sql.DriverManager
-import java.sql.PreparedStatement
-import java.sql.ResultSet
-import java.sql.SQLException
-import multiproject.lib.utils.Logger
+import java.sql.*
 
 class DatabaseManager {
     private lateinit var connection: Connection
@@ -145,7 +141,7 @@ class DatabaseManager {
             schema,
             statement,
             level = level,
-            currId = getStartId(tableName)
+            currId = if (level > 1) getStartId(tableName) else (getStartId(tableName) - itemsCount - 1)
         )
     }
     private fun entityToRow(schema: Map<String, CommandArgumentDto>, row: MutableMap<String, Any?>, tableName: String, inserts: MutableMap<String, InsertTemplate>) {
