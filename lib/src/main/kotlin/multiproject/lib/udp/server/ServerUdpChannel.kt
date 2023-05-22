@@ -1,5 +1,7 @@
 package multiproject.lib.udp.server
 
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.request.Request
@@ -24,16 +26,23 @@ class ServerUdpChannel: UdpChannel() {
         this.onMessage(address, data)
     }
 
-    override fun run() {
-        this.emit(
-            InetSocketAddress(UdpConfig.serverAddress, UdpConfig.serverPort),
-            Request(
-                PathDto(route = "_bind", controller = "system")
-            ).apply {
-                this setDirection RequestDirection.FROM_SERVER
-                this setFrom channel.localAddress
-            },
+    fun bindToResolver() {
+        emit(
+                InetSocketAddress(UdpConfig.serverAddress, UdpConfig.serverPort),
+                Request(
+                        PathDto(route = "_bind", controller = "system")
+                ).apply {
+                    this setDirection RequestDirection.FROM_SERVER
+                    this setFrom channel.localAddress
+                },
         )
-        super.run()
+    }
+
+    override suspend fun run() {
+        coroutineScope {
+            launch {
+                super.run()
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 package multiproject.resolver
 
+import kotlinx.coroutines.runBlocking
 import multiproject.lib.udp.UdpConfig
 import multiproject.lib.udp.gateway.GatewayUdpChannel
 import multiproject.lib.udp.gateway.runGateway
@@ -50,7 +51,7 @@ class App {
     }
 }
 
-fun main() {
+fun main() = runBlocking {
     val app = App()
     try {
         val server: GatewayUdpChannel by inject(GatewayUdpChannel::class.java, named("server"))

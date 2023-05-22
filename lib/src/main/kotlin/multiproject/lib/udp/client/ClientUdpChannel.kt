@@ -1,14 +1,14 @@
 package multiproject.lib.udp.client
 
-import multiproject.lib.dto.response.ResponseDto
-import multiproject.lib.utils.Serializer
 import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.dto.response.ResponseCode
+import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.request.Request
 import multiproject.lib.udp.UdpChannel
 import multiproject.lib.udp.UdpConfig
 import multiproject.lib.utils.LogLevel
+import multiproject.lib.utils.Serializer
 import java.net.InetSocketAddress
 import java.net.PortUnreachableException
 import java.nio.ByteBuffer
@@ -67,7 +67,7 @@ class ClientUdpChannel: UdpChannel() {
         this.authorized = true
         this.token = token
     }
-    override fun run() {
+    override suspend fun run() {
         channel.connect(this.servers.first().address)
         channel.configureBlocking(false)
         this.pingServer()

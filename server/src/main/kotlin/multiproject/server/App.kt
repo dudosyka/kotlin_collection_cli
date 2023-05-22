@@ -3,6 +3,9 @@
  */
 package multiproject.server
 
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.actor
+import kotlinx.coroutines.channels.produce
 import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.dto.response.ResponseCode
@@ -34,7 +37,8 @@ import multiproject.server.modules.flat.FlatCollection
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
-import org.koin.java.KoinJavaComponent.inject
+import java.util.*
+import kotlin.coroutines.CoroutineContext
 
 class App {
     init {
@@ -200,7 +204,7 @@ class App {
                                 })
                             }
 
-                            this.emit(
+                            emit(
                                 SocketAddressInterpreter.interpret(address),
                                 request
                             )
@@ -221,14 +225,119 @@ class App {
 }
 
 
-fun main() {
-    val server: ServerUdpChannel by inject(ServerUdpChannel::class.java, named("server"))
-    val collection: Collection<Flat> by inject(Collection::class.java, named("collection"))
-    try {
-        App()
-        collection.loadDump()
-        server.run()
-    } finally {
-        server.selfExecute(Request(PathDto("system", "_dump")))
+class Collection(private val context: CoroutineContext) {
+    val items: MutableList<Int> = mutableListOf()
+    sealed class CollectionCommands {
+        class AddItemCommand(val item: Int): CollectionCommands()
+
+        class GetCollectionCommand(val result: CompletableDeferred<Pair<Int, List<Int>>> = CompletableDeferred()): CollectionCommands()
+
     }
+
+    private val scope = CoroutineScope(context)
+
+    @OptIn(ObsoleteCoroutinesApi::class)
+    val commands = scope.actor<CollectionCommands>(capacity = 200) {
+        for (command in this) {
+            when(command) {
+                is CollectionCommands.AddItemCommand -> items.add(command.item)
+                is CollectionCommands.GetCollectionCommand -> command.result.complete(Pair(items.size, items.toList()))
+            }
+        }
+    }
+
+    fun addItem(item: Int) {
+        commands.trySend(CollectionCommands.AddItemCommand(item))
+    }
+
+    suspend fun getCollection(): Pair<Int, List<Int>> {
+        val get = CollectionCommands.GetCollectionCommand()
+        commands.send(get)
+        return get.result.await()
+    }
+}
+
+
+abstract class Task(val taskName: String) { //aka Command
+    abstract suspend fun run()
+}
+
+class SuperLongTask(taskName: String, val collection: multiproject.server.Collection): Task(taskName) {
+    override suspend fun run() {
+        delay(10000L)
+        collection.addItem(1)
+        println("Super long task: $taskName is completed!")
+    }
+}
+
+class NormalLongTask(taskName: String, val collection: multiproject.server.Collection): Task(taskName) {
+    override suspend fun run() {
+        delay(5000L)
+        collection.addItem(1)
+        println("Normal long task: $taskName is completed!")
+    }
+}
+
+class TaskRunner() { //aka Router
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    fun run(task: Task) {
+        scope.launch { task.run() }
+    }
+}
+
+fun getRandom(max: Int): Int {
+    return Random().nextInt(max)
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+fun main(): Unit = runBlocking {
+//    val server: ServerUdpChannel by inject(ServerUdpChannel::class.java, named("server"))
+//    val collection: Collection<Flat> by inject(Collection::class.java, named("collection"))
+//    App()
+//    collection.loadDump()
+//    server.bindToResolver()
+//    server.run()
+    val collection = Collection(Dispatchers.Default)
+    withContext(Dispatchers.IO) {
+        val channel = produce<Task> {
+            var num = 0
+            while (num < 100) {
+                num++
+                val task = getRandom(1)
+                if (task == 1) {
+                    send(SuperLongTask("$num", collection))
+                } else {
+                    send(NormalLongTask("$num", collection))
+                }
+                println(task)
+            }
+        }
+
+        launch {
+            val taskRunner = TaskRunner()
+            var counter = 100
+            while (true) {
+                val tryToGet = channel.tryReceive()
+//            println(tryToGet)
+                if (tryToGet.isSuccess) {
+                    val task = tryToGet.getOrNull()
+                    println("We got! {$counter} ${task?.taskName}")
+                    taskRunner.run(task!!)
+                    counter--
+                }
+
+            }
+        }
+
+        println("we are launched!")
+
+        delay(15000L)
+
+        val collectionData = collection.getCollection()
+
+        println(collectionData)
+    }
+
+
+
 }

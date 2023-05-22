@@ -11,6 +11,7 @@ plugins {
 dependencies {
     implementation(project(":lib"))
     implementation("io.insert-koin:koin-core:3.3.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0-RC")
 }
 
 application {

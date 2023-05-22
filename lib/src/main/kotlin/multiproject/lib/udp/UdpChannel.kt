@@ -1,17 +1,17 @@
 package multiproject.lib.udp
 
 import multiproject.lib.dto.ConnectedServer
-import multiproject.lib.utils.Serializer
 import multiproject.lib.request.Request
 import multiproject.lib.request.resolver.RequestResolver
-import multiproject.lib.udp.interfaces.OnConnectionRefused
-import multiproject.lib.udp.interfaces.OnConnectionRestored
 import multiproject.lib.udp.disconnect.CloseOnDisconnectStrategy
 import multiproject.lib.udp.disconnect.DisconnectStrategy
+import multiproject.lib.udp.interfaces.OnConnectionRefused
+import multiproject.lib.udp.interfaces.OnConnectionRestored
 import multiproject.lib.udp.interfaces.OnDisconnectAttempt
 import multiproject.lib.udp.interfaces.OnReceive
 import multiproject.lib.utils.LogLevel
 import multiproject.lib.utils.Logger
+import multiproject.lib.utils.Serializer
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.ServerSocket
@@ -98,7 +98,7 @@ abstract class UdpChannel {
     open fun stop() {
         channel.close()
     }
-    open fun run() {
+    open suspend fun run() {
         this.receive()
     }
 }

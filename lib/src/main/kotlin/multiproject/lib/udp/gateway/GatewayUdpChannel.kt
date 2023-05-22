@@ -138,7 +138,7 @@ class GatewayUdpChannel: UdpChannel() {
         return false
     }
 
-    override fun run() {
+    override suspend fun run() {
         Timer().scheduleAtFixedRate(
             checkPendingRequests, UdpConfig.pendingRequestCheckTimeout, UdpConfig.pendingRequestCheckTimeout
         )

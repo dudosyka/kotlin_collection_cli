@@ -1,5 +1,6 @@
 package multiproject.client
 
+import kotlinx.coroutines.runBlocking
 import multiproject.client.command.CommandResolver
 import multiproject.client.console.ConsoleReader
 import multiproject.client.console.ConsoleWriter
@@ -77,7 +78,7 @@ class App {
     }
 }
 
-fun main() {
+fun main() = runBlocking {
     App()
     val writer: Writer = ConsoleWriter()
     writer.writeLine("^_^ Welcome to the Collection CLI ^_^")
