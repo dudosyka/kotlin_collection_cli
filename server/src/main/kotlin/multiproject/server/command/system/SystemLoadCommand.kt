@@ -18,7 +18,7 @@ class SystemLoadCommand(controller: Controller) : Command(controller) {
      * @param input
      * @return
      */
-    override fun execute(input: ExecutableInput): Response {
+    override suspend fun execute(input: ExecutableInput): Response {
         return Response(ResponseCode.SUCCESS, "", commands = server.router.getCommandsInfo())
     }
 }

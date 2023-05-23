@@ -22,7 +22,7 @@ class SignupCommand(controller: Controller) : Command(controller) {
      * @param input: ExecutableInput
      * @return
      */
-    override fun execute(input: ExecutableInput): Response {
+    override suspend fun execute(input: ExecutableInput): Response {
         val checkLogin = User.getByLogin(input.data["login"]?.toString() ?: throw NotUniqueException("login"))
         return if (checkLogin == null) {
             input.data["password"] = User.hash(input.data["password"].toString())

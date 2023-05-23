@@ -23,7 +23,7 @@ class SystemDumpCommand(controller: Controller) : Command(controller) {
      * @param input
      * @return
      */
-    override fun execute(input: ExecutableInput): Response {
+    override suspend fun execute(input: ExecutableInput): Response {
         return try {
             this.collection.dump()
             Response(ResponseCode.SUCCESS, "Collection is successfully dumped!")

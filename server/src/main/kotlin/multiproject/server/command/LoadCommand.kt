@@ -24,7 +24,7 @@ class LoadCommand(controller: Controller) : Command(controller) {
      * @param input
      * @return
      */
-    override fun execute(input: ExecutableInput): Response {
+    override suspend fun execute(input: ExecutableInput): Response {
         return try {
             this.collection.loadDump()
             Response(ResponseCode.SUCCESS, "Collection successfully restored!")

@@ -27,24 +27,28 @@ class UpdateCommand(controller: Controller) : AddCommand(controller) {
         fields["id"] = CommandArgumentDto(name = "id", index = 0, type = FieldType.INT, inline = true)
     }
 
-    override fun execute(input: ExecutableInput): Response {
+    override suspend fun execute(input: ExecutableInput): Response {
         val id = this.getArgument(input.args, "id", 0, Validator(
             CommandArgumentDto(name = "id", type = FieldType.INT, required = true)
         )
-        )
-        val sync = input.request.getSyncHelper()
-        if (sync.removedInstances.contains(id.toString().toLong()))
-            return Response(ResponseCode.ITEM_NOT_FOUND, "Item not found!")
-        collection.checkIdExists(id as Int)
-        val entity = this.entityBuilder.build(input.data)
-        collection.update(id, entity)
+        ).toString().toInt()
 
-        return Response(ResponseCode.SUCCESS, "Item successfully updated.", commits = listOf(
-            CommitDto(
-                id = id.toLong(),
-                timestamp = ZonedDateTime.now().toEpochSecond(),
-                data = input.data
-            )
-        ))
+        val sync = input.request.getSyncHelper()
+        if (sync.removedInstances.contains(id.toLong()))
+            return Response(ResponseCode.ITEM_NOT_FOUND, "Item not found!")
+
+        val entity = this.entityBuilder.build(input.data)
+        val result = collection.update(id, entity)
+
+        return if (result)
+            Response(ResponseCode.SUCCESS, "Item successfully updated.", commits = listOf(
+                CommitDto(
+                    id = id.toLong(),
+                    timestamp = ZonedDateTime.now().toEpochSecond(),
+                    data = input.data
+                )
+            ))
+        else
+            Response(ResponseCode.ITEM_NOT_FOUND, "Item can`t be updated")
     }
 }

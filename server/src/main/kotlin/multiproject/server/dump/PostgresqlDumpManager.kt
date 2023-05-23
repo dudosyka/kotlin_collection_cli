@@ -11,16 +11,18 @@ import org.koin.java.KoinJavaComponent.inject
 class PostgresqlDumpManager<T: Entity>(private val entityBuilder: EntityBuilder<T>): DumpManager<T>() {
     private val dbManager: DatabaseManager by inject(DatabaseManager::class.java, named("dbManager"))
     private val logger: Logger by inject(Logger::class.java, named("logger"))
-    init {
-        dbManager.initModel(entityBuilder)
-    }
+    private var modelInit: Boolean = false
     /**
      * Load dump
      *
      * @return
      */
-    override fun loadDump(): MutableList<T> {
-        return dbManager.findAll(entityBuilder).apply { logger(LogLevel.DEBUG, "Dump loaded: $this") }
+    override suspend fun loadDump(): MutableList<T> {
+        if (!modelInit) {
+            modelInit = true
+            dbManager.initModel(entityBuilder as EntityBuilder<Entity>)
+        }
+        return dbManager.getAll(entityBuilder as EntityBuilder<Entity>).apply { logger(LogLevel.DEBUG, "Dump loaded: $this") } as MutableList<T>
     }
 
     /**
@@ -28,8 +30,8 @@ class PostgresqlDumpManager<T: Entity>(private val entityBuilder: EntityBuilder<
      *
      * @param items
      */
-    override fun dump(items: MutableList<T>) {
+    override suspend fun dump(items: MutableList<T>) {
         logger(LogLevel.DEBUG, "Send on dump $items")
-        dbManager.replaceAll(items)
+        dbManager.replaceAll(items as MutableList<Entity>)
     }
 }

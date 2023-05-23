@@ -21,7 +21,7 @@ open class ShowCommand(controller: Controller) : Command(controller) {
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
     override val commandSyncType: CommandSyncType
         get() = CommandSyncType(true)
-    override fun execute(input: ExecutableInput): Response {
+    override suspend fun execute(input: ExecutableInput): Response {
         return Response(ResponseCode.SUCCESS, collection.toString())
     }
 }

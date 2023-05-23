@@ -34,7 +34,7 @@ class CountByNumberOfRoomsCommand(controller: Controller) : Command(controller) 
         )
     )
     override val description: String = "Show number of items which have that number of rooms"
-    override fun execute(input: ExecutableInput): Response {
+    override suspend fun execute(input: ExecutableInput): Response {
         val numberOfRooms = this.getArgument(input.args, "Number of rooms", 0, Validator(
                 CommandArgumentDto(name = "number_of_rooms", type = FieldType.INT, required = true)
         )

@@ -35,7 +35,7 @@ class FilterLessThanFurnish(controller: Controller) : Command(controller) {
     override val description: String = "Show number of items that which furniture less than specified"
     override val commandSyncType: CommandSyncType
         get() = CommandSyncType(true)
-    override fun execute(input: ExecutableInput): Response {
+    override suspend fun execute(input: ExecutableInput): Response {
         val furnish = input.args.firstOrNull()
         val validator = Validator(
             CommandArgumentDto(name = "number_of_rooms", type = FieldType.ENUM, required = true, choisable = Furnish.values().map { it.toString() })
@@ -44,7 +44,8 @@ class FilterLessThanFurnish(controller: Controller) : Command(controller) {
         if (!validator.validate(furnish))
             return Response(ResponseCode.VALIDATION_ERROR, validator.describe())
 
-        return Response(ResponseCode.SUCCESS, collection.filterLessThanBy(furnish!!).toString())
+        collection.filterLessThanBy(furnish!!)
+        return Response(ResponseCode.SUCCESS, collection.toString())
 }
 
 }

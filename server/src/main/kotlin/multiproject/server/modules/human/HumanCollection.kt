@@ -1,6 +1,9 @@
 package multiproject.server.modules.human
 
+import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.coroutines.channels.ActorScope
 import multiproject.server.collection.Collection
+import java.time.ZonedDateTime
 
 /**
  * Human collection
@@ -13,26 +16,32 @@ class HumanCollection(override var items: MutableList<Human> = mutableListOf(), 
         this.items.sortWith(comparator)
     }
 
-    override fun <T : Any> countBy(comparable: T): Int {
+    @ObsoleteCoroutinesApi
+    override fun commandProcessor(command: CollectionCommand): ActorScope<CollectionCommand>.() -> Unit {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun <T : Any> countBy(comparable: T): Int {
         return this.items.filter { it.id == (comparable as Int) }.size
     }
 
-    override fun countLessThanBy(comparable: Any): Int {
+    override suspend fun countLessThanBy(comparable: Any): Int {
         return this.items.filter { it.id < (comparable as Int) }.size
     }
 
-    override fun filterLessThanBy(comparable: Any): MutableList<Human> {
-        return this.items.filter { it.id > (comparable as Int) }.toMutableList()
+    override suspend fun filterLessThanBy(comparable: Any): String {
+        this.items = this.items.filter { it.id > (comparable as Int) }.toMutableList()
+        return this@HumanCollection.toString()
     }
 
-    override fun addIfMax(comparable: Any, item: Human): Boolean {
+    override suspend fun addIfMax(item: Human): Boolean {
         this.sortBy(NameComparator().reversed())
         if (this.items.size <= 0)
             return true
         val maxName = if (this.items[0].name != null) this.items[0].name!! else ""
         val providedName = if (item.name != null) item.name!! else ""
         return if (maxName.length < providedName.length) {
-            this.addItem(item)
+            this.addItem(item, ZonedDateTime.now())
             true
         } else {
             false

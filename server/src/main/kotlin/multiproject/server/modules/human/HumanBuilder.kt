@@ -3,12 +3,9 @@ package multiproject.server.modules.human
 import kotlinx.serialization.Transient
 import multiproject.lib.dto.command.CommandArgumentDto
 import multiproject.lib.dto.command.FieldType
-import multiproject.server.collection.Collection
 import multiproject.server.collection.item.EntityBuilder
 import multiproject.server.collection.item.FieldDelegate
 import multiproject.server.modules.coordinates.CoordinatesBuilder
-import org.koin.core.qualifier.named
-import org.koin.java.KoinJavaComponent
 
 /**
  * Human builder
@@ -18,7 +15,7 @@ import org.koin.java.KoinJavaComponent
 class HumanBuilder : EntityBuilder<Human>() {
     override val tableName: String
         get() = "human"
-    private val collection: Collection<Human> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
+
     @Transient
     override val fields: MutableMap<String, CommandArgumentDto> = mutableMapOf(
         "id" to CommandArgumentDto(
@@ -48,12 +45,12 @@ class HumanBuilder : EntityBuilder<Human>() {
         )
     )
     override fun build(map: MutableMap<String, Any?>): Human {
-        val id: Int = this.collection.getUniqueId()
+        val id: Long? by FieldDelegate(map = map, fields["id"]!!)
         val name: String? by FieldDelegate(map = map, fields["name"]!!)
         val fatness: String? by FieldDelegate<String>(map = map, fields["fatness"]!!)
         val fatnessValue: Fatness = Fatness.valueOf(fatness!!)
         val position: MutableMap<String, Any?>? by FieldDelegate(map = map, fields["position"]!!)
-        return Human(id, name, fatnessValue, CoordinatesBuilder().build(position!!)).apply {
+        return Human(id!!.toInt(), name, fatnessValue, CoordinatesBuilder().build(position!!)).apply {
             pureData = map
             fieldsSchema = fields
         }

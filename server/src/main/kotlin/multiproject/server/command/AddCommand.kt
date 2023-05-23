@@ -36,8 +36,8 @@ open class AddCommand(controller: Controller) : Command(controller) {
      * @param input
      * @return
      */
-    override fun execute(input: ExecutableInput): Response {
-        val id = dbManager.getStartId(this.entityBuilder.tableName).toLong()
+    override suspend fun execute(input: ExecutableInput): Response {
+        val id = dbManager.getNewId(this.entityBuilder.tableName).toLong()
         input.data["id"] = id
         val entity = this.entityBuilder.build(input.data)
         collection.addItem(entity)

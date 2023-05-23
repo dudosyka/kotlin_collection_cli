@@ -18,7 +18,7 @@ import org.koin.java.KoinJavaComponent
 class InfoCommand(controller: Controller) : Command(controller) {
     override val description: String = "Show information about collection"
     private val collection: Collection<Entity> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
-    override fun execute(input: ExecutableInput): Response {
+    override suspend fun execute(input: ExecutableInput): Response {
         return Response(ResponseCode.SUCCESS, collection.getInfo().toString())
     }
 }

@@ -37,16 +37,16 @@ class RemoveByIdCommand(controller: Controller) : Command(controller) {
             blockByArgument = 0
         )
 
-    override fun execute(input: ExecutableInput): Response {
+    override suspend fun execute(input: ExecutableInput): Response {
         val id = this.getArgument(input.args, "id", 0,
             Validator(
                 CommandArgumentDto(name = "id", type = FieldType.INT, required = true)
             )
         )
-        collection.removeById(id as Int)
+        val removedId = collection.removeById(id as Int)
         return Response( ResponseCode.SUCCESS,"Item with id = $id successfully removed!", commits = listOf(
             CommitDto(
-                id = id.toLong(),
+                id = removedId,
                 timestamp = ZonedDateTime.now().toEpochSecond(),
                 data = null
             )

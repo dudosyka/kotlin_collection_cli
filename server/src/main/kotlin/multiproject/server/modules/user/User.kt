@@ -23,8 +23,8 @@ class User(
         get() = "users"
     companion object {
         private val databaseManager: DatabaseManager by inject(DatabaseManager::class.java, named("dbManager"))
-        fun getByLogin(login: String): User? {
-            return databaseManager.findOne(UserBuilder(), mapOf( "users" to DatabasePredicate("login", "=", "'$login'") ))
+        suspend fun getByLogin(login: String): User? {
+            return databaseManager.findOne(UserBuilder(), mapOf( "users" to DatabasePredicate("login", "=", "'$login'") )) as? User
         }
         fun hash(input: String): String {
             return MessageDigest
@@ -40,7 +40,7 @@ class User(
             val user = UserBuilder().build(data)
             databaseManager.insert(mutableListOf(user))
         }
-        fun login(login: String, password: String): String {
+        suspend fun login(login: String, password: String): String {
             val user = getByLogin(login)
             if (user != null) {
                 if (!compareHash(password, user.password))

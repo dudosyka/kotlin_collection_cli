@@ -30,7 +30,7 @@ class RemoveAtCommand(controller: Controller) : Command(controller) {
         )
     )
     override val description: String = "Remove element on specified index"
-    override fun execute(input: ExecutableInput): Response {
+    override suspend fun execute(input: ExecutableInput): Response {
         val index = this.getArgument(input.args, "index", 0, Validator(
             CommandArgumentDto(name = "index", type = FieldType.INT, required = true)
         )

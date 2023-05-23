@@ -13,7 +13,7 @@ class GetByTokenCommand(controller: Controller) : Command(controller) {
      * @param input: ExecutableInput
      * @return
      */
-    override fun execute(input: ExecutableInput): Response {
+    override suspend fun execute(input: ExecutableInput): Response {
         return Response(ResponseCode.SUCCESS, input.data["user"].toString())
     }
 }

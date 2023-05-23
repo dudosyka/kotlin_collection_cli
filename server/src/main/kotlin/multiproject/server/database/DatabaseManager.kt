@@ -1,5 +1,7 @@
 package multiproject.server.database
 
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.actor
 import multiproject.lib.dto.command.CommandArgumentDto
 import multiproject.lib.dto.command.FieldType
 import multiproject.lib.utils.LogLevel
@@ -13,6 +15,63 @@ import java.sql.*
 class DatabaseManager {
     private lateinit var connection: Connection
     val logger: Logger by inject(Logger::class.java, named("logger"))
+    val scope = CoroutineScope(Job())
+    private sealed class DatabaseCommand() {
+        class InitModel(val entityBuilder: EntityBuilder<Entity>): DatabaseCommand()
+        class GetNewId(val tableName: String, val response: CompletableDeferred<Int> = CompletableDeferred()): DatabaseCommand()
+        class FindOne(val entityBuilder: EntityBuilder<Entity>, val predicates: Map<String, DatabasePredicate> = mapOf(), val response: CompletableDeferred<Entity?> = CompletableDeferred()): DatabaseCommand()
+        class ReplaceAll(val items: MutableList<Entity>): DatabaseCommand()
+        class FindAll(val entityBuilder: EntityBuilder<Entity>, val predicates: Map<String, DatabasePredicate> = mapOf(), val response: CompletableDeferred<MutableList<Entity>> = CompletableDeferred()): DatabaseCommand()
+        class Insert(val items: MutableList<Entity>): DatabaseCommand()
+    }
+    @OptIn(ObsoleteCoroutinesApi::class)
+    private val actor = scope.actor<DatabaseCommand> {
+        for (command in this) {
+            when (command) {
+                is DatabaseCommand.InitModel -> run {
+                    val query = createTableQuery(command.entityBuilder.tableName, command.entityBuilder.fields)
+                    try {
+                        query.forEach {
+                            executeUpdate(it) {}
+                        }
+                    } catch (e: SQLException) {
+                        log("SQL. Execution error: ${e.message} ${e.stackTraceToString()}", LogLevel.ERROR)
+                    }
+                }
+                is DatabaseCommand.GetNewId -> run {
+                    command.response.complete(nextId(command.tableName))
+                }
+                is DatabaseCommand.FindOne -> run {
+                    command.response.complete(findAll(command.entityBuilder, command.predicates).takeIf { it.size > 0 }?.first())
+                }
+                is DatabaseCommand.ReplaceAll -> run {
+                    if (command.items.size == 0)
+                        return@run
+                    val item = command.items.first()
+                    val query = mutableListOf<String>()
+                    query.add("truncate table ${item.tableName} cascade")
+                    item.fieldsSchema.forEach {
+                        if (it.value.nested != null && it.value.show)
+                            query.add("truncate table ${it.value.nestedTable} cascade")
+                    }
+                    try {
+                        query.forEach {
+                            executeUpdate(it) {}
+                        }
+                        insertRows(command.items)
+                    } catch (e: Exception) {
+                        log("$e ${e.stackTraceToString()}", LogLevel.FATAL)
+                    }
+                }
+                is DatabaseCommand.FindAll -> run {
+                    command.response.complete(findAll(command.entityBuilder, command.predicates))
+                }
+                is DatabaseCommand.Insert -> run {
+                    insert(command.items)
+                }
+            }
+        }
+    }
     init {
         val connectionUrl = "jdbc:postgresql://localhost:5432/postgres"
         logger(LogLevel.INFO, "SQL. Start connection on $connectionUrl")
@@ -45,9 +104,6 @@ class DatabaseManager {
         val result = predicates.map { "${it.key}.${it.value.column} ${it.value.op} ${it.value.value}" }.joinToString(" ")
         return if (result.isNotEmpty()) "where $result" else result
     }
-    fun <T: Entity> findOne(entityBuilder: EntityBuilder<T>, predicates: Map<String, DatabasePredicate>): T? {
-        return this.findAll(entityBuilder, predicates).takeIf { it.size > 0 }?.first()
-    }
     private fun buildFromRow(tableName: String, fields: Map<String, CommandArgumentDto>, row: ResultSet): MutableMap<String, Any?> {
         return fields.map {
             val columnIndex = "$tableName$${it.key}"
@@ -64,31 +120,6 @@ class DatabaseManager {
                 }
             }
         }.toMap().toMutableMap()
-    }
-    fun <T: Entity> findAll(entity: EntityBuilder<T>, predicates: Map<String, DatabasePredicate> = mapOf()): MutableList<T> {
-        val fieldsOnSelect = entity.fields.filter { it.value.nested == null }.map { "${entity.tableName}.${it.key} as ${entity.tableName}$${it.key}" }.toMutableList()
-        val joinQueries = mutableListOf<String>()
-        val nested = entity.fields.filter { it.value.nested != null }
-        nested.forEach { model ->
-            model.value.nested!!.map {
-                fieldsOnSelect.add("${model.value.nestedTable}.${it.key} as ${model.value.nestedTable}$${it.key}")
-            }
-            joinQueries.add("left join ${model.value.nestedTable} on ${model.value.nestedTable}.${model.value.nestedJoinOn!!.second} = ${entity.tableName}.${model.value.nestedJoinOn!!.first}")
-        }
-
-        val data = mutableListOf<T>()
-        try {
-            val queryResult = execute("select ${fieldsOnSelect.joinToString(",") } from ${entity.tableName} ${joinQueries.joinToString(" ")} ${stringifyPredicates(predicates)}") {}
-
-            while (queryResult.next()) {
-                data.add(entity.build(buildFromRow(entity.tableName, entity.fields, queryResult)))
-            }
-
-        } catch (e: Exception) {
-            log("$e ${e.stackTraceToString()}", LogLevel.ERROR)
-        }
-
-        return data
     }
     private fun createTableQuery(tableName: String, fields: Map<String, CommandArgumentDto>): MutableList<String> {
         val queryQueue = mutableListOf<String>()
@@ -108,23 +139,13 @@ class DatabaseManager {
         queryQueue.add(query)
         return queryQueue
     }
-    fun <T: Entity> initModel(model: EntityBuilder<T>) {
-        val query = this.createTableQuery(model.tableName, model.fields)
-        try {
-            query.forEach {
-                executeUpdate(it) {}
-            }
-        } catch (e: SQLException) {
-            log("SQL. Execution error: ${e.message} ${e.stackTraceToString()}", LogLevel.ERROR)
-        }
-    }
     private data class InsertTemplate(
-            val schema: Map<String, CommandArgumentDto>,
-            val statement: PreparedStatement,
-            var index: Int = 1,
-            val level: Int,
-            var currId: Int,
-            val data: MutableList<Map<String, Any?>> = mutableListOf()
+        val schema: Map<String, CommandArgumentDto>,
+        val statement: PreparedStatement,
+        var index: Int = 1,
+        val level: Int,
+        var currId: Int,
+        val data: MutableList<Map<String, Any?>> = mutableListOf()
     )
     private fun generateInsertTemplate(tableName: String, schema: Map<String, CommandArgumentDto>, itemsCount: Int, level: Int): InsertTemplate {
         val schemaFields = schema.map {
@@ -141,7 +162,7 @@ class DatabaseManager {
             schema,
             statement,
             level = level,
-            currId = if (level > 1) getStartId(tableName) else (getStartId(tableName) - itemsCount - 1)
+            currId = if (level > 1) nextId(tableName) else (nextId(tableName) - itemsCount - 1)
         )
     }
     private fun entityToRow(schema: Map<String, CommandArgumentDto>, row: MutableMap<String, Any?>, tableName: String, inserts: MutableMap<String, InsertTemplate>) {
@@ -180,33 +201,7 @@ class DatabaseManager {
         }
         statement.addBatch()
     }
-    fun getStartId(tableName: String): Int {
-        val query = "select nextval('${tableName}_id_seq')"
-        val result = this.execute(query) {}
-        result.next()
-        return result.getInt(1)
-    }
-
-    fun <T: Entity> replaceAll(items: MutableList<T>) {
-        if (items.size == 0)
-            return
-        val item = items.first()
-        val query = mutableListOf<String>()
-        query.add("truncate table ${item.tableName} cascade")
-        item.fieldsSchema.forEach {
-            if (it.value.nested != null && it.value.show)
-                query.add("truncate table ${it.value.nestedTable} cascade")
-        }
-        try {
-            query.forEach {
-                executeUpdate(it) {}
-            }
-            this.insert(items)
-        } catch (e: Exception) {
-            log("$e ${e.stackTraceToString()}", LogLevel.FATAL)
-        }
-    }
-    fun <T: Entity> insert(items: MutableList<T>) {
+    private fun insertRows(items: MutableList<Entity>) {
         if (items.size == 0)
             return
         val item = items.first()
@@ -235,5 +230,66 @@ class DatabaseManager {
         } catch (e: Exception) {
             log("$e ${e.stackTraceToString()}", LogLevel.ERROR)
         }
+    }
+    private fun findAll(entityBuilder: EntityBuilder<Entity>, predicates: Map<String, DatabasePredicate> = mapOf()): MutableList<Entity> {
+        val fieldsOnSelect = entityBuilder.fields.filter { it.value.nested == null }.map { "${entityBuilder.tableName}.${it.key} as ${entityBuilder.tableName}$${it.key}" }.toMutableList()
+        val joinQueries = mutableListOf<String>()
+        val nested = entityBuilder.fields.filter { it.value.nested != null }
+        nested.forEach { model ->
+            model.value.nested!!.map {
+                fieldsOnSelect.add("${model.value.nestedTable}.${it.key} as ${model.value.nestedTable}$${it.key}")
+            }
+            joinQueries.add("left join ${model.value.nestedTable} on ${model.value.nestedTable}.${model.value.nestedJoinOn!!.second} = ${entityBuilder.tableName}.${model.value.nestedJoinOn!!.first}")
+        }
+
+        val data = mutableListOf<Entity>()
+        try {
+            val queryResult = execute("select ${fieldsOnSelect.joinToString(",") } from ${entityBuilder.tableName} ${joinQueries.joinToString(" ")} ${stringifyPredicates(predicates)}") {}
+
+            while (queryResult.next()) {
+                data.add(entityBuilder.build(buildFromRow(entityBuilder.tableName, entityBuilder.fields, queryResult)))
+            }
+
+        } catch (e: Exception) {
+            log("$e ${e.stackTraceToString()}", LogLevel.ERROR)
+        }
+
+        return data
+    }
+    private fun nextId(tableName: String): Int {
+        val query = "select nextval('${tableName}_id_seq')"
+        val result = execute(query) {}
+        result.next()
+        return result.getInt(1)
+    }
+
+
+    fun initModel(entityBuilder: EntityBuilder<Entity>) {
+        val command = DatabaseCommand.InitModel(entityBuilder)
+        actor.trySend(command)
+    }
+    suspend fun getNewId(tableName: String): Int {
+        val command = DatabaseCommand.GetNewId(tableName)
+        actor.send(command)
+        return command.response.await()
+    }
+    suspend fun <T: Entity> findOne(entityBuilder: EntityBuilder<T>, predicates: Map<String, DatabasePredicate>): Entity? {
+        val command = DatabaseCommand.FindOne(entityBuilder as EntityBuilder<Entity>, predicates)
+        delay(10_000)
+        actor.send(command)
+        return command.response.await()
+    }
+    fun replaceAll(items: MutableList<Entity>) {
+        val command = DatabaseCommand.ReplaceAll(items)
+        actor.trySend(command)
+    }
+    suspend fun getAll(entityBuilder: EntityBuilder<Entity>, predicates: Map<String, DatabasePredicate> = mapOf()): MutableList<Entity> {
+        val command = DatabaseCommand.FindAll(entityBuilder, predicates)
+        actor.send(command)
+        return command.response.await()
+    }
+    fun insert(items: MutableList<Entity>) {
+        val command = DatabaseCommand.Insert(items)
+        actor.trySend(command)
     }
 }

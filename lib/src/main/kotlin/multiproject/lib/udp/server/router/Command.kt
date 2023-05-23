@@ -26,7 +26,7 @@ abstract class Command(val controller: Controller) {
      * @param input: ExecutableInput
      * @return
      */
-    abstract fun execute(input: ExecutableInput): Response
+    abstract suspend fun execute(input: ExecutableInput): Response
 
     /**
      * Get argument

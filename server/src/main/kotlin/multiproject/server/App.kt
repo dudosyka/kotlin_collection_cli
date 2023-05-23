@@ -4,8 +4,6 @@
 package multiproject.server
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.actor
-import kotlinx.coroutines.channels.produce
 import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.dto.response.ResponseCode
@@ -37,8 +35,7 @@ import multiproject.server.modules.flat.FlatCollection
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
-import java.util.*
-import kotlin.coroutines.CoroutineContext
+import org.koin.java.KoinJavaComponent.inject
 
 class App {
     init {
@@ -64,6 +61,7 @@ class App {
                 runServer {
                     this.logger = logger
                     applyRouter {
+                        scope = CoroutineScope(Job())
                         addController {
                             name = "collection"
                             addMiddleware(AuthMiddleware)
@@ -170,44 +168,18 @@ class App {
                         }
                     }
                     receiveCallback = OnReceive {
-                        address, request -> run {
+                        address, request -> withContext(Dispatchers.Default) {
                             if (request.isEmptyPath())
-                                return@run
+                                return@withContext
 
                             if (request.path.controller == "_system" && request.path.route == "sync") {
                                 collection.loadDump()
-                                return@run
+                                return@withContext
                             }
 
-                            val syncType = request.getSyncType()
-                            val syncHelper = request.getSyncHelper()
-                            if (syncType.sync) {
-                                collection.pull(request.getSyncHelper().commits)
-                                syncHelper.servers.forEach {
-                                    this.emit(it!!, Request(PathDto("_system", "sync")))
-                                }
-                            }
+                            requestsChannel.send(Pair(address, request))
 
-
-                            val response = router.run(request)
-
-                            request.apply {
-                                this.response = response.dto ?: ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, "Resolver error")
-
-                                this setDirection RequestDirection.FROM_SERVER
-                                this setSender getChannelAddress()
-
-                                this setSyncHelper (this.getSyncHelper().apply {
-                                    if (syncType.sync)
-                                        this.synchronizationEnded = true
-                                    this.commits.addAll(response.commits)
-                                })
-                            }
-
-                            emit(
-                                SocketAddressInterpreter.interpret(address),
-                                request
-                            )
+                            println("we are here!")
                         }
                     }
                     bindOn(
@@ -224,120 +196,91 @@ class App {
     }
 }
 
-
-class Collection(private val context: CoroutineContext) {
-    val items: MutableList<Int> = mutableListOf()
-    sealed class CollectionCommands {
-        class AddItemCommand(val item: Int): CollectionCommands()
-
-        class GetCollectionCommand(val result: CompletableDeferred<Pair<Int, List<Int>>> = CompletableDeferred()): CollectionCommands()
-
-    }
-
-    private val scope = CoroutineScope(context)
-
-    @OptIn(ObsoleteCoroutinesApi::class)
-    val commands = scope.actor<CollectionCommands>(capacity = 200) {
-        for (command in this) {
-            when(command) {
-                is CollectionCommands.AddItemCommand -> items.add(command.item)
-                is CollectionCommands.GetCollectionCommand -> command.result.complete(Pair(items.size, items.toList()))
-            }
-        }
-    }
-
-    fun addItem(item: Int) {
-        commands.trySend(CollectionCommands.AddItemCommand(item))
-    }
-
-    suspend fun getCollection(): Pair<Int, List<Int>> {
-        val get = CollectionCommands.GetCollectionCommand()
-        commands.send(get)
-        return get.result.await()
-    }
-}
-
-
-abstract class Task(val taskName: String) { //aka Command
-    abstract suspend fun run()
-}
-
-class SuperLongTask(taskName: String, val collection: multiproject.server.Collection): Task(taskName) {
-    override suspend fun run() {
-        delay(10000L)
-        collection.addItem(1)
-        println("Super long task: $taskName is completed!")
-    }
-}
-
-class NormalLongTask(taskName: String, val collection: multiproject.server.Collection): Task(taskName) {
-    override suspend fun run() {
-        delay(5000L)
-        collection.addItem(1)
-        println("Normal long task: $taskName is completed!")
-    }
-}
-
-class TaskRunner() { //aka Router
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
-    fun run(task: Task) {
-        scope.launch { task.run() }
-    }
-}
-
-fun getRandom(max: Int): Int {
-    return Random().nextInt(max)
-}
-
 @OptIn(ExperimentalCoroutinesApi::class)
 fun main(): Unit = runBlocking {
-//    val server: ServerUdpChannel by inject(ServerUdpChannel::class.java, named("server"))
-//    val collection: Collection<Flat> by inject(Collection::class.java, named("collection"))
-//    App()
-//    collection.loadDump()
-//    server.bindToResolver()
-//    server.run()
-    val collection = Collection(Dispatchers.Default)
-    withContext(Dispatchers.IO) {
-        val channel = produce<Task> {
-            var num = 0
-            while (num < 100) {
-                num++
-                val task = getRandom(1)
-                if (task == 1) {
-                    send(SuperLongTask("$num", collection))
-                } else {
-                    send(NormalLongTask("$num", collection))
+    val server: ServerUdpChannel by inject(ServerUdpChannel::class.java, named("server"))
+    val collection: Collection<Flat> by inject(Collection::class.java, named("collection"))
+    App()
+    collection.loadDump()
+    server.bindToResolver()
+    withContext(Dispatchers.Default) {
+        launch {
+            server.run()
+        }
+
+        launch {
+            while (true) {
+                val tryToGet = server.requestsChannel.tryReceive()
+
+                if (tryToGet.isSuccess) {
+                    println("we got something to process!")
+                    val item = tryToGet.getOrNull()!!
+                    val address = item.first
+                    val request = item.second
+
+                    val syncType = request.getSyncType()
+                    val syncHelper = request.getSyncHelper()
+                    if (syncType.sync) {
+                        collection.pull(request.getSyncHelper().commits)
+                        syncHelper.servers.forEach {
+                            server.emit(it!!, Request(PathDto("_system", "sync")))
+                        }
+                    }
+
+                    val responseChannelItem = ServerUdpChannel.ResponseChannelItem(
+                        from = address,
+                        request = request,
+                        response = server.router.run(
+                            request,
+                            onError = ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, "Resolver error")
+                        )
+                    )
+
+                    server.responseChannel.send(responseChannelItem)
+
+                    println("we are ready for new step!")
                 }
-                println(task)
             }
         }
 
         launch {
-            val taskRunner = TaskRunner()
-            var counter = 100
             while (true) {
-                val tryToGet = channel.tryReceive()
-//            println(tryToGet)
-                if (tryToGet.isSuccess) {
-                    val task = tryToGet.getOrNull()
-                    println("We got! {$counter} ${task?.taskName}")
-                    taskRunner.run(task!!)
-                    counter--
-                }
+                val tryToGet = server.responseChannel.tryReceive()
 
+                if (tryToGet.isSuccess) {
+                    println("we got something to emit!")
+                    val responseChannelItem = tryToGet.getOrNull()!!
+                    val request = responseChannelItem.request
+                    val scope = CoroutineScope(Job())
+
+                    scope.launch {
+                        val response = responseChannelItem.response.await()
+                        val address = responseChannelItem.from
+
+                        val syncType = request.getSyncType()
+
+                        request.apply {
+                            this.response = response.dto!!
+
+                            this setDirection RequestDirection.FROM_SERVER
+                            this setSender server.getChannelAddress()
+
+                            this setSyncHelper (this.getSyncHelper().apply {
+                                if (syncType.sync)
+                                    this.synchronizationEnded = true
+                                this.commits.addAll(response.commits)
+                            })
+                        }
+
+                        server.emit(
+                            SocketAddressInterpreter.interpret(address),
+                            request
+                        )
+                    }
+
+                    println("Now we ready to emit something new!")
+                }
             }
         }
-
-        println("we are launched!")
-
-        delay(15000L)
-
-        val collectionData = collection.getCollection()
-
-        println(collectionData)
     }
-
-
-
 }

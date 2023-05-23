@@ -11,7 +11,6 @@ import multiproject.server.collection.item.Entity
 import multiproject.server.collection.item.EntityBuilder
 import multiproject.server.database.DatabaseManager
 import multiproject.server.modules.flat.Flat
-import multiproject.server.modules.flat.RoomsComparator
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 import java.time.ZonedDateTime
@@ -29,11 +28,11 @@ open class AddIfMaxCommand(controller: Controller) : AddCommand(controller) {
     override val needObject: Boolean = true
     override val fields: Map<String, CommandArgumentDto> = entityBuilder.fields
     override val description: String = "Adds new element if number of rooms grater than max of current items"
-    override fun execute(input: ExecutableInput): Response {
-        val id = dbManager.getStartId(this.entityBuilder.tableName).toLong()
+    override suspend fun execute(input: ExecutableInput): Response {
+        val id = dbManager.getNewId(this.entityBuilder.tableName).toLong()
         input.data["id"] = id
         val entity = this.entityBuilder.build(input.data)
-        val result = collection.addIfMax(RoomsComparator(), entity)
+        val result = collection.addIfMax(entity)
 
         return if (!result) {
             Response(ResponseCode.VALIDATION_ERROR,"Failed! number of rooms is lower than max in collection")

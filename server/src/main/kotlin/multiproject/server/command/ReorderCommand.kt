@@ -26,8 +26,7 @@ class ReorderCommand(controller: Controller) : Command(controller) {
         get() = CommandSyncType(true)
 
     override val description: String = "Sort items and show collection"
-    override fun execute(input: ExecutableInput): Response {
-        this.collection.sort(CollectionSortType.ASC)
-        return Response(ResponseCode.SUCCESS, collection.toString())
+    override suspend fun execute(input: ExecutableInput): Response {
+        return Response(ResponseCode.SUCCESS, this.collection.sort(CollectionSortType.ASC))
     }
 }

@@ -70,18 +70,18 @@ abstract class UdpChannel {
     }
     open fun send(address: InetSocketAddress, data: Request): Request = TODO("not yet implemented")
 
-    protected fun onMessage(address: SocketAddress, data: String) {
+    protected suspend fun onMessage(address: SocketAddress, data: String) {
         val request = Serializer.deserializeRequest(data)
         logger(LogLevel.INFO, "Received request. from $address with data $request")
         this.receiveCallback.process(address, request)
     }
-    protected open fun onNewConnection(address: SocketAddress, data: String) {
+    protected open suspend fun onNewConnection(address: SocketAddress, data: String) {
         val request = Serializer.deserializeRequest(data)
         logger(LogLevel.INFO, "Received first request. from $address with data $request")
         connections.add(address)
         this.firstConnectCallback.process(address, request)
     }
-    private fun receive() {
+    private suspend fun receive() {
         while (true) {
             val buffer = ByteBuffer.allocate(65535)
             val address: SocketAddress = channel.receive(buffer)

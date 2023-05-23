@@ -1,9 +1,13 @@
 package multiproject.lib.udp.server.router
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import multiproject.lib.dto.command.CommandDto
 import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
+import multiproject.lib.dto.response.ResponseDto
 import multiproject.lib.exceptions.ExecuteException
 import multiproject.lib.exceptions.RouteNotFound
 import multiproject.lib.request.Request
@@ -15,6 +19,7 @@ import multiproject.lib.utils.Logger
 class Router(val logger: Logger) {
     private val controllers: MutableList<Controller> = mutableListOf()
     private val requestInterpreter = RequestToExecutableInterpreter()
+    lateinit var scope: CoroutineScope
     fun addController(init: Controller.() -> Unit) {
         this.controllers.add(Controller().apply(init))
     }
@@ -53,11 +58,9 @@ class Router(val logger: Logger) {
         }
     }
 
-    fun run(request: Request): Response {
-
+    fun run(request: Request, onError: ResponseDto? = null): Deferred<Response> = scope.async {
         val path = getRoute(request.path)
-
-        return try {
+        return@async try {
             path.first.middlewares.forEach {
                 request.applyMiddleware(it())
             }
@@ -66,7 +69,10 @@ class Router(val logger: Logger) {
                 request.applyMiddleware(it())
             }
 
-            path.second.command.execute(requestInterpreter.interpret(request))
+            path.second.command.execute(requestInterpreter.interpret(request)).apply {
+                if (dto == null)
+                    dto = onError
+            }
         } catch (e: Exception) {
             logger(LogLevel.FATAL, "Fatal error!", error = e)
             Response(ResponseCode.INTERNAL_SERVER_ERROR, "$e")

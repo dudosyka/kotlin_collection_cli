@@ -21,7 +21,7 @@ class AuthCommand(controller: Controller) : Command(controller) {
      * @param input: ExecutableInput
      * @return
      */
-    override fun execute(input: ExecutableInput): Response {
+    override suspend fun execute(input: ExecutableInput): Response {
         return Response(ResponseCode.SUCCESS, User.login(input.data["login"]?.toString() ?: "", input.data["password"]?.toString() ?: ""), commands = server.router.getCommandsInfo())
     }
 }

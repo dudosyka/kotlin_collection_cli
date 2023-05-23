@@ -1,18 +1,14 @@
 package multiproject.server.modules.house
 
-import multiproject.server.collection.Collection
-import multiproject.server.collection.item.EntityBuilder
-import multiproject.lib.dto.command.FieldType
-import multiproject.server.modules.human.Human
 import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.FieldType
+import multiproject.server.collection.item.EntityBuilder
 import multiproject.server.collection.item.FieldDelegate
-import org.koin.core.qualifier.named
-import org.koin.java.KoinJavaComponent
 
 class HouseBuilder: EntityBuilder<House>() {
     override val tableName: String
         get() = "house"
-    private val collection: Collection<Human> by KoinJavaComponent.inject(Collection::class.java, named("collection"))
+
     @Transient
     override val fields: MutableMap<String, CommandArgumentDto> = mutableMapOf(
         "id" to CommandArgumentDto(name = "id", type = FieldType.INT, show = false, autoIncrement = true),
@@ -54,13 +50,13 @@ class HouseBuilder: EntityBuilder<House>() {
      * @return
      */
     override fun build(map: MutableMap<String, Any?>): House {
-        val id: Int = collection.getUniqueId()
+        val id: Long? by FieldDelegate(map = map, fields["id"]!!)
         val name: String? by FieldDelegate(map = map, fields["name"]!!)
         val year: Long? by FieldDelegate(map = map, fields["year"]!!)
         val numberOfFloors: Long? by FieldDelegate(map = map, fields["numberOfFloors"]!!)
         val numberOfFlatsOnFloor: Long? by FieldDelegate(map = map, fields["numberOfFlatsOnFloor"]!!)
         val numberOfLifts: Long? by FieldDelegate(map = map, fields["numberOfLifts"]!!)
-        return House(id, name, year!!, numberOfFloors!!, numberOfFlatsOnFloor!!, numberOfLifts!!).apply {
+        return House(id!!.toInt(), name, year!!, numberOfFloors!!, numberOfFlatsOnFloor!!, numberOfLifts!!).apply {
             pureData = map
             fieldsSchema = fields
         }

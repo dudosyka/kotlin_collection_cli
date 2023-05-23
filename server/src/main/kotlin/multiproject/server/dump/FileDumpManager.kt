@@ -1,6 +1,8 @@
 package multiproject.server.dump
 
-import kotlinx.serialization.*
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.csv.Csv
 import multiproject.server.collection.item.Entity
@@ -18,7 +20,7 @@ import java.io.*
 @OptIn(ExperimentalSerializationApi::class)
 class FileDumpManager<T : Entity> (private val filePath: String, private val serializer: KSerializer<T>): DumpManager<T>() {
 
-    override fun loadDump(): MutableList<T> {
+    override suspend fun loadDump(): MutableList<T> {
         try {
             val inputStream = FileInputStream(filePath)
             val fileReader = BufferedReader(InputStreamReader(inputStream))
@@ -36,7 +38,7 @@ class FileDumpManager<T : Entity> (private val filePath: String, private val ser
         }
     }
 
-    override fun dump(items: MutableList<T>) {
+    override suspend fun dump(items: MutableList<T>) {
         try {
             val fileWriter = FileWriter(filePath)
             val csv = Csv { hasHeaderRecord = true; ignoreUnknownColumns = true }

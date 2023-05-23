@@ -24,7 +24,7 @@ class ExecuteScriptCommand(controller: Controller) : Command(controller) {
     )
     override val fileReaderSource: Boolean = true
     override val description: String = "Run script"
-    override fun execute(input: ExecutableInput): Response {
+    override suspend fun execute(input: ExecutableInput): Response {
         return Response(ResponseCode.SUCCESS, "")
     }
 }

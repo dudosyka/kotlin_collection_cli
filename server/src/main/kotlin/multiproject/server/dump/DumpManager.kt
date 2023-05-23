@@ -14,12 +14,12 @@ abstract class DumpManager <T: Entity> {
      *
      * @return
      */
-    abstract fun loadDump(): MutableList<T>
+    abstract suspend fun loadDump(): MutableList<T>
 
     /**
      * Dump
      *
      * @param items
      */
-    abstract fun dump(items: MutableList<T>)
+    abstract suspend fun dump(items: MutableList<T>)
 }

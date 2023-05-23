@@ -1,9 +1,12 @@
 package multiproject.lib.udp.server
 
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.request.RequestDirection
+import multiproject.lib.dto.response.Response
 import multiproject.lib.request.Request
 import multiproject.lib.udp.UdpChannel
 import multiproject.lib.udp.UdpConfig
@@ -13,16 +16,20 @@ import java.net.SocketAddress
 
 class ServerUdpChannel: UdpChannel() {
     lateinit var router: Router
+    var requestsChannel: Channel<Pair<SocketAddress, Request>> = Channel(capacity = Channel.BUFFERED)
+    var responseChannel: Channel<ResponseChannelItem> = Channel(capacity = Channel.BUFFERED)
+
+    data class ResponseChannelItem (
+        val from: SocketAddress,
+        val request: Request,
+        val response: Deferred<Response>
+    )
 
     fun applyRouter(init: Router.() -> Unit) {
         this.router = Router(logger).apply(init)
     }
 
-    fun selfExecute(request: Request) {
-        this.router.run(request.apply { this setFrom getChannelAddress()})
-    }
-
-    override fun onNewConnection(address: SocketAddress, data: String) {
+    override suspend fun onNewConnection(address: SocketAddress, data: String) {
         this.onMessage(address, data)
     }
 

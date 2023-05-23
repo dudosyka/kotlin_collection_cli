@@ -35,7 +35,7 @@ class CountLessThanTimeToMetroByTransportCommand(controller: Controller) : Comma
         )
     )
     override val description: String = "Show number of items which time to metro less than specified"
-    override fun execute(input: ExecutableInput): Response {
+    override suspend fun execute(input: ExecutableInput): Response {
         val timeToMetro = this.getArgument(input.args, "Time to metro", 0, Validator(
             CommandArgumentDto(name = "time_to_metro", type = FieldType.INT, required = true)
         )

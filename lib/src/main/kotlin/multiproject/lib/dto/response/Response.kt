@@ -5,7 +5,7 @@ import multiproject.lib.dto.command.CommandDto
 import multiproject.lib.dto.command.CommitDto
 import multiproject.lib.utils.UltimateSerializer
 
-class Response(val dto: ResponseDto?, val commits: List<CommitDto> = listOf()) {
+class Response(var dto: ResponseDto?, val commits: List<CommitDto> = listOf()) {
     constructor(
         code: ResponseCode,
         result: String,
