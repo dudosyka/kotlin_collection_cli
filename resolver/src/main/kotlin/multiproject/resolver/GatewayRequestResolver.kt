@@ -13,6 +13,7 @@ import multiproject.lib.udp.gateway.GatewayUdpChannel
 import multiproject.lib.utils.LogLevel
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
+import java.time.ZonedDateTime
 
 class GatewayRequestResolver: RequestResolver() {
     private val gateway: GatewayUdpChannel by inject(GatewayUdpChannel::class.java, named("server"))
@@ -25,7 +26,7 @@ class GatewayRequestResolver: RequestResolver() {
                 }
             }
         else if (request directionIs RequestDirection.FROM_SERVER)
-            gateway.addServer(ConnectedServer(0, request.getFrom()))
+            gateway.addServer(ConnectedServer(0, ZonedDateTime.now().toEpochSecond(), request.getFrom()))
         else
             throw BadRequestException("Unknown request")
     }
@@ -37,10 +38,11 @@ class GatewayRequestResolver: RequestResolver() {
             gateway clearPending request
             gateway.servers.find { it.address == request.getSender() }?.apply {
                 temporaryUnavailable = Pair(0, false)
+                lastRequest = ZonedDateTime.now().toEpochSecond()
                 pendingRequest--
             }
             val syncHelper = request.getSyncHelper()
-            println("${gateway.blockInput} ${gateway.syncInitiator} ${request.getFrom()}")
+
             if (gateway.blockInput && request.getFrom() == gateway.syncInitiator?.getFrom()) {
                 gateway.blockInput = false
                 if (syncHelper.synchronizationEnded)

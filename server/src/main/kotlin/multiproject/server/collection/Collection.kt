@@ -87,7 +87,6 @@ abstract class Collection<T : Entity> {
     @OptIn(ObsoleteCoroutinesApi::class)
     @Transient private val collectionActor = CoroutineScope(Job()).actor<CollectionCommand> {
         for (command in this) {
-            println("Command received! $command")
             when (command) {
                 is CollectionCommand.AddItem -> run {
                     addItem(command.item as T, command.lastAccessTimestamp)
@@ -119,7 +118,6 @@ abstract class Collection<T : Entity> {
                     this@Collection.items = mutableListOf()
                 }
                 is CollectionCommand.Info -> run {
-                    println("We are here!")
                     command.response.complete(CollectionInfo(items.javaClass.simpleName.toString(), items.size, lastInsertId, lastAccessTimestamp, initializationTimestamp))
                 }
                 is CollectionCommand.Dump -> {

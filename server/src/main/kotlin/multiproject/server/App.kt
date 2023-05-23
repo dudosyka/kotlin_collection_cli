@@ -178,8 +178,6 @@ class App {
                             }
 
                             requestsChannel.send(Pair(address, request))
-
-                            println("we are here!")
                         }
                     }
                     bindOn(
@@ -213,7 +211,6 @@ fun main(): Unit = runBlocking {
                 val tryToGet = server.requestsChannel.tryReceive()
 
                 if (tryToGet.isSuccess) {
-                    println("we got something to process!")
                     val item = tryToGet.getOrNull()!!
                     val address = item.first
                     val request = item.second
@@ -237,8 +234,6 @@ fun main(): Unit = runBlocking {
                     )
 
                     server.responseChannel.send(responseChannelItem)
-
-                    println("we are ready for new step!")
                 }
             }
         }
@@ -248,7 +243,6 @@ fun main(): Unit = runBlocking {
                 val tryToGet = server.responseChannel.tryReceive()
 
                 if (tryToGet.isSuccess) {
-                    println("we got something to emit!")
                     val responseChannelItem = tryToGet.getOrNull()!!
                     val request = responseChannelItem.request
                     val scope = CoroutineScope(Job())
@@ -277,8 +271,6 @@ fun main(): Unit = runBlocking {
                             request
                         )
                     }
-
-                    println("Now we ready to emit something new!")
                 }
             }
         }

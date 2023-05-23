@@ -18,18 +18,11 @@ import java.time.ZonedDateTime
 import java.util.*
 
 class GatewayUdpChannel: UdpChannel() {
-    @Volatile private var pendingRequests = Collections.synchronizedMap(mutableMapOf<Pair<Long, InetSocketAddress>, Pair<ConnectedServer, Request>>())
+    private var pendingRequests = Collections.synchronizedMap(mutableMapOf<Pair<Long, InetSocketAddress>, Pair<ConnectedServer, Request>>())
     private var blockedRequests = Collections.synchronizedList(mutableListOf<Request>())
     var blockInput = false
     var syncInitiator: Request? = null
     var commits: MutableList<CommitDto> = mutableListOf()
-
-
-    private val checkPendingRequests2 = object: TimerTask() {
-        override fun run() {
-
-        }
-    }
 
     private val checkPendingRequests = object: TimerTask() {
         @Synchronized override fun run() {
@@ -37,15 +30,8 @@ class GatewayUdpChannel: UdpChannel() {
             logger(LogLevel.DEBUG,"Pending requests: $pendingRequests")
             logger(LogLevel.DEBUG, "Available servers: $servers")
             pendingRequests.forEach {
-                request -> if (now - request.key.first >= UdpConfig.unavailableTimeout) {
+                request -> if (now - request.key.first >= UdpConfig.holdRequestTimeout) {
                     val req = request.value.second
-                    servers.replaceAll {
-                        if (it == request.value.first) {
-                            it.apply { temporaryUnavailable = Pair(now, true) }
-                            it
-                        } else
-                            it
-                    }
                     try {
                         if (request.value.second.getSyncType().sync) {
                             blockInput = false
@@ -65,6 +51,12 @@ class GatewayUdpChannel: UdpChannel() {
                     pendingRequests.remove(request.key)
                 }
             }
+            servers.replaceAll {
+                if (now - it.lastRequest >= UdpConfig.unavailableTimeout && it.pendingRequest >= 1 && !it.temporaryUnavailable.second)
+                    it.temporaryUnavailable = Pair(now, true)
+
+                it
+            }
             servers = servers.filter {
                     server -> if (server.temporaryUnavailable.second) {
                 now - server.temporaryUnavailable.first < UdpConfig.removeAfterUnavailableTimeout
@@ -73,7 +65,7 @@ class GatewayUdpChannel: UdpChannel() {
         }
     }
     private var syncHelper: SyncHelper = SyncHelper()
-    @Synchronized fun sendThrough(initiator: Request, updateWith: Request.() -> Unit) {
+    fun sendThrough(initiator: Request, updateWith: Request.() -> Unit) {
         val now = ZonedDateTime.now().toEpochSecond()
         initiator.apply(updateWith).apply {
             this setHeader Pair("id", now)
@@ -142,7 +134,6 @@ class GatewayUdpChannel: UdpChannel() {
         Timer().scheduleAtFixedRate(
             checkPendingRequests, UdpConfig.pendingRequestCheckTimeout, UdpConfig.pendingRequestCheckTimeout
         )
-        Timer().schedule(checkPendingRequests2, UdpConfig.pendingRequestCheckTimeout)
 
         super.run()
     }

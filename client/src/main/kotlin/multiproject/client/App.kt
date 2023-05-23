@@ -29,6 +29,7 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
 import java.net.InetSocketAddress
+import java.time.ZonedDateTime
 
 class App {
     init {
@@ -63,7 +64,7 @@ class App {
                         attemptNum -> writer.writeLine("Try to reconnect... Reconnect attempt #$attemptNum")
                     }
                     addServer(
-                        address = ConnectedServer(0, InetSocketAddress(UdpConfig.serverAddress, UdpConfig.serverPort))
+                        address = ConnectedServer(0, lastRequest = ZonedDateTime.now().toEpochSecond(), InetSocketAddress(UdpConfig.serverAddress, UdpConfig.serverPort))
                     )
                     disconnectStrategy = RestoreOnDisconnectStrategy()
                     bindOn(null)
