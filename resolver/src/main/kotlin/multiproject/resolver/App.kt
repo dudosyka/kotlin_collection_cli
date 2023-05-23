@@ -14,7 +14,7 @@ import org.koin.java.KoinJavaComponent.inject
 import java.net.InetSocketAddress
 
 class App {
-    val logger = Logger(LogLevel.DEBUG)
+    val logger = Logger(LogLevel.ERROR)
     init {
         val module = module {
             single<GatewayUdpChannel>(named("server")) {

@@ -12,6 +12,7 @@ import multiproject.client.io.Reader
 import multiproject.client.io.Writer
 import multiproject.lib.dto.ConnectedServer
 import multiproject.lib.dto.request.PathDto
+import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.exceptions.InvalidArgumentException
 import multiproject.lib.exceptions.ValidationFieldException
 import multiproject.lib.request.Request
@@ -33,7 +34,7 @@ import java.time.ZonedDateTime
 
 class App {
     init {
-        val logger = Logger(LogLevel.DEBUG)
+        val logger = Logger(LogLevel.ERROR)
         val writer = ConsoleWriter()
         val module = module {
             factory<Reader>(named("reader")) {
@@ -103,7 +104,10 @@ fun main() = runBlocking {
                     CommandResolver.updateCommandList(result.responseDto!!.commands)
                     writer.writeLine("Commands list updated from server!")
                 } else {
-                    writer.writeLine(result.responseDto!!.result)
+                    if (result.responseDto!!.code == ResponseCode.INTERNAL_SERVER_ERROR)
+                        writer.writeLine("Command processing failed \\_(*_*)_/ Try again later...")
+                    else
+                        writer.writeLine(result.responseDto!!.result)
                 }
 
             }

@@ -39,7 +39,7 @@ import org.koin.java.KoinJavaComponent.inject
 
 class App {
     init {
-        val logger = Logger(LogLevel.DEBUG)
+        val logger = Logger(LogLevel.ERROR)
         val collection = FlatCollection(mutableListOf(), FlatBuilder())
         val module = module {
             single<Collection<Flat>>(named("collection")) {
