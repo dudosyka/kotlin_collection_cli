@@ -1,12 +1,12 @@
 package multiproject.server.modules.flat
 
 import kotlinx.serialization.Transient
+import multiproject.lib.dto.command.CommandArgumentDto
+import multiproject.lib.dto.command.FieldType
 import multiproject.server.collection.item.EntityBuilder
 import multiproject.server.collection.item.FieldDelegate
 import multiproject.server.modules.coordinates.CoordinatesBuilder
 import multiproject.server.modules.house.HouseBuilder
-import multiproject.lib.dto.command.FieldType
-import multiproject.lib.dto.command.CommandArgumentDto
 import multiproject.server.modules.user.UserBuilder
 
 class FlatBuilder: EntityBuilder<Flat>() {
@@ -98,6 +98,7 @@ class FlatBuilder: EntityBuilder<Flat>() {
         val coordinatesEntity = CoordinatesBuilder().build(coordinates!!)
 
         val house: MutableMap<String, Any?>? by FieldDelegate(map = map, fields["house"]!!)
+        house?.set("id", id)
         val houseEntity = HouseBuilder().build(house!!)
 
         val author: MutableMap<String, Any?>? by FieldDelegate(map = map, fields["author"]!!)

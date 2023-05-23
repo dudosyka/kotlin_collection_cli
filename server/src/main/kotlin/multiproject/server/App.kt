@@ -90,6 +90,7 @@ class App {
                             addRoute {
                                 name = "remove_by_id"
                                 command = RemoveByIdCommand(this@addController)
+                                addMiddleware(BuildAuthorMiddleware)
                             }
                             addRoute {
                                 name = "load"
@@ -102,6 +103,7 @@ class App {
                             addRoute {
                                 name = "remove_at"
                                 command = RemoveAtCommand(this@addController)
+                                addMiddleware(BuildAuthorMiddleware)
                             }
                             addRoute {
                                 name = "add_if_max"

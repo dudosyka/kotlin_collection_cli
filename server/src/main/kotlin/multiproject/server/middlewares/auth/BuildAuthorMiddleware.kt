@@ -13,6 +13,7 @@ object BuildAuthorMiddleware: Middleware() {
                 "password" to buildUserData["password"]
             )
             this.data.arguments["author"] = userData
+            this setHeader Pair("authorizedUserId", buildUserData["id"]!!.toLong())
         }
     }
 }

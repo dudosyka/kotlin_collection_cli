@@ -43,7 +43,7 @@ class RemoveByIdCommand(controller: Controller) : Command(controller) {
                 CommandArgumentDto(name = "id", type = FieldType.INT, required = true)
             )
         )
-        val removedId = collection.removeById(id as Int)
+        val removedId = collection.removeById(id as Int, input.request.getHeader("authorizedUserId").toString().toLong())
         return Response( ResponseCode.SUCCESS,"Item with id = $id successfully removed!", commits = listOf(
             CommitDto(
                 id = removedId,

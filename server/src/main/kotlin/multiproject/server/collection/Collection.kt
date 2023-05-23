@@ -37,15 +37,15 @@ abstract class Collection<T : Entity> {
     open class CollectionCommand(val lastAccessTimestamp: ZonedDateTime) {
         class AddItem(val item: Entity, lastAccessTimestamp: ZonedDateTime): CollectionCommand(lastAccessTimestamp)
 
-        class RemoveItem(val index: Int, val response: CompletableDeferred<Long> = CompletableDeferred(), lastAccessTimestamp: ZonedDateTime): CollectionCommand(
+        class RemoveItem(val index: Int, val author: Long, val response: CompletableDeferred<Long> = CompletableDeferred(), lastAccessTimestamp: ZonedDateTime): CollectionCommand(
             lastAccessTimestamp
         )
 
-        class RemoveItemById(val id: Int, val response: CompletableDeferred<Long> = CompletableDeferred(), lastAccessTimestamp: ZonedDateTime): CollectionCommand(
+        class RemoveItemById(val id: Int, val author: Long, val response: CompletableDeferred<Long> = CompletableDeferred(), lastAccessTimestamp: ZonedDateTime): CollectionCommand(
             lastAccessTimestamp
         )
 
-        class UpdateItem(val id: Int, val item: Entity, val response: CompletableDeferred<Boolean> = CompletableDeferred(), lastAccessTimestamp: ZonedDateTime): CollectionCommand(
+        class UpdateItem(val id: Int, val author: Long, val item: Entity, val response: CompletableDeferred<Boolean> = CompletableDeferred(), lastAccessTimestamp: ZonedDateTime): CollectionCommand(
             lastAccessTimestamp
         )
 
@@ -92,14 +92,39 @@ abstract class Collection<T : Entity> {
                     addItem(command.item as T, command.lastAccessTimestamp)
                 }
                 is CollectionCommand.RemoveItem -> run {
-                    command.response.complete(removeAt(command.index, command.lastAccessTimestamp))
+                    val item = items[command.index]
+                    val authorData = (item.pureData["author"] as MutableMap<String, Any>)
+                    if (authorData["id"].toString().toLong() == command.author)
+                        command.response.complete(removeAt(command.index, command.lastAccessTimestamp))
+                    else
+                        command.response.complete(0)
                 }
                 is CollectionCommand.RemoveItemById -> run {
                     val index = getIndexById(command.id)
-                    command.response.complete(removeAt(index, command.lastAccessTimestamp))
+                    if (index == null) {
+                        command.response.complete(0)
+                        return@run
+                    }
+
+                    val authorData = (items[index].pureData["author"] as MutableMap<String, Any>)
+
+                    if (authorData["id"].toString().toLong() == command.author)
+                        command.response.complete(removeAt(index, command.lastAccessTimestamp))
+                    else
+                        command.response.complete(0)
                 }
                 is CollectionCommand.UpdateItem -> run {
-                    command.response.complete(update(command.id, command.item as T, command.lastAccessTimestamp))
+                    val index = getIndexById(command.id)
+                    if (index == null) {
+                        command.response.complete(false)
+                        return@run
+                    }
+                    val authorData = (items[index].pureData["author"] as MutableMap<String, Any>)
+
+                    if (authorData["id"].toString().toLong() == command.author)
+                        command.response.complete(update(command.id, command.item as T, command.lastAccessTimestamp))
+                    else
+                        command.response.complete(false)
                 }
                 is CollectionCommand.GetItem -> run {
                     command.response.complete(items[command.index])
@@ -270,8 +295,8 @@ abstract class Collection<T : Entity> {
      *
      * @param index
      */
-    suspend fun removeAt(index: Int): Long {
-        val command = CollectionCommand.RemoveItem(index, lastAccessTimestamp = ZonedDateTime.now())
+    suspend fun removeAt(index: Int, author: Long): Long {
+        val command = CollectionCommand.RemoveItem(index, author, lastAccessTimestamp = ZonedDateTime.now())
         collectionActor.send(command)
         return command.response.await()
     }
@@ -282,8 +307,8 @@ abstract class Collection<T : Entity> {
      * @param id
      * @return
      */
-    suspend fun removeById(id: Int): Long {
-        val command = CollectionCommand.RemoveItemById(id, lastAccessTimestamp = ZonedDateTime.now())
+    suspend fun removeById(id: Int, author: Long): Long {
+        val command = CollectionCommand.RemoveItemById(id, author, lastAccessTimestamp = ZonedDateTime.now())
         collectionActor.send(command)
         return command.response.await()
     }
@@ -310,8 +335,8 @@ abstract class Collection<T : Entity> {
      * @param item
      * @return
      */
-    suspend fun update(id: Int, item: T): Boolean {
-        val command = CollectionCommand.UpdateItem(id, item = item, lastAccessTimestamp = ZonedDateTime.now())
+    suspend fun update(id: Int, item: T, author: Long): Boolean {
+        val command = CollectionCommand.UpdateItem(id, item = item, author = author, lastAccessTimestamp = ZonedDateTime.now())
         return command.response.await()
     }
 

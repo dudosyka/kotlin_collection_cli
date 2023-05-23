@@ -1,6 +1,9 @@
 package multiproject.server.database
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.actor
 import multiproject.lib.dto.command.CommandArgumentDto
 import multiproject.lib.dto.command.FieldType
@@ -67,7 +70,7 @@ class DatabaseManager {
                     command.response.complete(findAll(command.entityBuilder, command.predicates))
                 }
                 is DatabaseCommand.Insert -> run {
-                    insert(command.items)
+                    insertRows(command.items)
                 }
             }
         }
@@ -275,7 +278,6 @@ class DatabaseManager {
     }
     suspend fun <T: Entity> findOne(entityBuilder: EntityBuilder<T>, predicates: Map<String, DatabasePredicate>): Entity? {
         val command = DatabaseCommand.FindOne(entityBuilder as EntityBuilder<Entity>, predicates)
-        delay(10_000)
         actor.send(command)
         return command.response.await()
     }

@@ -36,12 +36,17 @@ class RemoveAtCommand(controller: Controller) : Command(controller) {
         )
         )
 
-        val deletedId = collection.removeAt(index as Int)
+        val deletedId = collection.removeAt(index as Int, input.request.getHeader("authorizedUserId").toString().toLong())
         input.request.apply {
             this.setSyncHelper(this.getSyncHelper().apply {
                 this.removedInstances.add(deletedId)
             })
         }
-        return Response( ResponseCode.SUCCESS,"Item with index $index successfully removed!")
+
+        return if (deletedId.toInt() != 0)
+            Response( ResponseCode.SUCCESS,"Item with index $index successfully removed!")
+        else
+            Response(ResponseCode.FORBIDDEN, "Item was not removed!")
+
     }
 }

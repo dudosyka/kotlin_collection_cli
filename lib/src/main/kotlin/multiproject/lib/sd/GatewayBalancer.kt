@@ -5,6 +5,7 @@ import multiproject.lib.udp.UdpChannel
 import multiproject.lib.udp.gateway.GatewayUdpChannel
 import multiproject.lib.utils.LogLevel
 import java.net.InetSocketAddress
+import java.time.ZonedDateTime
 
 object GatewayBalancer {
     fun getServer(gateway: GatewayUdpChannel): ConnectedServer? {
@@ -16,7 +17,10 @@ object GatewayBalancer {
         if (availableServers.isEmpty())
             return null
         gateway.logger(LogLevel.INFO, "Gateway has chosen address: ${availableServers.first().address}")
-        gateway.servers.find { availableServers.first().address == it.address }!!.pendingRequest++
+        gateway.servers.find { availableServers.first().address == it.address }!!.apply {
+            pendingRequest++
+            lastRequest = ZonedDateTime.now().toEpochSecond()
+        }
         return availableServers.first()
     }
 
