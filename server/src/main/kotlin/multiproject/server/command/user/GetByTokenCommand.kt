@@ -7,6 +7,8 @@ import multiproject.lib.udp.server.router.Command
 import multiproject.lib.udp.server.router.Controller
 
 class GetByTokenCommand(controller: Controller) : Command(controller) {
+    override val description: String
+        get() = "Returns current logged in user data"
     /**
      * Execute
      *

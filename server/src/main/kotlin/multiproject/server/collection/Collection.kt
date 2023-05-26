@@ -1,17 +1,18 @@
 package multiproject.server.collection
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.ActorScope
 import kotlinx.coroutines.channels.actor
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import multiproject.lib.dto.command.CommitDto
+import multiproject.lib.utils.LogLevel
+import multiproject.lib.utils.Logger
 import multiproject.server.collection.item.Entity
 import multiproject.server.collection.item.EntityBuilder
 import multiproject.server.collection.sort.CollectionSortType
 import multiproject.server.collection.sort.IdComparator
 import multiproject.server.dump.DumpManager
-import multiproject.server.exceptions.NotUniqueException
+import multiproject.server.exceptions.execution.NotUniqueException
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
 import java.time.ZonedDateTime
@@ -33,6 +34,7 @@ abstract class Collection<T : Entity> {
     @Transient private val initializationTimestamp: ZonedDateTime = ZonedDateTime.now()
     @Transient protected var lastAccessTimestamp: ZonedDateTime = initializationTimestamp
     @Transient lateinit var builder: EntityBuilder<T>
+    private val logger: Logger by KoinJavaComponent.inject(Logger::class.java, named("logger"))
 
     open class CollectionCommand(val lastAccessTimestamp: ZonedDateTime) {
         class AddItem(val item: Entity, lastAccessTimestamp: ZonedDateTime): CollectionCommand(lastAccessTimestamp)
@@ -50,6 +52,10 @@ abstract class Collection<T : Entity> {
         )
 
         class GetItem(val index: Int, val response: CompletableDeferred<Entity> = CompletableDeferred(), lastAccessTimestamp: ZonedDateTime): CollectionCommand(
+            lastAccessTimestamp
+        )
+
+        class GetItemById(val id: Int, val response: CompletableDeferred<Entity?> = CompletableDeferred(), lastAccessTimestamp: ZonedDateTime): CollectionCommand(
             lastAccessTimestamp
         )
 
@@ -74,10 +80,20 @@ abstract class Collection<T : Entity> {
         class Dump(lastAccessTimestamp: ZonedDateTime) : CollectionCommand(lastAccessTimestamp)
 
         class LoadDump(lastAccessTimestamp: ZonedDateTime) : CollectionCommand(lastAccessTimestamp)
-    }
 
-    @OptIn(ObsoleteCoroutinesApi::class)
-    protected abstract fun commandProcessor(command: CollectionCommand): ActorScope<CollectionCommand>.() -> Unit
+        class CountLessThanByCommand(val comparable: Any, val response: CompletableDeferred<Int> = CompletableDeferred(),
+                                     lastAccessTimestamp: ZonedDateTime
+        ): CollectionCommand(lastAccessTimestamp)
+        class FilterLessThanByCommand(val comparable: Any, val response: CompletableDeferred<String> = CompletableDeferred(),
+                                      lastAccessTimestamp: ZonedDateTime
+        ): CollectionCommand(lastAccessTimestamp)
+        class AddIfMaxCommand(val item: Entity, val response: CompletableDeferred<Boolean> = CompletableDeferred(),
+                              lastAccessTimestamp: ZonedDateTime
+        ): CollectionCommand(lastAccessTimestamp)
+        class CountByCommand(val comparable: Any, val response: CompletableDeferred<Int> = CompletableDeferred(),
+                             lastAccessTimestamp: ZonedDateTime
+        ): CollectionCommand(lastAccessTimestamp)
+    }
 
     constructor(items: MutableList<T>, builder: EntityBuilder<T>) {
         checkUniqueId(items)
@@ -85,13 +101,17 @@ abstract class Collection<T : Entity> {
     }
 
     @OptIn(ObsoleteCoroutinesApi::class)
-    @Transient private val collectionActor = CoroutineScope(Job()).actor<CollectionCommand> {
+    @Transient protected val collectionActor = CoroutineScope(Job()).actor<CollectionCommand> {
         for (command in this) {
             when (command) {
                 is CollectionCommand.AddItem -> run {
                     addItem(command.item as T, command.lastAccessTimestamp)
                 }
                 is CollectionCommand.RemoveItem -> run {
+                    if (command.index < 0 || command.index >= items.size) {
+                        command.response.complete(-1)
+                        return@run
+                    }
                     val item = items[command.index]
                     val authorData = (item.pureData["author"] as MutableMap<String, Any>)
                     if (authorData["id"].toString().toLong() == command.author)
@@ -102,7 +122,7 @@ abstract class Collection<T : Entity> {
                 is CollectionCommand.RemoveItemById -> run {
                     val index = getIndexById(command.id)
                     if (index == null) {
-                        command.response.complete(0)
+                        command.response.complete(-1)
                         return@run
                     }
 
@@ -110,8 +130,9 @@ abstract class Collection<T : Entity> {
 
                     if (authorData["id"].toString().toLong() == command.author)
                         command.response.complete(removeAt(index, command.lastAccessTimestamp))
-                    else
+                    else {
                         command.response.complete(0)
+                    }
                 }
                 is CollectionCommand.UpdateItem -> run {
                     val index = getIndexById(command.id)
@@ -129,10 +150,14 @@ abstract class Collection<T : Entity> {
                 is CollectionCommand.GetItem -> run {
                     command.response.complete(items[command.index])
                 }
+                is CollectionCommand.GetItemById -> run {
+                    getItemById(command)
+                }
                 is CollectionCommand.PullCommits -> run {
                     pull(command.commits, command.lastAccessTimestamp)
                 }
                 is CollectionCommand.ShowItems -> run {
+                    sort(CollectionSortType.DESC, lastAccessTimestamp)
                     command.response.complete(this@Collection.toString())
                 }
                 is CollectionCommand.SortAndReturn -> run {
@@ -150,17 +175,23 @@ abstract class Collection<T : Entity> {
                     dumpManager.dump(items)
                 }
                 is CollectionCommand.LoadDump -> {
-                    lastAccessTimestamp = command.lastAccessTimestamp
-                    val loaded = dumpManager.loadDump()
-                    checkUniqueId(loaded)
-                    this@Collection.items = loaded
-                    sort(time = command.lastAccessTimestamp)
-                    lastInsertId = if (items.size > 0)
-                        items.last().id
-                    else
-                        0
+                    loadDump(command.lastAccessTimestamp)
                 }
-                else -> commandProcessor(command)
+                is CollectionCommand.CountLessThanByCommand -> run {
+                    countLessThanBy(command)
+                }
+                is CollectionCommand.FilterLessThanByCommand -> run {
+                    filterLessThanBy(command)
+                }
+                is CollectionCommand.AddIfMaxCommand -> run {
+                    addIfMax(command)
+                }
+                is CollectionCommand.CountByCommand -> run {
+                    countBy(command)
+                }
+                else -> run {
+                    logger(LogLevel.ERROR, "Unknown command was caught in collection actor")
+                }
             }
         }
     }
@@ -210,6 +241,18 @@ abstract class Collection<T : Entity> {
         return this.items.elementAt(index)
     }
 
+    private fun getItemById(command: CollectionCommand.GetItemById) {
+        val index = getIndexById(command.id)
+        val res = this.items.getOrNull(index ?: -1)
+        command.response.complete(res)
+    }
+
+    suspend fun getItemById(id: Int): T? {
+        val command = CollectionCommand.GetItemById(id, lastAccessTimestamp = ZonedDateTime.now())
+        collectionActor.send(command)
+        return command.response.await() as? T
+    }
+
     /**
      * Get index by id
      *
@@ -238,16 +281,15 @@ abstract class Collection<T : Entity> {
         collectionActor.trySend(CollectionCommand.AddItem(collectionItem, ZonedDateTime.now()))
     }
 
-    suspend fun loadDump(time: ZonedDateTime) {
-        this.lastAccessTimestamp = time
-        val items = dumpManager.loadDump()
-        checkUniqueId(items)
-        this.items = items
-        this.sort(time = time)
-        if (this.items.size > 0)
-            this.lastInsertId = this.items.last().id
+    private suspend fun loadDump(time: ZonedDateTime) {
+        lastAccessTimestamp = time
+        val loaded = dumpManager.loadDump()
+        this.items = loaded
+        sort(time = lastAccessTimestamp)
+        lastInsertId = if (items.size > 0)
+            items.last().id
         else
-            this.lastInsertId = 0
+            0
     }
 
     /**
@@ -319,10 +361,10 @@ abstract class Collection<T : Entity> {
 
     private fun update(id: Int, item: T, time: ZonedDateTime): Boolean {
         lastAccessTimestamp = time
-        val index = this.checkIdExists(id)
+        val index = checkIdExists(id)
         if (index == 0)
             return false
-        val old = this.getItem(index)
+        val old = getItem(index)
         item.id = old.id
         item.creationDate = old.creationDate
         this.items[index] = item
@@ -337,6 +379,7 @@ abstract class Collection<T : Entity> {
      */
     suspend fun update(id: Int, item: T, author: Long): Boolean {
         val command = CollectionCommand.UpdateItem(id, item = item, author = author, lastAccessTimestamp = ZonedDateTime.now())
+        collectionActor.send(command)
         return command.response.await()
     }
 
@@ -381,7 +424,7 @@ abstract class Collection<T : Entity> {
         return command.response.await()
     }
 
-    override fun toString(): String {
+    protected fun stringifyItems(items: MutableList<T>): String {
         var result = ""
         return if (items.isNotEmpty()) {
             items.withIndex().forEach {
@@ -393,32 +436,23 @@ abstract class Collection<T : Entity> {
             "Collection is empty"
     }
 
-    /**
-     * Count by
-     *
-     * @param T
-     * @param comparable
-     * @return
-     */
+    override fun toString(): String = stringifyItems(items)
+
+    abstract fun countBy(command: CollectionCommand.CountByCommand): Int
+
+    abstract fun countLessThanBy(command: CollectionCommand.CountLessThanByCommand): Int
+
+    abstract fun filterLessThanBy(command: CollectionCommand.FilterLessThanByCommand): String
+
+    abstract fun addIfMax(command: CollectionCommand.AddIfMaxCommand): Boolean
+
     abstract suspend fun <T:Any> countBy(comparable: T): Int
 
-    /**
-     * Count less than by
-     *
-     * @param comparable
-     * @return
-     */
     abstract suspend fun countLessThanBy(comparable: Any): Int
 
-    /**
-     * Filter less than by
-     *
-     * @param comparable
-     * @return
-     */
     abstract suspend fun filterLessThanBy(comparable: Any): String
 
-    abstract suspend fun addIfMax(item: T): Boolean
+    abstract suspend fun addIfMax(item: Entity): Boolean
 
     private suspend fun pull(commitsById: MutableMap<Long, CommitDto>, time: ZonedDateTime) {
         commitsById.forEach {

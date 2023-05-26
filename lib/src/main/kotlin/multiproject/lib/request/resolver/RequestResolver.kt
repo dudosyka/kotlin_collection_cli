@@ -1,5 +1,6 @@
 package multiproject.lib.request.resolver
 
+import multiproject.lib.exceptions.gateway.ResolveError
 import multiproject.lib.request.Request
 
 abstract class RequestResolver {

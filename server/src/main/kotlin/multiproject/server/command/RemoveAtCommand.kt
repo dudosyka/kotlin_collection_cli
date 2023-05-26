@@ -1,9 +1,6 @@
 package multiproject.server.command
 
-import multiproject.lib.dto.command.CommandArgumentDto
-import multiproject.lib.dto.command.ExecutableInput
-import multiproject.lib.dto.command.FieldType
-import multiproject.lib.dto.command.Validator
+import multiproject.lib.dto.command.*
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.udp.server.router.Command
@@ -12,6 +9,7 @@ import multiproject.server.collection.Collection
 import multiproject.server.collection.item.Entity
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent
+import java.time.ZonedDateTime
 
 /**
  * Remove at command
@@ -36,17 +34,25 @@ class RemoveAtCommand(controller: Controller) : Command(controller) {
         )
         )
 
-        val deletedId = collection.removeAt(index as Int, input.request.getHeader("authorizedUserId").toString().toLong())
+        val removedId = collection.removeAt(index as Int, input.request.getHeader("authorizedUserId").toString().toLong())
         input.request.apply {
             this.setSyncHelper(this.getSyncHelper().apply {
-                this.removedInstances.add(deletedId)
+                this.removedInstances.add(removedId)
             })
         }
 
-        return if (deletedId.toInt() != 0)
-            Response( ResponseCode.SUCCESS,"Item with index $index successfully removed!")
+        return if (removedId.toInt() == -1)
+            Response(ResponseCode.ITEM_NOT_FOUND, "Item not found!")
+        else if (removedId.toInt() == 0)
+            Response(ResponseCode.FORBIDDEN, "Forbidden! You can't delete this item!")
         else
-            Response(ResponseCode.FORBIDDEN, "Item was not removed!")
+            Response(ResponseCode.SUCCESS,"Item with index $index successfully removed!", commits = listOf(
+                CommitDto(
+                    id = removedId,
+                    data = null,
+                    timestamp = ZonedDateTime.now().toEpochSecond()
+                )
+            ))
 
     }
 }

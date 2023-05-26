@@ -150,7 +150,7 @@ class DatabaseManager {
         var currId: Int,
         val data: MutableList<Map<String, Any?>> = mutableListOf()
     )
-    private fun generateInsertTemplate(tableName: String, schema: Map<String, CommandArgumentDto>, itemsCount: Int, level: Int): InsertTemplate {
+    private fun generateInsertTemplate(tableName: String, schema: Map<String, CommandArgumentDto>, firstId: Int, itemsCount: Int, level: Int): InsertTemplate {
         val schemaFields = schema.map {
             if (it.value.nested != null) it.value.nestedJoinOn!!.first else it.key
         }
@@ -165,7 +165,7 @@ class DatabaseManager {
             schema,
             statement,
             level = level,
-            currId = if (level > 1) nextId(tableName) else (nextId(tableName) - itemsCount - 1)
+            currId = firstId
         )
     }
     private fun entityToRow(schema: Map<String, CommandArgumentDto>, row: MutableMap<String, Any?>, tableName: String, inserts: MutableMap<String, InsertTemplate>) {
@@ -209,10 +209,10 @@ class DatabaseManager {
             return
         val item = items.first()
         val inserts = mutableMapOf<String, InsertTemplate>()
-        inserts[item.tableName] = this.generateInsertTemplate(item.tableName, item.fieldsSchema, items.size, 1)
+        inserts[item.tableName] = this.generateInsertTemplate(item.tableName, item.fieldsSchema, firstId = items.first().id - 1, items.size, 1)
         item.fieldsSchema.forEach {
             if (it.value.nested != null && it.value.show)
-                inserts[it.value.nestedTable!!] = this.generateInsertTemplate(it.value.nestedTable!!, it.value.nested!!, items.size, 2)
+                inserts[it.value.nestedTable!!] = this.generateInsertTemplate(it.value.nestedTable!!, it.value.nested!!, firstId = items.first().id - 1, items.size, 2)
         }
         items.forEach {
             inserts[it.tableName]!!.currId++

@@ -4,7 +4,7 @@ import multiproject.lib.dto.command.CommandArgumentDto
 import multiproject.lib.dto.command.ExecutableInput
 import multiproject.lib.dto.command.Validator
 import multiproject.lib.dto.response.Response
-import multiproject.lib.exceptions.InvalidArgumentException
+import multiproject.lib.exceptions.ValidationFieldException
 
 /**
  * Command
@@ -39,11 +39,11 @@ abstract class Command(val controller: Controller) {
      */
     fun getArgument(args: List<Any?>, name: String, index: Int, validator: Validator): Any {
         if (args.size < index || args.isEmpty() || index < 0) {
-            throw InvalidArgumentException(name, validator.describe())
+            throw ValidationFieldException(validator)
         }
-        val argumentValue = args[index] ?: throw InvalidArgumentException(name, validator.describe())
+        val argumentValue = args[index] ?: throw ValidationFieldException(validator)
         if (!validator.validate(argumentValue))
-            throw InvalidArgumentException(name, validator.describe())
+            throw ValidationFieldException(validator)
         return validator.value!!
     }
 

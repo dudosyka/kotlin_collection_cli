@@ -2,7 +2,6 @@ package multiproject.server.modules.user.jwt
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import multiproject.server.exceptions.BadJwtSubject
 import java.util.*
 
 @Serializable
@@ -15,7 +14,7 @@ class JwtBody (
         fun build(
             subject: String, data: Map<String, String> = mapOf(), expirationDate: Date = Date()
         ): JwtBody {
-            val intSubject = subject.toIntOrNull() ?: throw BadJwtSubject()
+            val intSubject = subject.toInt()
             return JwtBody(intSubject, data, expirationDate)
         }
     }

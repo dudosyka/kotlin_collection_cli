@@ -12,6 +12,7 @@ import multiproject.lib.utils.Serializer
 import java.net.InetSocketAddress
 import java.net.PortUnreachableException
 import java.nio.ByteBuffer
+import java.time.ZonedDateTime
 import java.util.*
 
 class ClientUdpChannel: UdpChannel() {
@@ -57,6 +58,7 @@ class ClientUdpChannel: UdpChannel() {
     }
     fun sendRequest(request: Request): ResponseDto {
         request setDirection RequestDirection.FROM_CLIENT
+        request setHeader Pair("sendAt", ZonedDateTime.now().toEpochSecond())
         if (authorized)
             request setHeader Pair("token", token)
         request setFrom channel.localAddress

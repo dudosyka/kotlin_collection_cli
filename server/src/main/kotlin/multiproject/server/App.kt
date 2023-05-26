@@ -21,7 +21,6 @@ import multiproject.server.command.*
 import multiproject.server.command.system.SystemDumpCommand
 import multiproject.server.command.system.SystemLoadCommand
 import multiproject.server.command.user.AuthCommand
-import multiproject.server.command.user.GetByTokenCommand
 import multiproject.server.command.user.LongCommand
 import multiproject.server.command.user.SignupCommand
 import multiproject.server.database.DatabaseManager
@@ -39,7 +38,7 @@ import org.koin.java.KoinJavaComponent.inject
 
 class App {
     init {
-        val logger = Logger(LogLevel.ERROR)
+        val logger = Logger(LogLevel.DEBUG)
         val collection = FlatCollection(mutableListOf(), FlatBuilder())
         val module = module {
             single<Collection<Flat>>(named("collection")) {
@@ -92,10 +91,10 @@ class App {
                                 command = RemoveByIdCommand(this@addController)
                                 addMiddleware(BuildAuthorMiddleware)
                             }
-                            addRoute {
-                                name = "load"
-                                command = LoadCommand(this@addController)
-                            }
+//                            addRoute {
+//                                name = "load"
+//                                command = LoadCommand(this@addController)
+//                            }
                             addRoute {
                                 name = "execute_script"
                                 command = ExecuteScriptCommand(this@addController)
@@ -157,11 +156,11 @@ class App {
                                 command = SignupCommand(this@addController)
                                 needAuth = false
                             }
-                            addRoute {
-                                name = "get"
-                                command = GetByTokenCommand(this@addController)
-                                addMiddleware(AuthMiddleware)
-                            }
+//                            addRoute {
+//                                name = "get"
+//                                command = GetByTokenCommand(this@addController)
+//                                addMiddleware(AuthMiddleware)
+//                            }
                             addRoute {
                                 name = "help"
                                 command = HelpCommand(this@addController)
@@ -197,7 +196,15 @@ class App {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-fun main(): Unit = runBlocking {
+fun main(): Unit = runBlocking (
+    CoroutineExceptionHandler {
+        _, error -> run {
+            println("Caught here!")
+            val logger: Logger by inject(Logger::class.java, named("logger"))
+            logger(LogLevel.FATAL, "Fatal error!", Exception(error))
+        }
+    }
+) {
     val server: ServerUdpChannel by inject(ServerUdpChannel::class.java, named("server"))
     val collection: Collection<Flat> by inject(Collection::class.java, named("collection"))
     App()

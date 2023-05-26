@@ -6,7 +6,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.csv.Csv
 import multiproject.server.collection.item.Entity
-import multiproject.server.exceptions.FileDumpException
+import multiproject.server.exceptions.execution.FileDumpException
 import java.io.*
 
 /**

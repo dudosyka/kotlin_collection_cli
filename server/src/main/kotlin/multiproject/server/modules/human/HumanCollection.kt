@@ -1,8 +1,7 @@
 package multiproject.server.modules.human
 
-import kotlinx.coroutines.ObsoleteCoroutinesApi
-import kotlinx.coroutines.channels.ActorScope
 import multiproject.server.collection.Collection
+import multiproject.server.collection.item.Entity
 import java.time.ZonedDateTime
 
 /**
@@ -16,8 +15,7 @@ class HumanCollection(override var items: MutableList<Human> = mutableListOf(), 
         this.items.sortWith(comparator)
     }
 
-    @ObsoleteCoroutinesApi
-    override fun commandProcessor(command: CollectionCommand): ActorScope<CollectionCommand>.() -> Unit {
+    override fun countBy(command: CollectionCommand.CountByCommand): Int {
         TODO("Not yet implemented")
     }
 
@@ -25,8 +23,16 @@ class HumanCollection(override var items: MutableList<Human> = mutableListOf(), 
         return this.items.filter { it.id == (comparable as Int) }.size
     }
 
+    override fun countLessThanBy(command: CollectionCommand.CountLessThanByCommand): Int {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun countLessThanBy(comparable: Any): Int {
         return this.items.filter { it.id < (comparable as Int) }.size
+    }
+
+    override fun filterLessThanBy(command: CollectionCommand.FilterLessThanByCommand): String {
+        TODO("Not yet implemented")
     }
 
     override suspend fun filterLessThanBy(comparable: Any): String {
@@ -34,7 +40,12 @@ class HumanCollection(override var items: MutableList<Human> = mutableListOf(), 
         return this@HumanCollection.toString()
     }
 
-    override suspend fun addIfMax(item: Human): Boolean {
+    override fun addIfMax(command: CollectionCommand.AddIfMaxCommand): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun addIfMax(item: Entity): Boolean {
+        item as Human
         this.sortBy(NameComparator().reversed())
         if (this.items.size <= 0)
             return true

@@ -37,9 +37,11 @@ class UpdateCommand(controller: Controller) : AddCommand(controller) {
         if (sync.removedInstances.contains(id.toLong()))
             return Response(ResponseCode.ITEM_NOT_FOUND, "Item not found!")
 
-        val entity = this.entityBuilder.build(input.data)
-        val result = collection.update(id, entity)
+        collection.getItemById(id) ?: return Response(ResponseCode.ITEM_NOT_FOUND, "Item not found!")
 
+        input.data["id"] = id.toLong()
+        val entity = this.entityBuilder.build(input.data)
+        val result = collection.update(id, entity, input.request.getHeader("authorizedUserId").toString().toLong())
         return if (result)
             Response(ResponseCode.SUCCESS, "Item successfully updated.", commits = listOf(
                 CommitDto(

@@ -5,9 +5,8 @@ import multiproject.lib.dto.command.CommitDto
 import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.dto.response.ResponseDto
-import multiproject.lib.exceptions.NoAvailableServers
+import multiproject.lib.exceptions.gateway.ResolveError
 import multiproject.lib.request.Request
-import multiproject.lib.request.resolver.ResolveError
 import multiproject.lib.sd.GatewayBalancer
 import multiproject.lib.udp.UdpChannel
 import multiproject.lib.udp.UdpConfig
@@ -33,20 +32,41 @@ class GatewayUdpChannel: UdpChannel() {
                 request -> if (now - request.key.first >= UdpConfig.holdRequestTimeout) {
                     val req = request.value.second
                     try {
+                        println("We here")
                         if (request.value.second.getSyncType().sync) {
                             blockInput = false
                             runBlockedRequests()
                         }
-                        sendThrough(req) {}
+                        val sendAt = request.value.second.getHeader("sendAt")?.toString()?.toLong() ?: ZonedDateTime.now().toEpochSecond()
+                        pendingRequests.remove(request.key)
+                        if (ZonedDateTime.now().toEpochSecond() - sendAt <= UdpConfig.holdRequestTimeout * 3)
+                            sendThrough(req) {}
+                        else
+                            emit(request.value.second.getFrom(), req.apply {
+                                response = ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, "Failed")
+                            })
+                        request.value.first.pendingRequest--
                     } catch (e: ResolveError) {
-                        if (e.code == ResponseCode.CONNECTION_REFUSED) {
-                            req.apply {
-                                response = ResponseDto(e.code, result = "Server unavailable. Connection refused.")
+                        val from = req.getFrom()
+                        req.removeSystemHeaders()
+                        when (e.code) {
+                            ResponseCode.CONNECTION_REFUSED -> {
+                                req.apply {
+                                    response = ResponseDto(e.code, result = "Server unavailable. Connection refused.")
+                                }
                             }
-                            val from = req.getFrom()
-                            req.removeSystemHeaders()
-                            emit(from, req)
+                            ResponseCode.BAD_REQUEST -> {
+                                req.apply {
+                                    response = ResponseDto(e.code, result = "Validation error!")
+                                }
+                            }
+                            else -> {
+                                req.apply {
+                                    response = ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR)
+                                }
+                            }
                         }
+                        emit(from, req)
                     }
                     pendingRequests.remove(request.key)
                 }
@@ -85,7 +105,7 @@ class GatewayUdpChannel: UdpChannel() {
                 syncHelper.removedInstances.add(initiator.data.arguments[commandSyncType.blockByDataValue].toString().toLong())
         }
 
-        val server = GatewayBalancer.getServer(this) ?: throw NoAvailableServers()
+        val server = GatewayBalancer.getServer(this) ?: throw ResolveError(ResponseCode.CONNECTION_REFUSED)
         val serverAddress = server.address
 
         if (commandSyncType.sync) {
@@ -118,8 +138,12 @@ class GatewayUdpChannel: UdpChannel() {
         blockedRequests.clear()
     }
 
-    infix fun clearPending(request: Request) {
-        pendingRequests.remove(Pair(request.getHeader("id").toString().toLong(), request.getFrom()))
+    infix fun clearPending(request: Request): Boolean {
+        val key = Pair(request.getHeader("id").toString().toLong(), request.getFrom())
+        return if (pendingRequests.containsKey(key)) {
+            pendingRequests.remove(key)
+            true
+        } else false
     }
 
     infix fun isPendingClient(request: Request): Boolean {

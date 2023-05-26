@@ -1,11 +1,11 @@
 package multiproject.client.command
 
+import multiproject.client.exceptions.ValidationException
 import multiproject.client.io.IOData
 import multiproject.client.io.Reader
 import multiproject.client.io.Writer
 import multiproject.lib.dto.command.CommandArgumentDto
 import multiproject.lib.dto.command.Validator
-import multiproject.lib.exceptions.ValidationFieldException
 import multiproject.lib.utils.LogLevel
 import multiproject.lib.utils.Logger
 import org.koin.core.qualifier.named
@@ -41,7 +41,7 @@ class ObjectBuilder(private val fieldsMap: Map<String, CommandArgumentDto>) {
                     this.writer.writeLine(validator.describe())
                     this.getField(map, key, argumentDto)
                 } else
-                    throw ValidationFieldException(validator)
+                    throw ValidationException(validator)
             }
         }
     }

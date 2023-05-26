@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 import multiproject.server.collection.item.Entity
 import multiproject.server.database.DatabaseManager
 import multiproject.server.database.DatabasePredicate
-import multiproject.server.exceptions.ForbiddenException
+import multiproject.server.exceptions.execution.ForbiddenException
 import multiproject.server.modules.user.jwt.JwtBody
 import multiproject.server.modules.user.jwt.JwtUtil
 import org.koin.core.qualifier.named
@@ -44,7 +44,7 @@ class User(
             val user = getByLogin(login)
             if (user != null) {
                 if (!compareHash(password, user.password))
-                    throw ForbiddenException()
+                    throw ForbiddenException("Password incorrect!")
                 val curDate = LocalDateTime.now().toLocalDate()
                 return JwtUtil.sign(
                     JwtBody(
@@ -58,7 +58,7 @@ class User(
                     )
                 )
             } else
-                throw ForbiddenException()
+                throw ForbiddenException("User with login $login not found!")
         }
         fun checkToken(token: String): JwtBody {
             return JwtUtil.verify(token)

@@ -44,12 +44,18 @@ class RemoveByIdCommand(controller: Controller) : Command(controller) {
             )
         )
         val removedId = collection.removeById(id as Int, input.request.getHeader("authorizedUserId").toString().toLong())
-        return Response( ResponseCode.SUCCESS,"Item with id = $id successfully removed!", commits = listOf(
-            CommitDto(
-                id = removedId,
-                timestamp = ZonedDateTime.now().toEpochSecond(),
-                data = null
-            )
-        ))
+
+        return if (removedId.toInt() == -1)
+            Response(ResponseCode.ITEM_NOT_FOUND, "Item not found!")
+        else if (removedId.toInt() == 0)
+            Response(ResponseCode.FORBIDDEN, "Forbidden! You can't delete this item!")
+        else
+            Response(ResponseCode.SUCCESS,"Item with id = $id successfully removed!", commits = listOf(
+                CommitDto(
+                    id = removedId,
+                    data = null,
+                    timestamp = ZonedDateTime.now().toEpochSecond()
+                )
+            ))
     }
 }

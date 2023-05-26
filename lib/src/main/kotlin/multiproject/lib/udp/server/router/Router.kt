@@ -4,15 +4,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import multiproject.lib.dto.command.CommandDto
-import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.response.Response
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.dto.response.ResponseDto
-import multiproject.lib.exceptions.ExecuteException
-import multiproject.lib.exceptions.RouteNotFound
+import multiproject.lib.exceptions.InvalidSocketAddress
+import multiproject.lib.exceptions.MiddlewareException
+import multiproject.lib.exceptions.command.CommandExecutionException
+import multiproject.lib.exceptions.router.NotFoundException
+import multiproject.lib.exceptions.router.RouteExecutionException
 import multiproject.lib.request.Request
 import multiproject.lib.request.RequestToExecutableInterpreter
-import multiproject.lib.request.middleware.MiddlewareException
 import multiproject.lib.utils.LogLevel
 import multiproject.lib.utils.Logger
 
@@ -23,24 +24,24 @@ class Router(val logger: Logger) {
     fun addController(init: Controller.() -> Unit) {
         this.controllers.add(Controller().apply(init))
     }
-    private fun getRoute(path: PathDto): Pair<Controller, Route> {
+    private fun getRoute(request: Request): Pair<Controller, Route> {
         val controller: Controller = this.controllers.find {
-            it.name == path.controller
-        } ?: throw RouteNotFound(path)
+            it.name == request.path.controller
+        } ?: throw NotFoundException(request)
 
         val route: Route = controller.routes.find {
-            it.name == path.route
-        } ?: throw RouteNotFound(path)
+            it.name == request.path.route
+        } ?: throw NotFoundException(request)
 
         return Pair(controller, route)
     }
 
     fun getRoutes(controllerName: String): List<Route> {
-        val controller: Controller = this.controllers.find {
+        val controller: Controller? = this.controllers.find {
             it.name == controllerName
-        } ?: throw RouteNotFound(PathDto(controllerName, ""))
+        }
 
-        return controller.routes
+        return controller?.routes ?: listOf()
     }
     fun getCommandsInfo(): Map<String, List<CommandDto>> {
         return this.controllers.associate { controller ->
@@ -59,7 +60,7 @@ class Router(val logger: Logger) {
     }
 
     fun run(request: Request, onError: ResponseDto? = null): Deferred<Response> = scope.async {
-        val path = getRoute(request.path)
+        val path = getRoute(request)
         return@async try {
             path.first.middlewares.forEach {
                 request.applyMiddleware(it())
@@ -73,15 +74,21 @@ class Router(val logger: Logger) {
                 if (dto == null)
                     dto = onError
             }
-        } catch (e: Exception) {
-            logger(LogLevel.FATAL, "Fatal error!", error = e)
-            Response(ResponseCode.INTERNAL_SERVER_ERROR, "$e")
+        } catch (e: CommandExecutionException) {
+            logger(LogLevel.FATAL, "Command execution exception!", error = e)
+            Response(e.code, e.message)
+        } catch (e: RouteExecutionException) {
+            logger(LogLevel.INFO, "Route execution exception!", error = e)
+            Response(e.code, e.message)
         } catch (e: MiddlewareException) {
             logger(LogLevel.INFO, "Middleware exception!", error = e)
-            Response(ResponseCode.BAD_REQUEST, e.message)
-        } catch (e: ExecuteException) {
-            logger(LogLevel.INFO, "Execute exception!", error = e)
             Response(e.code, e.message)
+        } catch (e: InvalidSocketAddress) {
+            logger(LogLevel.ERROR, "Error socket address parsing!")
+            Response(ResponseCode.BAD_REQUEST, "Address failed!")
+        } catch (e: Exception) {
+            logger(LogLevel.ERROR, "Fatal error!", error = e)
+            Response(ResponseCode.INTERNAL_SERVER_ERROR, "$e")
         }
     }
 }

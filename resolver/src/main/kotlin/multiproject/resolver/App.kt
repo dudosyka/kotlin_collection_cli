@@ -1,5 +1,6 @@
 package multiproject.resolver
 
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.runBlocking
 import multiproject.lib.udp.UdpConfig
 import multiproject.lib.udp.gateway.GatewayUdpChannel
@@ -14,12 +15,12 @@ import org.koin.java.KoinJavaComponent.inject
 import java.net.InetSocketAddress
 
 class App {
-    val logger = Logger(LogLevel.ERROR)
     init {
+        val logger = Logger(LogLevel.INFO)
         val module = module {
             single<GatewayUdpChannel>(named("server")) {
                 runGateway {
-                    logger = this@App.logger
+                    this.logger = logger
                     requestResolver = GatewayRequestResolver()
                     receiveCallback = OnReceive { address, request ->
                         run {
@@ -42,6 +43,9 @@ class App {
                     )
                 }
             }
+            single<Logger>(named("logger")) {
+                logger
+            }
         }
         startKoin {
             modules(
@@ -51,13 +55,15 @@ class App {
     }
 }
 
-fun main() = runBlocking {
-    val app = App()
-    try {
-        val server: GatewayUdpChannel by inject(GatewayUdpChannel::class.java, named("server"))
-        server.run()
-    } catch (e: Exception) {
-        app.logger(LogLevel.FATAL, "Fatal error!", e)
-        throw e
+fun main() = runBlocking(
+    CoroutineExceptionHandler {
+        _, error -> run {
+            val logger: Logger by inject(Logger::class.java, named("logger"))
+            logger(LogLevel.FATAL, "Fatal error!", Exception(error))
+        }
     }
+) {
+    App()
+    val server: GatewayUdpChannel by inject(GatewayUdpChannel::class.java, named("server"))
+    server.run()
 }

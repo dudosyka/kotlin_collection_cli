@@ -43,9 +43,10 @@ class CommandResolver {
 
         fun updateCommandList(commandList: Map<String, List<CommandDto>>) {
             logger(LogLevel.DEBUG, "$commandList")
-            if (commandList.isNotEmpty())
+            if (commandList.isNotEmpty()) {
                 commands = commandList.map { controller -> controller.key to controller.value.filter { !it.hideFromClient }.filter { if (client.authorized) true else !it.needAuth } }.toMap()
-            writer.writeLine("Commands list updated from server!")
+                writer.writeLine("Commands list updated from server!")
+            }
             logger(LogLevel.DEBUG, "$commands")
         }
 

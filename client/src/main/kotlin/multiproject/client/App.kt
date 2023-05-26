@@ -5,7 +5,6 @@ import multiproject.client.command.CommandResolver
 import multiproject.client.console.ConsoleReader
 import multiproject.client.console.ConsoleWriter
 import multiproject.client.exceptions.CommandNotFound
-import multiproject.client.exceptions.RecursiveScriptException
 import multiproject.client.file.FileReader
 import multiproject.client.io.IOData
 import multiproject.client.io.Reader
@@ -13,8 +12,7 @@ import multiproject.client.io.Writer
 import multiproject.lib.dto.ConnectedServer
 import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.exceptions.InvalidArgumentException
-import multiproject.lib.exceptions.ValidationFieldException
+import multiproject.lib.exceptions.client.ClientExecutionException
 import multiproject.lib.request.Request
 import multiproject.lib.udp.UdpConfig
 import multiproject.lib.udp.client.ClientUdpChannel
@@ -86,6 +84,7 @@ fun main() = runBlocking {
     writer.writeLine("^_^ Welcome to the Collection CLI ^_^")
 
     val client: ClientUdpChannel by inject(ClientUdpChannel::class.java, named("client"))
+    val logger: Logger by inject(Logger::class.java, named("logger"))
 
     client.run()
 
@@ -121,19 +120,13 @@ fun main() = runBlocking {
                     writer.writeLine(result.body)
                 }
             }
-
-        } catch (e: InvalidArgumentException) {
-            writer.writeLine(e.validationRulesDescribe)
-        } catch (e: ValidationFieldException) {
+        } catch(e: ClientExecutionException) {
+            if (e is CommandNotFound) {
+                CommandResolver.loadCommands()
+            }
             writer.writeLine(e.message)
-        } catch (e: RecursiveScriptException) {
-            writer.writeLine("Error recursive script!")
-        } catch (e: CommandNotFound) {
-            writer.writeLine("Command not found. (Try to synchronize...)")
-            CommandResolver.loadCommands()
         } catch (e: Exception) {
-            writer.writeLine(e.stackTraceToString())
-            writer.writeLine(e.toString())
+            logger(LogLevel.ERROR, error = e)
         }
     }
 }

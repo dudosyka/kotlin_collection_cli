@@ -5,18 +5,19 @@ import multiproject.lib.dto.request.PathDto
 import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.dto.response.ResponseCode
 import multiproject.lib.dto.response.ResponseDto
-import multiproject.lib.exceptions.BadRequestException
+import multiproject.lib.exceptions.gateway.ResolveError
 import multiproject.lib.request.Request
 import multiproject.lib.request.resolver.RequestResolver
-import multiproject.lib.request.resolver.ResolveError
 import multiproject.lib.udp.gateway.GatewayUdpChannel
 import multiproject.lib.utils.LogLevel
+import multiproject.lib.utils.Logger
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.inject
 import java.time.ZonedDateTime
 
 class GatewayRequestResolver: RequestResolver() {
     private val gateway: GatewayUdpChannel by inject(GatewayUdpChannel::class.java, named("server"))
+    private val logger: Logger by inject(Logger::class.java, named("logger"))
     override fun resolveFirst(request: Request) {
         if (request directionIs RequestDirection.FROM_CLIENT)
             if (gateway isPendingClient request) throw ResolveError(ResponseCode.CONNECTION_REFUSED)
@@ -25,17 +26,21 @@ class GatewayRequestResolver: RequestResolver() {
                     path = PathDto("system", "_load")
                 }
             }
-        else if (request directionIs RequestDirection.FROM_SERVER)
+        if (request directionIs RequestDirection.FROM_SERVER)
             gateway.addServer(ConnectedServer(0, ZonedDateTime.now().toEpochSecond(), request.getFrom()))
         else
-            throw BadRequestException("Unknown request")
+            logger(LogLevel.WARN, "Unknown request have come $request")
     }
 
     override fun resolve(request: Request) {
         if (request directionIs RequestDirection.FROM_CLIENT)
             gateway.sendThrough(request) {}
         else if (request directionIs RequestDirection.FROM_SERVER) {
-            gateway clearPending request
+            println("We here too")
+            if (!(gateway clearPending request)) {
+                println("And here")
+                return
+            }
             gateway.servers.find { it.address == request.getSender() }?.apply {
                 temporaryUnavailable = Pair(0, false)
                 lastRequest = ZonedDateTime.now().toEpochSecond()
@@ -57,7 +62,7 @@ class GatewayRequestResolver: RequestResolver() {
             gateway.emit(from, request)
         }
         else
-            throw BadRequestException("Unknown request")
+            logger(LogLevel.WARN, "Unknown request have come $request")
     }
 
     override fun resolveError(request: Request, e: ResolveError) {

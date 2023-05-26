@@ -8,7 +8,7 @@ import multiproject.lib.udp.server.ServerUdpChannel
 import multiproject.lib.udp.server.router.Command
 import multiproject.lib.udp.server.router.Controller
 import multiproject.server.database.DatabaseManager
-import multiproject.server.exceptions.NotUniqueException
+import multiproject.server.exceptions.execution.NotUniqueException
 import multiproject.server.modules.user.User
 import multiproject.server.modules.user.UserBuilder
 import org.koin.core.qualifier.named
@@ -18,6 +18,8 @@ class SignupCommand(controller: Controller) : Command(controller) {
     val server: ServerUdpChannel by inject(ServerUdpChannel::class.java, named("server"))
     val dbManager: DatabaseManager by inject(DatabaseManager::class.java, named("dbManager"))
     override val fields: Map<String, CommandArgumentDto> = UserBuilder().fields
+    override val description: String
+        get() = "SignUp command"
     /**
      * Execute
      *

@@ -1,14 +1,13 @@
 package multiproject.client.exceptions
 
-import multiproject.lib.dto.response.ResponseCode
-import multiproject.lib.exceptions.ExecuteException
+import multiproject.lib.exceptions.client.ClientExecutionException
 
 /**
  * Recursive script exception
  *
  * @constructor Create empty Recursive script exception
  */
-class RecursiveScriptException: ExecuteException(ResponseCode.VALIDATION_ERROR) {
+class RecursiveScriptException: ClientExecutionException() {
     override val message: String
-        get() = "Recursive script cached!"
+        get() = "Error! Recursive script cached!"
 }

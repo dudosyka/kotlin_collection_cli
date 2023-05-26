@@ -8,6 +8,8 @@ import multiproject.lib.udp.server.router.Command
 import multiproject.lib.udp.server.router.Controller
 
 class LongCommand(controller: Controller) : Command(controller) {
+    override val description: String
+        get() = "Debug long-time command"
     /**
      * Execute
      *

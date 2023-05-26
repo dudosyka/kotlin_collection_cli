@@ -15,6 +15,8 @@ import org.koin.java.KoinJavaComponent
 class AuthCommand(controller: Controller) : Command(controller) {
     val server: ServerUdpChannel by KoinJavaComponent.inject(ServerUdpChannel::class.java, named("server"))
     override val fields: Map<String, CommandArgumentDto> = UserBuilder().fields
+    override val description: String
+        get() = "Authorization command"
     /**
      * Execute
      *
