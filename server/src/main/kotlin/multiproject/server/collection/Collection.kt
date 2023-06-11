@@ -1,6 +1,9 @@
 package multiproject.server.collection
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.actor
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -420,7 +423,6 @@ abstract class Collection<T : Entity> {
     suspend fun getInfo(): CollectionInfo {
         val command = CollectionCommand.Info()
         collectionActor.send(command)
-        delay(10_000)
         return command.response.await()
     }
 

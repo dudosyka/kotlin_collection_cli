@@ -34,7 +34,6 @@ class GatewayUdpChannel: UdpChannel() {
                     logger(LogLevel.INFO, "Available servers: $servers")
                     val req = request.value.second
                     try {
-                        println("We here")
                         if (request.value.second.getSyncType().sync) {
                             blockInput = false
                             runBlockedRequests()
@@ -96,6 +95,7 @@ class GatewayUdpChannel: UdpChannel() {
             this setHeader Pair("id", now)
             this setHeader Pair("sync", syncHelper)
         }
+
         if (blockInput) {
             blockedRequests.add(initiator)
             return
@@ -122,7 +122,8 @@ class GatewayUdpChannel: UdpChannel() {
                     servers = this@GatewayUdpChannel.servers.filter { it.address != serverAddress }.map { it.address }.toMutableList()
                 })
             }
-            commits = mutableListOf()
+            println("Commits [${commits.size}] $commits")
+            this.commits = mutableListOf()
         }
 
         try {
@@ -140,7 +141,6 @@ class GatewayUdpChannel: UdpChannel() {
         blockedRequests.forEach {
             sendThrough(it) {}
         }
-        blockedRequests.clear()
     }
 
     infix fun clearPending(request: Request): Boolean {

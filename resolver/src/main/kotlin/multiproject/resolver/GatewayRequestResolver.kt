@@ -36,9 +36,7 @@ class GatewayRequestResolver: RequestResolver() {
         if (request directionIs RequestDirection.FROM_CLIENT)
             gateway.sendThrough(request) {}
         else if (request directionIs RequestDirection.FROM_SERVER) {
-            println("We here too")
             if (!(gateway clearPending request)) {
-                println("And here")
                 return
             }
             gateway.servers.find { it.address == request.getSender() }?.apply {

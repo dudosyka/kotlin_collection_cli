@@ -228,6 +228,9 @@ fun main(): Unit = runBlocking (
                     val syncHelper = request.getSyncHelper()
                     if (syncType.sync) {
                         collection.pull(request.getSyncHelper().commits)
+                        request setSyncHelper (request.getSyncHelper().apply {
+                            this.commits = mutableListOf()
+                        })
                         syncHelper.servers.forEach {
                             server.emit(it!!, Request(PathDto("_system", "sync")))
                         }
