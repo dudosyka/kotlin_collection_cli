@@ -30,6 +30,8 @@ class GatewayUdpChannel: UdpChannel() {
             logger(LogLevel.DEBUG, "Available servers: $servers")
             pendingRequests.forEach {
                 request -> if (now - request.key.first >= UdpConfig.holdRequestTimeout) {
+                    logger(LogLevel.INFO,"Pending requests: $pendingRequests")
+                    logger(LogLevel.INFO, "Available servers: $servers")
                     val req = request.value.second
                     try {
                         println("We here")
@@ -46,6 +48,9 @@ class GatewayUdpChannel: UdpChannel() {
                                 response = ResponseDto(ResponseCode.INTERNAL_SERVER_ERROR, "Failed")
                             })
                         request.value.first.pendingRequest--
+                        if (request.value.first.pendingRequest == 0) {
+                            request.value.first.temporaryUnavailable = Pair(ZonedDateTime.now().toEpochSecond(), true)
+                        }
                     } catch (e: ResolveError) {
                         val from = req.getFrom()
                         req.removeSystemHeaders()
