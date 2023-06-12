@@ -1,5 +1,6 @@
 package multiproject.lib.udp
 
+import kotlinx.coroutines.channels.Channel
 import multiproject.lib.dto.ConnectedServer
 import multiproject.lib.request.Request
 import multiproject.lib.request.resolver.RequestResolver
@@ -29,9 +30,10 @@ abstract class UdpChannel {
     var disconnectStrategy: DisconnectStrategy = CloseOnDisconnectStrategy()
     var wasDisconnected: Boolean = false
     private var connections: MutableList<SocketAddress> = mutableListOf()
-    var servers: MutableList<ConnectedServer> = mutableListOf()
+    protected var servers: MutableList<ConnectedServer> = mutableListOf()
     lateinit var requestResolver: RequestResolver
     var logger: Logger = Logger()
+    var requestsChannel: Channel<Pair<SocketAddress, Request>> = Channel(capacity = Channel.BUFFERED)
 
     fun getChannelAddress(): SocketAddress = channel.localAddress
     fun bindOn(address: InetSocketAddress?) {
@@ -101,4 +103,6 @@ abstract class UdpChannel {
     open suspend fun run() {
         this.receive()
     }
+
+    protected open fun removeServer(address: InetSocketAddress) {}
 }

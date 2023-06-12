@@ -16,7 +16,6 @@ import java.net.SocketAddress
 
 class ServerUdpChannel: UdpChannel() {
     lateinit var router: Router
-    var requestsChannel: Channel<Pair<SocketAddress, Request>> = Channel(capacity = Channel.BUFFERED)
     var responseChannel: Channel<ResponseChannelItem> = Channel(capacity = Channel.BUFFERED)
 
     data class ResponseChannelItem (
