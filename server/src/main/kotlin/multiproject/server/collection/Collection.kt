@@ -4,6 +4,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -104,7 +105,7 @@ abstract class Collection<T : Entity> {
     }
 
     @OptIn(ObsoleteCoroutinesApi::class)
-    @Transient protected val collectionActor = CoroutineScope(Job()).actor<CollectionCommand> {
+    @Transient protected val collectionActor = CoroutineScope(Job()).actor<CollectionCommand>(capacity = Channel.BUFFERED) {
         for (command in this) {
             when (command) {
                 is CollectionCommand.AddItem -> run {

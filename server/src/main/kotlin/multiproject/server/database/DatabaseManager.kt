@@ -4,6 +4,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import multiproject.lib.dto.command.CommandArgumentDto
 import multiproject.lib.dto.command.FieldType
@@ -28,7 +29,7 @@ class DatabaseManager {
         class Insert(val items: MutableList<Entity>): DatabaseCommand()
     }
     @OptIn(ObsoleteCoroutinesApi::class)
-    private val actor = scope.actor<DatabaseCommand> {
+    private val actor = scope.actor<DatabaseCommand>(capacity = Channel.BUFFERED) {
         for (command in this) {
             when (command) {
                 is DatabaseCommand.InitModel -> run {

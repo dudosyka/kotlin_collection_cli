@@ -60,6 +60,7 @@ class App {
     }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 fun main(): Unit = runBlocking(
     CoroutineExceptionHandler {
         _, error -> run {
@@ -78,12 +79,18 @@ fun main(): Unit = runBlocking(
         //Manage requests which come from clients
         launch {
             while (true) {
-                val syncState = server.syncState()
-                //If we sync now we stop processing requests
-                if (syncState.blocked) {
-                    continue
-                }
-                for (msg in server.clientRequestsChannel) {
+                if (!server.clientRequestsChannel.isEmpty && !server.clientRequestsChannel.isClosedForReceive) {
+                    val syncState = server.syncState()
+//                    println("Check stuck! ${syncState.blocked}")
+                    //If we sync now we stop processing requests
+                    if (syncState.blocked) {
+                        continue
+                    }
+
+                    val msg = server.clientRequestsChannel.receive()
+
+                    println(msg)
+
                     val request = msg.second
                     server.sendThrough(request) {}
                 }
@@ -103,8 +110,14 @@ fun main(): Unit = runBlocking(
 
                     val syncHelper = request.getSyncHelper()
 
-                    if (syncState.blocked && request.getFrom() == syncState.initiator?.getFrom())
+                    println(syncState)
+                    println(request.getFrom())
+                    println(syncState.initiator?.getFrom())
+
+                    if (syncState.blocked && request.getFrom() == syncState.initiator?.getFrom()) {
+                        println("Sync stopped!")
                         server.stopSync()
+                    }
 
                     if (syncHelper.commits.size > 0)
                         server.addCommits(syncHelper.commits)

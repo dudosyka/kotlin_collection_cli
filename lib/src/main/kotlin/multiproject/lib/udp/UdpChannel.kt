@@ -46,8 +46,8 @@ abstract class UdpChannel {
         logger(LogLevel.INFO, "Socket bind on $address")
         channel.bind(address)
     }
-    fun addServer(address: ConnectedServer) {
-        this.servers.add(address)
+    open fun addServer(address: ConnectedServer) {
+        servers.add(address)
     }
     private fun processBuffer(buffer: ByteBuffer): String {
         buffer.flip()

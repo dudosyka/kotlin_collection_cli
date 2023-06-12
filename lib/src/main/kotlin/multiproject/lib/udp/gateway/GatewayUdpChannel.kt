@@ -48,14 +48,24 @@ class GatewayUdpChannel: UdpChannel() {
         class ClearCommits: GatewayCommand()
         class CommitsGetAndClear(val response: CompletableDeferred<MutableList<CommitDto>> = CompletableDeferred()): GatewayCommand()
         class GetServers(val response: CompletableDeferred<MutableList<ConnectedServer>> = CompletableDeferred()): GatewayCommand()
+        class AddServer(val address: ConnectedServer): GatewayCommand()
         class FilterServers: GatewayCommand()
         class UnblockServers(val address: InetSocketAddress): GatewayCommand()
         class SendThrough(val initiator: Request, val updateWith: Request.() -> Unit): GatewayCommand()
     }
 
     @OptIn(ObsoleteCoroutinesApi::class)
-    private val gatewayActor = gatewayScope.actor<GatewayCommand> {
+    private val gatewayActor = gatewayScope.actor<GatewayCommand>(capacity = Channel.BUFFERED) {
         for (command in this) {
+            if (!(
+                    command is GatewayCommand.GetPendingRequests ||
+                    command is GatewayCommand.GetServers ||
+                    command is GatewayCommand.FilterServers ||
+                    command is GatewayCommand.GetSyncState
+                )
+                )
+                println("Command coming: ${command.javaClass.simpleName}")
+
             when (command) {
                 is GatewayCommand.GetCommits -> run {
                     command.response.complete(commits)
@@ -65,6 +75,7 @@ class GatewayUdpChannel: UdpChannel() {
                 }
                 is GatewayCommand.SetSyncState -> run {
                     syncState = command.syncState
+                    println("new sync state = $syncState")
                 }
                 is GatewayCommand.GetPendingRequests -> run {
                     command.response.complete(pendingRequests)
@@ -97,8 +108,8 @@ class GatewayUdpChannel: UdpChannel() {
                     commits = mutableListOf()
                 }
                 is GatewayCommand.CommitsGetAndClear -> run {
-                    command.response.complete(commits)
                     commits.clear()
+                    command.response.complete(commits)
                 }
                 is GatewayCommand.GetServers -> run {
                     command.response.complete(servers)
@@ -131,8 +142,18 @@ class GatewayUdpChannel: UdpChannel() {
                         pendingRequest--
                     }
                 }
+                is GatewayCommand.AddServer -> run {
+                    servers.add(command.address)
+                }
             }
+            if (!(command is GatewayCommand.GetPendingRequests || command is GatewayCommand.GetServers || command is GatewayCommand.FilterServers ||
+                        command is GatewayCommand.GetSyncState))
+                println("Command ended: ${command.javaClass.simpleName}")
         }
+    }
+
+    override fun addServer(address: ConnectedServer) {
+        gatewayActor.trySend(GatewayCommand.AddServer(address))
     }
 
     private fun sendThrough(initiator: Request) {
@@ -211,7 +232,8 @@ class GatewayUdpChannel: UdpChannel() {
     }
 
     fun stopSync() {
-        gatewayActor.trySend(GatewayCommand.SetSyncState(SyncState(false)))
+        val res = gatewayActor.trySend(GatewayCommand.SetSyncState(SyncState(false)))
+        println("Sync stop res: $res")
     }
 
     suspend fun getCommits(): MutableList<CommitDto> {
@@ -244,8 +266,8 @@ class GatewayUdpChannel: UdpChannel() {
                 gatewayActor.send(getServersCommand)
                 val servers = getServersCommand.response.await()
 
-                logger(LogLevel.DEBUG,"Pending requests: $pendingRequests")
-                logger(LogLevel.DEBUG, "Available servers: $servers")
+//                logger(LogLevel.DEBUG,"Pending requests: $pendingRequests")
+//                logger(LogLevel.DEBUG, "Available servers: $servers")
 
                 pendingRequests.forEach {
                         request -> if (now - request.key.first >= UdpConfig.holdRequestTimeout) {
@@ -296,7 +318,7 @@ class GatewayUdpChannel: UdpChannel() {
                 }
                 }
                 gatewayActor.send(GatewayCommand.FilterServers())
-                delay(1000L)
+                delay(5000L)
             } while (true)
         }
         coroutineScope {
