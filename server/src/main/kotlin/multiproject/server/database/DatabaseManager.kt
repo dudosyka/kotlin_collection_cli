@@ -24,9 +24,10 @@ class DatabaseManager {
         class InitModel(val entityBuilder: EntityBuilder<Entity>): DatabaseCommand()
         class GetNewId(val tableName: String, val response: CompletableDeferred<Int> = CompletableDeferred()): DatabaseCommand()
         class FindOne(val entityBuilder: EntityBuilder<Entity>, val predicates: Map<String, DatabasePredicate> = mapOf(), val response: CompletableDeferred<Entity?> = CompletableDeferred()): DatabaseCommand()
-        class ReplaceAll(val items: MutableList<Entity>): DatabaseCommand()
+        class ReplaceAll(val items: MutableList<Entity>, val response: CompletableDeferred<Boolean> = CompletableDeferred()): DatabaseCommand()
         class FindAll(val entityBuilder: EntityBuilder<Entity>, val predicates: Map<String, DatabasePredicate> = mapOf(), val response: CompletableDeferred<MutableList<Entity>> = CompletableDeferred()): DatabaseCommand()
         class Insert(val items: MutableList<Entity>): DatabaseCommand()
+        class ReplaceThis(val builder: EntityBuilder<Entity>, val removedItems: MutableList<Int>, val updatedItems: MutableList<Entity>, val response: CompletableDeferred<MutableList<Entity>> = CompletableDeferred()): DatabaseCommand()
     }
     @OptIn(ObsoleteCoroutinesApi::class)
     private val actor = scope.actor<DatabaseCommand>(capacity = Channel.BUFFERED) {
@@ -49,8 +50,10 @@ class DatabaseManager {
                     command.response.complete(findAll(command.entityBuilder, command.predicates).takeIf { it.size > 0 }?.first())
                 }
                 is DatabaseCommand.ReplaceAll -> run {
-                    if (command.items.size == 0)
+                    if (command.items.size == 0) {
+                        command.response.complete(true)
                         return@run
+                    }
                     val item = command.items.first()
                     val query = mutableListOf<String>()
                     query.add("truncate table ${item.tableName} cascade")
@@ -63,9 +66,20 @@ class DatabaseManager {
                             executeUpdate(it) {}
                         }
                         insertRows(command.items)
+                        command.response.complete(true)
                     } catch (e: Exception) {
                         log("$e ${e.stackTraceToString()}", LogLevel.FATAL)
+                        command.response.complete(false)
                     }
+                }
+                is DatabaseCommand.ReplaceThis -> run {
+                    if (command.updatedItems.size == 0 && command.removedItems.size == 0) {
+                        command.response.complete(mutableListOf())
+                        return@run
+                    }
+
+                    command.response.complete(replaceOnly(command.builder, command.removedItems, command.updatedItems))
+
                 }
                 is DatabaseCommand.FindAll -> run {
                     command.response.complete(findAll(command.entityBuilder, command.predicates))
@@ -77,10 +91,10 @@ class DatabaseManager {
         }
     }
     init {
-        val connectionUrl = "jdbc:postgresql://localhost:5432/postgres"
+        val connectionUrl = "jdbc:postgresql://localhost:8090/postgres"
         logger(LogLevel.INFO, "SQL. Start connection on $connectionUrl")
         try {
-            connection = DriverManager.getConnection(connectionUrl)
+            connection = DriverManager.getConnection(connectionUrl, "postgres", "")
         } catch (e: SQLException) {
             log( "Error during connection: ${e.message}")
         }
@@ -90,12 +104,18 @@ class DatabaseManager {
         logger(logLevel, "SQL. $message")
     }
     private fun execute(sql: String, data: PreparedStatement.() -> Unit): ResultSet {
-        val statement = connection.prepareStatement(sql).apply(data)
+        val statement = connection.prepareStatement(sql)
+        statement.apply(data)
         log("executed: $sql")
-        return statement.executeQuery()
+        return try {
+            statement.executeQuery()
+        } catch (e: Exception) {
+            statement.executeQuery()
+        }
     }
     private fun executeUpdate(sql: String, data: PreparedStatement.() -> Unit): Int {
-        val statement = connection.prepareStatement(sql).apply(data)
+        val statement = connection.prepareStatement(sql)
+        statement.apply(data)
         log("executed: $sql")
         return try {
             statement.executeUpdate()
@@ -177,8 +197,12 @@ class DatabaseManager {
             if (it.value.nested != null && it.value.show) {
                 val nestedValues = row[it.key]!! as MutableMap<String, Any?>
                 val nestedInsert = inserts[it.value.nestedTable!!]!!
-                nestedInsert.currId++
-                nestedValues[it.value.nestedJoinOn!!.second] = nestedInsert.currId
+                if (nestedValues[it.value.nestedJoinOn!!.second] != null) {
+                    nestedInsert.currId = nestedValues[it.value.nestedJoinOn!!.second].toString().toInt()
+                } else {
+                    nestedValues[it.value.nestedJoinOn!!.second] = insert.currId
+                    nestedInsert.currId = insert.currId
+                }
                 statement.setInt(insert.index, nestedInsert.currId)
                 entityToRow(
                     it.value.nested!!,
@@ -219,7 +243,11 @@ class DatabaseManager {
             inserts[it.tableName]!!.currId++
             val data = it.pureData.toMutableMap()
             data.apply {
-                this["id"] = inserts[it.tableName]!!.currId
+                if (this["id"] == null) {
+                    this["id"] = inserts[it.tableName]!!.currId
+                } else {
+                    inserts[it.tableName]!!.currId = this["id"].toString().toInt()
+                }
             }
             entityToRow(it.fieldsSchema, data, it.tableName, inserts)
         }
@@ -266,8 +294,23 @@ class DatabaseManager {
         result.next()
         return result.getInt(1)
     }
-
-
+    private fun replaceOnly(entityBuilder: EntityBuilder<Entity>, removedItems: MutableList<Int>, updatedItems: MutableList<Entity>): MutableList<Entity> {
+        val ids = (updatedItems.map { it.id }).toMutableList()
+        ids.addAll(removedItems)
+        val placeholder = ids.joinToString(",") { "?" }
+        executeUpdate("delete from ${entityBuilder.tableName} where id in ($placeholder)") {
+            ids.forEachIndexed {index, value -> setInt(index + 1, value)}
+        }
+        entityBuilder.fields.forEach {
+            if (it.value.nested != null && it.value.show) {
+                executeUpdate("delete from ${it.value.nestedTable} where id in ($placeholder)") {
+                    ids.forEachIndexed {index, value -> setInt(index + 1, value)}
+                }
+            }
+        }
+        insertRows(updatedItems)
+        return findAll(entityBuilder)
+    }
     fun initModel(entityBuilder: EntityBuilder<Entity>) {
         val command = DatabaseCommand.InitModel(entityBuilder)
         actor.trySend(command)
@@ -282,9 +325,15 @@ class DatabaseManager {
         actor.send(command)
         return command.response.await()
     }
-    fun replaceAll(items: MutableList<Entity>) {
+    suspend fun replaceAll(items: MutableList<Entity>): Boolean {
         val command = DatabaseCommand.ReplaceAll(items)
         actor.trySend(command)
+        return command.response.await()
+    }
+    suspend fun replace(entityBuilder: EntityBuilder<Entity>, removedItems: MutableList<Int>, updatedItems: MutableList<Entity>): MutableList<Entity> {
+        val command = DatabaseCommand.ReplaceThis(entityBuilder, removedItems, updatedItems)
+        actor.send(command)
+        return command.response.await()
     }
     suspend fun getAll(entityBuilder: EntityBuilder<Entity>, predicates: Map<String, DatabasePredicate> = mapOf()): MutableList<Entity> {
         val command = DatabaseCommand.FindAll(entityBuilder, predicates)

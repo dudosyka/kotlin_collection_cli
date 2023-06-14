@@ -50,13 +50,11 @@ class FlatCollection(override var items: MutableList<Flat>, builder: FlatBuilder
                 val checkFurnish = Furnish.valueOf(comparable.toString()).toString()
                 val currFurnishIndex = furnishValues.indexOf(currFurnish)
                 val checkFurnishIndex = furnishValues.indexOf(checkFurnish)
-                println("Compare $currFurnish $checkFurnish, $checkFurnishIndex >= $currFurnishIndex")
                 checkFurnishIndex >= currFurnishIndex
             } catch (e: IllegalArgumentException) {
                 false
             }
         }.toMutableList()
-        println("Result ${items.size} size ${stringifyItems(items)}")
         lastAccessTimestamp = time
         command.response.complete(stringifyItems(items))
         return stringifyItems(items)

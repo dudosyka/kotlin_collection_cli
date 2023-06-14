@@ -38,14 +38,19 @@ class FileDumpManager<T : Entity> (private val filePath: String, private val ser
         }
     }
 
-    override suspend fun dump(items: MutableList<T>) {
-        try {
+    override suspend fun dumpOnly(removedItems: MutableList<Int>, items: MutableList<T>): MutableList<T> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun dump(items: MutableList<T>): Boolean {
+        return try {
             val fileWriter = FileWriter(filePath)
             val csv = Csv { hasHeaderRecord = true; ignoreUnknownColumns = true }
             val encoded = csv.encodeToString(ListSerializer(serializer), items.toList())
             fileWriter.use {
                 out -> out.write(encoded)
             }
+            true
         } catch (e: FileNotFoundException) {
             throw FileDumpException(e, this.filePath, "Error! ${e.message}")
         }

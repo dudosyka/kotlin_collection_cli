@@ -17,7 +17,7 @@ import java.net.InetSocketAddress
 
 class App {
     init {
-        val logger = Logger(LogLevel.DEBUG)
+        val logger = Logger(LogLevel.FATAL)
         val module = module {
             single<GatewayUdpChannel>(named("server")) {
                 runGateway {
@@ -89,8 +89,6 @@ fun main(): Unit = runBlocking(
 
                     val msg = server.clientRequestsChannel.receive()
 
-                    println(msg)
-
                     val request = msg.second
                     server.sendThrough(request) {}
                 }
@@ -110,12 +108,7 @@ fun main(): Unit = runBlocking(
 
                     val syncHelper = request.getSyncHelper()
 
-                    println(syncState)
-                    println(request.getFrom())
-                    println(syncState.initiator?.getFrom())
-
                     if (syncState.blocked && request.getFrom() == syncState.initiator?.getFrom()) {
-                        println("Sync stopped!")
                         server.stopSync()
                     }
 
@@ -124,7 +117,7 @@ fun main(): Unit = runBlocking(
 
                     val commits = server.getCommits()
 
-                    server.logger(LogLevel.INFO, "Unpushed changes $commits")
+                    server.logger(LogLevel.INFO, "Unpushed changes ${commits.size}")
                     val from = request.getFrom()
                     request.removeSystemHeaders()
                     server.emit(from, request)
@@ -149,8 +142,6 @@ fun main(): Unit = runBlocking(
                 }
             }
         }
-
-        println("Now we know that our coroutines works!")
 
     }
 }

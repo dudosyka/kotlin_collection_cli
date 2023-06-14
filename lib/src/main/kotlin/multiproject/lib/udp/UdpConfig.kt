@@ -7,11 +7,11 @@ object UdpConfig {
     const val pendingRequestCheckTimeout: Long = 5 * 1000 //in ms
 
     //Time after sending the request when we will try to send it to another server
-    const val holdRequestTimeout: Long = 30 //in seconds
+    const val holdRequestTimeout: Long = 120 //in seconds
 
     //Time after last response from server when we will mark it as unavailable
-    const val unavailableTimeout: Long = 30 //in seconds
+    const val unavailableTimeout: Long = 120 //in seconds
 
     //Time that server have after being marked as temporary unavailable to emit something
-    const val removeAfterUnavailableTimeout: Long = 30 //in seconds
+    const val removeAfterUnavailableTimeout: Long = 120 //in seconds
 }

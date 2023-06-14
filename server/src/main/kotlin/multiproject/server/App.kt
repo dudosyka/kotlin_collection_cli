@@ -38,7 +38,7 @@ import org.koin.java.KoinJavaComponent.inject
 
 class App {
     init {
-        val logger = Logger(LogLevel.INFO)
+        val logger = Logger(LogLevel.FATAL)
         val collection = FlatCollection(mutableListOf(), FlatBuilder())
         val module = module {
             single<Collection<Flat>>(named("collection")) {
@@ -227,7 +227,7 @@ fun main(): Unit = runBlocking (
                     val syncType = request.getSyncType()
                     val syncHelper = request.getSyncHelper()
                     if (syncType.sync) {
-                        collection.pull(request.getSyncHelper().commits)
+                        async { collection.pull(request.getSyncHelper().commits) }.await()
                         request setSyncHelper (request.getSyncHelper().apply {
                             this.commits = mutableListOf()
                         })

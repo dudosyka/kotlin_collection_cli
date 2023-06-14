@@ -21,5 +21,7 @@ abstract class DumpManager <T: Entity> {
      *
      * @param items
      */
-    abstract suspend fun dump(items: MutableList<T>)
+    abstract suspend fun dump(items: MutableList<T>): Boolean
+
+    abstract suspend fun dumpOnly(removedItems: MutableList<Int> = mutableListOf(), updatedItems: MutableList<T> = mutableListOf()): MutableList<T>
 }

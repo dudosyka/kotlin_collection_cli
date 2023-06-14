@@ -41,6 +41,7 @@ open class AddCommand(controller: Controller) : Command(controller) {
         input.data["id"] = id
         val entity = this.entityBuilder.build(input.data)
         collection.addItem(entity)
+//        delay(5000L)
         return Response(ResponseCode.SUCCESS, "Item successfully created.", commits = listOf(
             CommitDto(
                 id = id,

@@ -58,13 +58,13 @@ class GatewayUdpChannel: UdpChannel() {
     private val gatewayActor = gatewayScope.actor<GatewayCommand>(capacity = Channel.BUFFERED) {
         for (command in this) {
             if (!(
-                    command is GatewayCommand.GetPendingRequests ||
-                    command is GatewayCommand.GetServers ||
-                    command is GatewayCommand.FilterServers ||
+//                    command is GatewayCommand.GetPendingRequests ||
+//                    command is GatewayCommand.GetServers ||
+//                    command is GatewayCommand.FilterServers ||
                     command is GatewayCommand.GetSyncState
                 )
                 )
-                println("Command coming: ${command.javaClass.simpleName}")
+                logger(LogLevel.DEBUG, "Command coming: ${command.javaClass.simpleName}")
 
             when (command) {
                 is GatewayCommand.GetCommits -> run {
@@ -75,7 +75,6 @@ class GatewayUdpChannel: UdpChannel() {
                 }
                 is GatewayCommand.SetSyncState -> run {
                     syncState = command.syncState
-                    println("new sync state = $syncState")
                 }
                 is GatewayCommand.GetPendingRequests -> run {
                     command.response.complete(pendingRequests)
@@ -146,9 +145,12 @@ class GatewayUdpChannel: UdpChannel() {
                     servers.add(command.address)
                 }
             }
-            if (!(command is GatewayCommand.GetPendingRequests || command is GatewayCommand.GetServers || command is GatewayCommand.FilterServers ||
+            if (!(
+//                        command is GatewayCommand.GetPendingRequests ||
+//                        command is GatewayCommand.GetServers ||
+//                        command is GatewayCommand.FilterServers ||
                         command is GatewayCommand.GetSyncState))
-                println("Command ended: ${command.javaClass.simpleName}")
+                logger(LogLevel.DEBUG, "Command coming: ${command.javaClass.simpleName}")
         }
     }
 
@@ -158,6 +160,7 @@ class GatewayUdpChannel: UdpChannel() {
 
     private fun sendThrough(initiator: Request) {
         val now = ZonedDateTime.now().toEpochSecond()
+        syncHelper.commits = mutableListOf()
         initiator.apply {
             this setHeader Pair("id", now)
             this setHeader Pair("sync", syncHelper)
@@ -181,15 +184,16 @@ class GatewayUdpChannel: UdpChannel() {
             lastRequest = ZonedDateTime.now().toEpochSecond()
         }
 
-        if (commandSyncType.sync) {
+        if (commandSyncType.sync || commits.size > 70) {
             syncState = SyncState(true, initiator = initiator)
             initiator.apply {
                 this setSyncHelper (this.getSyncHelper().apply {
                     commits = this@GatewayUdpChannel.commits
                     servers = this@GatewayUdpChannel.servers.filter { it.address != serverAddress }.map { it.address }.toMutableList()
                 })
+                this setSyncType CommandSyncType(true)
             }
-            println("Commits [${commits.size}] $commits")
+            logger(LogLevel.DEBUG, "Commits [${commits.size}]")
             commits = mutableListOf()
         }
 
@@ -233,7 +237,6 @@ class GatewayUdpChannel: UdpChannel() {
 
     fun stopSync() {
         val res = gatewayActor.trySend(GatewayCommand.SetSyncState(SyncState(false)))
-        println("Sync stop res: $res")
     }
 
     suspend fun getCommits(): MutableList<CommitDto> {

@@ -96,19 +96,24 @@ fun main(): Unit = runBlocking(
     }
 ) {
     val app = App()
+    val timeStart = ZonedDateTime.now().toEpochSecond()
+    println("Start test!")
     withContext(Dispatchers.Default) {
         val main = app.createClient("dudosyka", "test")
-        repeat(3) {
+        val clients = 20
+        val requestsPerClient = 100
+        async {
+            repeat(clients) {
             clientNumber -> launch {
                 val client = app.createClient("dudosyka", "test")
 
-                repeat(1) {
+                repeat(requestsPerClient) {
 
                     val request = Request(
                         path = PathDto("collection", "add"),
                         data = RequestDataDto(
                             arguments = mutableMapOf(
-                                "name" to "name",
+                                "name" to "Client #$clientNumber request #$it",
                                 "area" to 12.0,
                                 "numberOfRooms" to 3,
                                 "numberOfBathrooms" to 2,
@@ -132,10 +137,8 @@ fun main(): Unit = runBlocking(
                     request setSyncType app.getCommandByName("collection", "add")!!.commandSyncType
 
                     val result = client.sendRequest(request)
-
                     println("client #$clientNumber, returned request #$it: $result")
-
-//                    if (it % 70 == 0) {
+//                    if (it % 20 == 0) {
 //                        val requestInfo = Request(path = PathDto("collection", "info"))
 //                        requestInfo setSyncType app.getCommandByName("collection", "info")!!.commandSyncType
 //                        val show = client.sendRequest(requestInfo)
@@ -143,12 +146,16 @@ fun main(): Unit = runBlocking(
 //                    }
 
                 }
-
-                val requestInfo = Request(path = PathDto("collection", "info"))
-                requestInfo setSyncType app.getCommandByName("collection", "info")!!.commandSyncType
-                val show = main.sendRequest(requestInfo)
-                println(show.result)
             }
-        }
+        }}.await()
+        println("We are here!")
+        val timeEnd = ZonedDateTime.now().toEpochSecond()
+        val requestInfo = Request(path = PathDto("collection", "info"))
+        requestInfo setSyncType app.getCommandByName("collection", "info")!!.commandSyncType
+        val show = main.sendRequest(requestInfo)
+        println(show.result)
+        println("We are done! Clients: $clients, Requests per client: $requestsPerClient")
+        println("Time on test: ${timeEnd - timeStart} sec.")
+
     }
 }
