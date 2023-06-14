@@ -309,7 +309,7 @@ class DatabaseManager {
             }
         }
         insertRows(updatedItems)
-        return findAll(entityBuilder)
+        return mutableListOf()
     }
     fun initModel(entityBuilder: EntityBuilder<Entity>) {
         val command = DatabaseCommand.InitModel(entityBuilder)

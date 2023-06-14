@@ -174,7 +174,7 @@ class App {
                                 return@withContext
 
                             if (request.path.controller == "_system" && request.path.route == "sync") {
-                                collection.loadDump()
+                                collection.pull(request.getSyncHelper().commits)
                                 return@withContext
                             }
 
@@ -227,13 +227,13 @@ fun main(): Unit = runBlocking (
                     val syncType = request.getSyncType()
                     val syncHelper = request.getSyncHelper()
                     if (syncType.sync) {
-                        async { collection.pull(request.getSyncHelper().commits) }.await()
+                        launch { collection.pullAndDump(request.getSyncHelper().commits) }
+                        syncHelper.servers.forEach {
+                            server.emit(it!!, Request(PathDto("_system", "sync")).apply { this setSyncHelper request.getSyncHelper() })
+                        }
                         request setSyncHelper (request.getSyncHelper().apply {
                             this.commits = mutableListOf()
                         })
-                        syncHelper.servers.forEach {
-                            server.emit(it!!, Request(PathDto("_system", "sync")))
-                        }
                     }
 
                     val responseChannelItem = ServerUdpChannel.ResponseChannelItem(

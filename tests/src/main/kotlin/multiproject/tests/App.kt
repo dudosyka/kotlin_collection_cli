@@ -101,7 +101,7 @@ fun main(): Unit = runBlocking(
     withContext(Dispatchers.Default) {
         val main = app.createClient("dudosyka", "test")
         val clients = 20
-        val requestsPerClient = 100
+        val requestsPerClient = 1000
         async {
             repeat(clients) {
             clientNumber -> launch {

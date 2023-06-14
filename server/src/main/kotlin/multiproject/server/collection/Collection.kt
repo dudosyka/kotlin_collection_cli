@@ -63,7 +63,7 @@ abstract class Collection<T : Entity> {
             lastAccessTimestamp
         )
 
-        class PullCommits(val commits: MutableMap<Long, CommitDto>, val response: CompletableDeferred<Boolean> = CompletableDeferred(), lastAccessTimestamp: ZonedDateTime):CollectionCommand(
+        class PullCommits(val commits: MutableMap<Long, CommitDto>, val needDump: Boolean = false, val response: CompletableDeferred<Boolean> = CompletableDeferred(), lastAccessTimestamp: ZonedDateTime):CollectionCommand(
             lastAccessTimestamp
         )
 
@@ -158,7 +158,7 @@ abstract class Collection<T : Entity> {
                     getItemById(command)
                 }
                 is CollectionCommand.PullCommits -> run {
-                    command.response.complete(pull(command.commits, command.lastAccessTimestamp))
+                    command.response.complete(pull(command.commits, command.needDump, command.lastAccessTimestamp))
                 }
                 is CollectionCommand.ShowItems -> run {
                     sort(CollectionSortType.DESC, lastAccessTimestamp)
@@ -456,12 +456,12 @@ abstract class Collection<T : Entity> {
 
     abstract suspend fun addIfMax(item: Entity): Boolean
 
-    private suspend fun pull(commitsById: MutableMap<Long, CommitDto>, time: ZonedDateTime): Boolean {
+    private suspend fun pull(commitsById: MutableMap<Long, CommitDto>, needDump: Boolean, time: ZonedDateTime): Boolean {
         val updatedItems = mutableListOf<T>()
         val removedItems = mutableListOf<Int>()
+        val ids = items.mapIndexed { key, value -> value.id.toLong() to key }.toMap()
         commitsById.forEach {
             (key, value) -> run {
-                val ids = items.mapIndexed { key, value -> value.id.toLong() to key }.toMap()
                 if (ids.keys.contains(key)) {
                     if (value.data != null) {
                         val item = builder.build(value.data!!.toMutableMap())
@@ -482,12 +482,15 @@ abstract class Collection<T : Entity> {
             }
         }
 
+        println("Start dump at ${ZonedDateTime.now()}")
         lastAccessTimestamp = time
-        dumpManager.dumpOnly(removedItems, updatedItems)
+        if (needDump)
+            dumpManager.dumpOnly(removedItems, updatedItems)
+        println("End dump at ${ZonedDateTime.now()}")
         return true
     }
 
-    suspend fun pull(commits: List<CommitDto>): Boolean {
+    private fun createCommitsById(commits: List<CommitDto>): MutableMap<Long, CommitDto> {
         val commitsById: MutableMap<Long, CommitDto> = mutableMapOf()
         commits.forEach {
             if (commitsById.keys.contains(it.id)) {
@@ -498,10 +501,25 @@ abstract class Collection<T : Entity> {
                 commitsById[it.id] = it
             }
         }
+        return commitsById
+    }
 
-        val command = CollectionCommand.PullCommits(commitsById, lastAccessTimestamp = ZonedDateTime.now())
+    suspend fun pullAndDump(commits: List<CommitDto>): Boolean {
+        val commitsById = createCommitsById(commits)
+
+        val command = CollectionCommand.PullCommits(commitsById, needDump = true, lastAccessTimestamp = ZonedDateTime.now())
         collectionActor.send(command)
 
         return command.response.await()
+    }
+
+    suspend fun pull(commits: List<CommitDto>): Boolean {
+        val commitsById = createCommitsById(commits)
+
+        val command = CollectionCommand.PullCommits(commitsById, needDump = false, lastAccessTimestamp = ZonedDateTime.now())
+        collectionActor.send(command)
+
+        val res = command.response.await()
+        return res
     }
 }
