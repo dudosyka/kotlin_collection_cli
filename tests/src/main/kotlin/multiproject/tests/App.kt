@@ -87,7 +87,7 @@ class App {
     }
 }
 
-fun main(): Unit = runBlocking(
+fun main(args: Array<String>): Unit = runBlocking(
     CoroutineExceptionHandler {
         _, error -> run {
             val logger: Logger by inject(Logger::class.java, named("logger"))
@@ -100,15 +100,22 @@ fun main(): Unit = runBlocking(
     println("Start test!")
     withContext(Dispatchers.Default) {
         val main = app.createClient("dudosyka", "test")
-        val clients = 20
-        val requestsPerClient = 1000
-        async {
+        var clients = 20
+        var requestsPerClient = 100
+        var readPerWrite = 10
+        if (args.size > 1) {
+            clients = args[0].toInt()
+            requestsPerClient = args[1].toInt()
+        }
+        if (args.size > 2) {
+            readPerWrite = args[2].toInt()
+        }
+        launch {
             repeat(clients) {
             clientNumber -> launch {
                 val client = app.createClient("dudosyka", "test")
 
                 repeat(requestsPerClient) {
-
                     val request = Request(
                         path = PathDto("collection", "add"),
                         data = RequestDataDto(
@@ -138,16 +145,16 @@ fun main(): Unit = runBlocking(
 
                     val result = client.sendRequest(request)
                     println("client #$clientNumber, returned request #$it: $result")
-//                    if (it % 20 == 0) {
-//                        val requestInfo = Request(path = PathDto("collection", "info"))
-//                        requestInfo setSyncType app.getCommandByName("collection", "info")!!.commandSyncType
-//                        val show = client.sendRequest(requestInfo)
-//                        println(show.result)
-//                    }
-
+                    if (it % readPerWrite == 0) {
+                        val requestInfo = Request(path = PathDto("collection", "info"))
+                        requestInfo setSyncType app.getCommandByName("collection", "info")!!.commandSyncType
+                        println("sent info")
+                        val show = client.sendRequest(requestInfo)
+                        println(show.result)
+                    }
                 }
             }
-        }}.await()
+        }}.join()
         println("We are here!")
         val timeEnd = ZonedDateTime.now().toEpochSecond()
         val requestInfo = Request(path = PathDto("collection", "info"))

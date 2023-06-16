@@ -4,4 +4,11 @@
 # Ignore Gradle build output directory
 build
 
+docker/prometheus
+docker/prometheus/*
+docker/grafana
+docker/grafana/*
+
+*/logger.file.log
+
 /.idea

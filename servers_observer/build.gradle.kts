@@ -28,7 +28,7 @@ dependencies {
 
 application {
     // Define the main class for the application.
-    mainClass.set("multiproject.server.AppKt")
+    mainClass.set("multiproject.servers_observer.AppKt")
 }
 
 tasks {

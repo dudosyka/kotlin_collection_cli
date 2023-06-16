@@ -17,7 +17,7 @@ import java.net.InetSocketAddress
 
 class App {
     init {
-        val logger = Logger(LogLevel.FATAL)
+        val logger = Logger(LogLevel.DEBUG)
         val module = module {
             single<GatewayUdpChannel>(named("server")) {
                 runGateway {

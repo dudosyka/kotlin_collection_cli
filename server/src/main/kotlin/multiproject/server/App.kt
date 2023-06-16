@@ -36,9 +36,10 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
 
+
 class App {
     init {
-        val logger = Logger(LogLevel.FATAL)
+        val logger = Logger(LogLevel.DEBUG)
         val collection = FlatCollection(mutableListOf(), FlatBuilder())
         val module = module {
             single<Collection<Flat>>(named("collection")) {
@@ -174,7 +175,12 @@ class App {
                                 return@withContext
 
                             if (request.path.controller == "_system" && request.path.route == "sync") {
-                                collection.pull(request.getSyncHelper().commits)
+                                println("We are on sync from other server")
+                                println("Now we have: ${collection.getInfo()}")
+                                println("We get this commits: [${request.getSyncHelper().commits.size}] ${request.getSyncHelper().commits}")
+                                launch { collection.pull(request.getSyncHelper().commits) }.join()
+                                println("After pulling we have: ${collection.getInfo()}")
+                                emitCache(collection.getInfo().size.toDouble())
                                 return@withContext
                             }
 
@@ -205,11 +211,12 @@ fun main(): Unit = runBlocking (
         }
     }
 ) {
+    App()
     val server: ServerUdpChannel by inject(ServerUdpChannel::class.java, named("server"))
     val collection: Collection<Flat> by inject(Collection::class.java, named("collection"))
-    App()
     collection.loadDump()
     server.bindToResolver()
+    server.emitCache(collection.getInfo().size.toDouble())
     withContext(Dispatchers.Default) {
         launch {
             server.run()
@@ -220,6 +227,7 @@ fun main(): Unit = runBlocking (
                 val tryToGet = server.requestsChannel.tryReceive()
 
                 if (tryToGet.isSuccess) {
+
                     val item = tryToGet.getOrNull()!!
                     val address = item.first
                     val request = item.second
@@ -227,7 +235,12 @@ fun main(): Unit = runBlocking (
                     val syncType = request.getSyncType()
                     val syncHelper = request.getSyncHelper()
                     if (syncType.sync) {
-                        launch { collection.pullAndDump(request.getSyncHelper().commits) }
+                        val commits = request.getSyncHelper().commits.map { it }
+
+                        launch {
+                            collection.pullAndDump(commits)
+                            server.emitCache(collection.getInfo().size.toDouble())
+                        }
                         syncHelper.servers.forEach {
                             server.emit(it!!, Request(PathDto("_system", "sync")).apply { this setSyncHelper request.getSyncHelper() })
                         }

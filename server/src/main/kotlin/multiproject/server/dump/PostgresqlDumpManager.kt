@@ -22,7 +22,7 @@ class PostgresqlDumpManager<T: Entity>(private val entityBuilder: EntityBuilder<
             modelInit = true
             dbManager.initModel(entityBuilder as EntityBuilder<Entity>)
         }
-        return dbManager.getAll(entityBuilder as EntityBuilder<Entity>).apply { logger(LogLevel.DEBUG, "Dump loaded: $this") } as MutableList<T>
+        return dbManager.getAll(entityBuilder as EntityBuilder<Entity>).apply {  } as MutableList<T>
     }
 
     override suspend fun dumpOnly(removedItems: MutableList<Int>, updatedItems: MutableList<T>): MutableList<T> {

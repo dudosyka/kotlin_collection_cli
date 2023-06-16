@@ -101,7 +101,9 @@ class GatewayUdpChannel: UdpChannel() {
                     pendingRequests.remove(command.key)
                 }
                 is GatewayCommand.AddCommits -> run {
+                    println("It was ${commits.size} $commits")
                     commits.addAll(command.commits)
+                    println("We made it ${commits.size} $commits")
                 }
                 is GatewayCommand.ClearCommits -> run {
                     commits = mutableListOf()
@@ -236,7 +238,7 @@ class GatewayUdpChannel: UdpChannel() {
     }
 
     fun stopSync() {
-        val res = gatewayActor.trySend(GatewayCommand.SetSyncState(SyncState(false)))
+        gatewayActor.trySend(GatewayCommand.SetSyncState(SyncState(false)))
     }
 
     suspend fun getCommits(): MutableList<CommitDto> {

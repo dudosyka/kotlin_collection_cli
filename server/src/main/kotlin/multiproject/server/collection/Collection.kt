@@ -465,6 +465,8 @@ abstract class Collection<T : Entity> {
                 if (ids.keys.contains(key)) {
                     if (value.data != null) {
                         val item = builder.build(value.data!!.toMutableMap())
+                        println("we got update $key $value")
+                        println("Old value: ${items[ids[key]!!]}")
                         updatedItems.add(item)
                         items[ids[key]!!] = item
                     }
@@ -476,6 +478,7 @@ abstract class Collection<T : Entity> {
                     if (value.data != null) {
                         val item = builder.build(value.data!!.toMutableMap())
                         updatedItems.add(item)
+                        println("We got new!")
                         items.add(item)
                     }
                 }
@@ -501,10 +504,12 @@ abstract class Collection<T : Entity> {
                 commitsById[it.id] = it
             }
         }
+        println("We get this commits by id: $commitsById")
         return commitsById
     }
 
     suspend fun pullAndDump(commits: List<CommitDto>): Boolean {
+        println("From server we got this: $commits")
         val commitsById = createCommitsById(commits)
 
         val command = CollectionCommand.PullCommits(commitsById, needDump = true, lastAccessTimestamp = ZonedDateTime.now())

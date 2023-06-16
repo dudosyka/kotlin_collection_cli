@@ -34,17 +34,20 @@ abstract class UdpChannel {
     lateinit var requestResolver: RequestResolver
     var logger: Logger = Logger()
     var requestsChannel: Channel<Pair<SocketAddress, Request>> = Channel(capacity = Channel.BUFFERED)
+    lateinit var address: InetSocketAddress
 
     fun getChannelAddress(): SocketAddress = channel.localAddress
     fun bindOn(address: InetSocketAddress?) {
         if (address == null) {
             val socket = ServerSocket(0)
             val port = socket.localPort
-            channel.bind(InetSocketAddress(InetAddress.getLocalHost(), port))
+            this.address = InetSocketAddress(InetAddress.getLocalHost(), port)
+            channel.bind(this.address)
             return
         }
         logger(LogLevel.INFO, "Socket bind on $address")
         channel.bind(address)
+        this.address = address
     }
     open fun addServer(address: ConnectedServer) {
         servers.add(address)

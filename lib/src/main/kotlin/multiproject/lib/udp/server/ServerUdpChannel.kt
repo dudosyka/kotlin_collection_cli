@@ -5,6 +5,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import multiproject.lib.dto.request.PathDto
+import multiproject.lib.dto.request.RequestDataDto
 import multiproject.lib.dto.request.RequestDirection
 import multiproject.lib.dto.response.Response
 import multiproject.lib.request.Request
@@ -17,6 +18,7 @@ import java.net.SocketAddress
 class ServerUdpChannel: UdpChannel() {
     lateinit var router: Router
     var responseChannel: Channel<ResponseChannelItem> = Channel(capacity = Channel.BUFFERED)
+    val observerAddress = InetSocketAddress(UdpConfig.observerAddress, UdpConfig.observerPort)
 
     data class ResponseChannelItem (
         val from: SocketAddress,
@@ -50,5 +52,9 @@ class ServerUdpChannel: UdpChannel() {
                 super.run()
             }
         }
+    }
+
+    fun emitCache(cache: Double) {
+        emit(observerAddress, Request(PathDto("cache", ""), data = RequestDataDto(arguments = mutableMapOf("cache_dump" to cache))))
     }
 }
