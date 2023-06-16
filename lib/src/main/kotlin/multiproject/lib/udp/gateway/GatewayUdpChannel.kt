@@ -17,10 +17,9 @@ import multiproject.lib.utils.LogLevel
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 import java.time.ZonedDateTime
-import java.util.*
 
 class GatewayUdpChannel: UdpChannel() {
-    private var pendingRequests = Collections.synchronizedMap(mutableMapOf<Pair<Long, InetSocketAddress>, Pair<ConnectedServer, Request>>())
+    private var pendingRequests = mutableMapOf<Pair<Long, InetSocketAddress>, Pair<ConnectedServer, Request>>()
     private var commits: MutableList<CommitDto> = mutableListOf()
     private val gatewayScope = CoroutineScope(Job())
     val clientRequestsChannel: Channel<Pair<SocketAddress, Request>> = Channel(capacity = Channel.BUFFERED)
@@ -152,7 +151,7 @@ class GatewayUdpChannel: UdpChannel() {
 //                        command is GatewayCommand.GetServers ||
 //                        command is GatewayCommand.FilterServers ||
                         command is GatewayCommand.GetSyncState))
-                logger(LogLevel.DEBUG, "Command coming: ${command.javaClass.simpleName}")
+                logger(LogLevel.DEBUG, "Command ended: ${command.javaClass.simpleName}")
         }
     }
 

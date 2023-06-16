@@ -4,6 +4,7 @@
 package multiproject.servers_observer
 
 import io.prometheus.client.CollectorRegistry
+import io.prometheus.client.Histogram
 import io.prometheus.client.Summary
 import io.prometheus.client.exporter.HTTPServer
 import kotlinx.coroutines.*
@@ -26,7 +27,7 @@ class App {
         val logger = Logger(LogLevel.DEBUG)
         val testMetrics = TestMetricDto(
             Summary.build().name("cache").help("Total elements.").labelNames("server").register(registry),
-            Summary.build().name("requests_time").help("Time on request").labelNames("server").register(registry),
+            Histogram.build().name("cache_histogram").help("Total elements").labelNames("server").register(registry),
         )
         val module = module {
             single<Logger>(named("logger")) {

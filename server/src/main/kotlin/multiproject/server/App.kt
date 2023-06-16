@@ -175,11 +175,7 @@ class App {
                                 return@withContext
 
                             if (request.path.controller == "_system" && request.path.route == "sync") {
-                                println("We are on sync from other server")
-                                println("Now we have: ${collection.getInfo()}")
-                                println("We get this commits: [${request.getSyncHelper().commits.size}] ${request.getSyncHelper().commits}")
                                 launch { collection.pull(request.getSyncHelper().commits) }.join()
-                                println("After pulling we have: ${collection.getInfo()}")
                                 emitCache(collection.getInfo().size.toDouble())
                                 return@withContext
                             }
